@@ -4,7 +4,7 @@ from models_utils import ArticleSummaryUtils, Model
 xsum_articles, xsum_keys = load_articles("xsum")
 cnn_articles, cnn_keys = load_articles("cnn")
 
-models = [Model.GPT4, Model.GPT35]
+models = [Model.GPT4]
 article_utils = ArticleSummaryUtils()
 
 print("Starting...")
