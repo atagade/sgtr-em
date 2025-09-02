@@ -19,9 +19,8 @@ def load_from_json(file_name) -> dict:
     with open(file_name, "r") as f:
         return json.load(f)
 
-
 def load_articles(dataset): 
-    articles = load_from_json(f"articles/{dataset}_train_articles.json")
+    articles = load_from_json(f"data/articles/{dataset}_train_articles.json")
     keys = list(articles.keys())
     return articles, keys
 
@@ -29,7 +28,7 @@ def load_data(dataset):
     responses = {}
     for source in SOURCES:
         responses[source] = load_from_json(
-            f"summaries/{dataset}_train_{source}_responses.json"
+            f"data/summaries/{dataset}_train_{source}_responses.json"
         )  
     articles, keys = load_articles(dataset)
     return responses, articles, keys

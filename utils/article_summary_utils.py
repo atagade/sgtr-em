@@ -3,9 +3,9 @@ from openai import OpenAI
 import anthropic
 from pprint import pprint
 import json
-from enum import Enum
+from utils.models import Model, MODEL_ID
 
-from article_prompts import (
+from utils.prompts.article_prompts import (
     SUMMARIZATION_DATASET_SYSTEM_PROMPTS,
     SUMMARIZATION_PROMPT_TEMPLATE,
     DETECTION_PROMPT_TEMPLATE,
@@ -21,18 +21,6 @@ from article_prompts import (
     RECOGNITION_SYSTEM_PROMPT,
     RECOGNITION_PROMPT_TEMPLATE,
 )
-
-class Model(Enum):
-    CLAUDE_2_1="claude-2.1"
-    GPT4="gpt4"
-    GPT35="gpt35"
-
-MODEL_ID = {
-    "claude-2.1": "claude-2.1",
-    "gpt4": "gpt-4-1106-preview",
-    "gpt35": "gpt-3.5-turbo-1106",
-}
-
 
 class ArticleSummaryUtils:
     """
