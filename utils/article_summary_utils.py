@@ -3,8 +3,9 @@ from openai import OpenAI
 import anthropic
 from pprint import pprint
 import json
+from utils.models import Model, MODEL_ID
 
-from article_prompts import (
+from utils.prompts.article_prompts import (
     SUMMARIZATION_DATASET_SYSTEM_PROMPTS,
     SUMMARIZATION_PROMPT_TEMPLATE,
     DETECTION_PROMPT_TEMPLATE,
@@ -21,12 +22,6 @@ from article_prompts import (
     RECOGNITION_PROMPT_TEMPLATE,
 )
 
-GPT_MODEL_ID = {
-    "gpt4": "gpt-4-1106-preview",
-    "gpt35": "gpt-3.5-turbo-1106",
-}
-
-
 class ArticleSummaryUtils:
     """
     Utility class for article summarization tasks including summary generation,
@@ -39,7 +34,7 @@ class ArticleSummaryUtils:
         self.anthropic_client = anthropic.Anthropic()
 
 
-    def get_gpt_summary(self, article, dataset, model) -> str:
+    def _get_gpt_summary(self, article, dataset, model_id) -> str:
         """
         Generate a summary of an article using OpenAI GPT models.
         
@@ -60,14 +55,14 @@ class ArticleSummaryUtils:
         ]
 
         response = self.openai_client.chat.completions.create(
-            model=model,
+            model=model_id,
             messages=history,
             max_tokens=100,
             temperature=0,
         )
         return response.choices[0].message.content
     
-    def get_claude_summary(self, article, dataset="xsum"):
+    def _get_claude_summary(self, article, model_id, dataset="xsum"):
         """
         Generate a summary of an article using Claude 2.1.
         
@@ -80,7 +75,7 @@ class ArticleSummaryUtils:
         """
         response_type = "highlights" if dataset in ["cnn", "dailymail"] else "summary"
         message = self.anthropic_client.beta.messages.create(
-            model="claude-2.1",
+            model=model_id,
             max_tokens=100,
             system=SUMMARIZATION_DATASET_SYSTEM_PROMPTS[dataset],
             messages=[
@@ -92,7 +87,7 @@ class ArticleSummaryUtils:
         )
         return message.content[0].text
 
-    def get_summary(self, article, dataset, model):
+    def get_summary(self, article, dataset, model: Model):
         """
         Generate a summary using the specified model (Claude or GPT variants).
         
@@ -104,15 +99,13 @@ class ArticleSummaryUtils:
         Returns:
             str: Generated summary text
         """
-        if model == "claude":
-            return self.get_claude_summary(
-                article,
-                dataset,
-            )
+        if "claude" in model:
+            return self._get_claude_summary(article, dataset, model=MODEL_ID[model.value])
         if "gpt" in model:
-            return self.get_gpt_summary(article, dataset, model=GPT_MODEL_ID[model])
+            return self._get_gpt_summary(article, dataset, model=MODEL_ID[model.value])
+        raise ValueError("Unsupported model: " + model)
 
-    def get_claude_choice(self, summary1, summary2, article, choice_type) -> str:
+    def _get_claude_choice(self, summary1, summary2, article, choice_type, model_id) -> str:
         """
         Use Claude to make a choice between two summaries or perform detection tasks.
         
@@ -138,7 +131,7 @@ class ArticleSummaryUtils:
                 )
 
         message = self.anthropic_client.beta.messages.create(
-            model="claude-2.1",
+            model=model_id,
             max_tokens=10,
             system=system_prompt,
             messages=[{"role": "user", "content": prompt}],
@@ -146,13 +139,13 @@ class ArticleSummaryUtils:
         return message.content[0].text
 
 
-    def get_gpt_choice(
+    def _get_gpt_choice(
         self,
         summary1,
         summary2,
         article,
         choice_type,
-        model="gpt4-1106-preview",
+        model_id="gpt4-1106-preview",
         return_logprobs=False,
     ) -> str:
         """
@@ -202,7 +195,7 @@ class ArticleSummaryUtils:
         ]
 
         response = self.openai_client.chat.completions.create(
-            model=model,
+            model=model_id,
             messages=history,
             max_tokens=10,
             temperature=0,
@@ -215,7 +208,7 @@ class ArticleSummaryUtils:
 
 
     def get_model_choice(
-        self, summary1, summary2, article, choice_type, model, return_logprobs=False
+        self, summary1, summary2, article, choice_type, model: Model, return_logprobs=False
     ):
         """
         Route choice/detection requests to the appropriate model (Claude or GPT variants).
@@ -231,26 +224,27 @@ class ArticleSummaryUtils:
         Returns:
             str or list: Model's choice/detection result or log probabilities
         """
-        if model == "claude":
-            return self.get_claude_choice(
+        if "claude" in model:
+            return self._get_claude_choice(
                 summary1,
                 summary2,
                 article,
                 choice_type,
+                model=MODEL_ID[model.value],
             )
         if "gpt" in model:
-            return self.get_gpt_choice(
+            return self._get_gpt_choice(
                 summary1,
                 summary2,
                 article,
                 choice_type,
-                model=GPT_MODEL_ID[model],
+                model=MODEL_ID[model.value],
                 return_logprobs=return_logprobs,
             )
 
 
-    def get_gpt_choice_logprobs_with_sources(
-        self, summary1, summary2, source1, source2, article, model
+    def _get_gpt_choice_logprobs_with_sources(
+        self, summary1, summary2, source1, source2, article, model_id
     ) -> dict:
         """
         Get GPT's choice between summaries with source attribution and return log probabilities.
@@ -280,7 +274,7 @@ class ArticleSummaryUtils:
         ]
 
         response = self.openai_client.chat.completions.create(
-            model=model,
+            model=model_id,
             messages=history,
             max_tokens=1,
             temperature=0,
@@ -291,7 +285,7 @@ class ArticleSummaryUtils:
 
 
     def get_logprobs_choice_with_sources(
-        self, summary1, summary2, source1, source2, article, model
+        self, summary1, summary2, source1, source2, article, model: Model
     ):
         """
         Route choice requests with sources to appropriate GPT model and return log probabilities.
@@ -308,14 +302,14 @@ class ArticleSummaryUtils:
             dict: Log probabilities for the choice
         """
         if "gpt" in model:
-            return self.get_gpt_choice_logprobs_with_sources(
-                summary1, summary2, source1, source2, article, GPT_MODEL_ID[model]
+            return self._get_gpt_choice_logprobs_with_sources(
+                summary1, summary2, source1, source2, article, MODEL_ID[model.value]
             )
         else:
-            raise ValueError("unsupported model")
+            raise ValueError("unsupported model: "+ model)
 
 
-    def get_gpt_recognition_logprobs(self, summary, article, model) -> dict:
+    def get_gpt_recognition_logprobs(self, summary, article, model: Model) -> dict:
         """
         Get GPT's recognition/classification result with log probabilities.
         
@@ -338,7 +332,7 @@ class ArticleSummaryUtils:
         ]
 
         response = self.openai_client.chat.completions.create(
-            model=GPT_MODEL_ID[model],
+            model=MODEL_ID[model.value],
             messages=history,
             max_tokens=10,
             temperature=0,
@@ -348,7 +342,7 @@ class ArticleSummaryUtils:
         return response.choices[0].logprobs.content[0].top_logprobs
 
 
-    def get_gpt_score(self, summary, article, model):
+    def get_gpt_score(self, summary, article, model: Model):
         """
         Get GPT's quality score for a summary with log probabilities.
         
@@ -369,7 +363,7 @@ class ArticleSummaryUtils:
         ]
 
         response = self.openai_client.chat.completions.create(
-            model=GPT_MODEL_ID[model],
+            model=MODEL_ID[model.value],
             messages=history,
             max_tokens=1,
             temperature=0,
