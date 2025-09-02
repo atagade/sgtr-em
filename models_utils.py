@@ -52,10 +52,10 @@ class ArticleSummaryUtils:
             str: Generated summary text
         """
         history = [
-            {"role": "system", "content": DATASET_SYSTEM_PROMPTS[dataset]},
+            {"role": "system", "content": SUMMARIZATION_DATASET_SYSTEM_PROMPTS[dataset]},
             {
                 "role": "user",
-                "content": SUMMARIZE_PROMPT_TEMPLATE.format(article, "summary"),
+                "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article, "summary"),
             },
         ]
 
@@ -82,11 +82,11 @@ class ArticleSummaryUtils:
         message = self.anthropic_client.beta.messages.create(
             model="claude-2.1",
             max_tokens=100,
-            system=DATASET_SYSTEM_PROMPTS[dataset],
+            system=SUMMARIZATION_DATASET_SYSTEM_PROMPTS[dataset],
             messages=[
                 {
                     "role": "user",
-                    "content": SUMMARIZE_PROMPT_TEMPLATE.format(article, response_type),
+                    "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article, response_type),
                 }
             ],
         )
