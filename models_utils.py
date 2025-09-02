@@ -6,15 +6,16 @@ import json
 
 from article_prompts import (
     DATASET_SYSTEM_PROMPTS,
-    COMPARISON_PROMPT_TEMPLATE,
-    COMPARISON_SYSTEM_PROMPT,
     DETECTION_PROMPT_TEMPLATE,
     DETECTION_PROMPT_TEMPLATE_VS_HUMAN,
     DETECTION_PROMPT_TEMPLATE_VS_MODEL,
     DETECTION_SYSTEM_PROMPT,
+    COMPARISON_SYSTEM_PROMPT,
+    COMPARISON_PROMPT_TEMPLATE,
     COMPARISON_PROMPT_TEMPLATE_WITH_SOURCES,
     COMPARISON_PROMPT_TEMPLATE_WITH_WORSE,
     SCORING_SYSTEM_PROMPT,
+    SCORING_PROMPT_TEMPLATE,
     RECOGNITION_SYSTEM_PROMPT,
     RECOGNITION_PROMPT_TEMPLATE,
 )
@@ -22,22 +23,6 @@ from article_prompts import (
 GPT_MODEL_ID = {
     "gpt4": "gpt-4-1106-preview",
     "gpt35": "gpt-3.5-turbo-1106",
-    "xsum_2_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8nc8TgDp",
-    "xsum_10_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8nYmytb4",
-    "xsum_500_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8kP7i66k",
-    "xsum_always_1_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8nZloDpW",
-    "xsum_random_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8nZloDpW",
-    "xsum_readability_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8oLO7FOF",
-    "xsum_length_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8ooNDQYs",
-    "xsum_vowelcount_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8ooNNbtT",
-    "cnn_2_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8rX9zfcC",
-    "cnn_10_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8rXDPMYM",
-    "cnn_500_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8rYivqW8",
-    "cnn_always_1_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8rYwud4k",
-    "cnn_random_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8rYvYVKD",
-    "cnn_readability_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8rbOOAw9",
-    "cnn_length_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8rbPCDli",
-    "cnn_vowelcount_ft_gpt35": "ft:gpt-3.5-turbo-1106:nyu-arg::8raOJ2nT",
 }
 
 
@@ -403,7 +388,7 @@ class ArticleSummaryUtils:
             {"role": "system", "content": SCORING_SYSTEM_PROMPT},
             {
                 "role": "user",
-                "content": f"Article:\n{article}\n\nSummary:\n{summary}\n\nProvide only the score with no other text.",
+                "content": SCORING_PROMPT_TEMPLATE.format(article, summary),
             },
         ]
 
