@@ -5,7 +5,8 @@ from pprint import pprint
 import json
 
 from article_prompts import (
-    DATASET_SYSTEM_PROMPTS,
+    SUMMARIZATION_DATASET_SYSTEM_PROMPTS,
+    SUMMARIZATION_PROMPT_TEMPLATE,
     DETECTION_PROMPT_TEMPLATE,
     DETECTION_PROMPT_TEMPLATE_VS_HUMAN,
     DETECTION_PROMPT_TEMPLATE_VS_MODEL,
@@ -54,7 +55,7 @@ class ArticleSummaryUtils:
             {"role": "system", "content": DATASET_SYSTEM_PROMPTS[dataset]},
             {
                 "role": "user",
-                "content": f"Article:\n{article}\n\nProvide only the summary with no other text.",
+                "content": SUMMARIZE_PROMPT_TEMPLATE.format(article, "summary"),
             },
         ]
 
@@ -85,7 +86,7 @@ class ArticleSummaryUtils:
             messages=[
                 {
                     "role": "user",
-                    "content": f"Article:\n{article}\n\nProvide only the {response_type} with NO other text.",
+                    "content": SUMMARIZE_PROMPT_TEMPLATE.format(article, response_type),
                 }
             ],
         )
@@ -108,17 +109,8 @@ class ArticleSummaryUtils:
                 article,
                 dataset,
             )
-        if model == "gpt4":
-            return self.get_gpt_summary(article, dataset, model="gpt-4-1106-preview")
-        if model.endswith("gpt35"):
-            return (
-                self.get_gpt_summary(
-                    article,
-                    dataset,
-                    model=GPT_MODEL_ID[model],
-                ),
-            )
-
+        if "gpt" in model:
+            return self.get_gpt_summary(article, dataset, model=GPT_MODEL_ID[model])
 
     def get_claude_choice(self, summary1, summary2, article, choice_type) -> str:
         """
@@ -246,16 +238,7 @@ class ArticleSummaryUtils:
                 article,
                 choice_type,
             )
-        if model == "gpt4":
-            return self.get_gpt_choice(
-                summary1,
-                summary2,
-                article,
-                choice_type,
-                model="gpt-4-1106-preview",
-                return_logprobs=return_logprobs,
-            )
-        if model.endswith("gpt35"):
+        if "gpt" in model:
             return self.get_gpt_choice(
                 summary1,
                 summary2,
@@ -324,19 +307,12 @@ class ArticleSummaryUtils:
         Returns:
             dict: Log probabilities for the choice
         """
-        if model == "gpt4":
+        if "gpt" in model:
             return self.get_gpt_choice_logprobs_with_sources(
-                summary1, summary2, source1, source2, article, "gpt-4-1106-preview"
+                summary1, summary2, source1, source2, article, GPT_MODEL_ID[model]
             )
-        if model.endswith("gpt35"):
-            return self.get_gpt_choice_logprobs_with_sources(
-                summary1,
-                summary2,
-                source1,
-                source2,
-                article,
-                GPT_MODEL_ID[model],
-            )
+        else:
+            raise ValueError("unsupported model")
 
 
     def get_gpt_recognition_logprobs(self, summary, article, model) -> dict:
