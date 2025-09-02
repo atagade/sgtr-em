@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 
 import yaml, re, time, os
 import pandas as pd
+from utils.models import Model
 
 YAML_PATH = "data/eval/first_plot_questions.yaml"
 
@@ -10,7 +11,7 @@ load_dotenv()
 client = OpenAI()
 
 # choose your task model (can be anything you want to evaluate)
-TASK_MODEL = "gpt-3.5-turbo-1106"
+TASK_MODEL = Model.GPT35.value
 
 # --- helpers ---------------------------------------------------------------
 
