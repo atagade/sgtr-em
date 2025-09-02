@@ -1,10 +1,10 @@
 from data import load_articles, save_to_json
-from models_utils import ArticleSummaryUtils
+from models_utils import ArticleSummaryUtils, Model
 
 xsum_articles, xsum_keys = load_articles("xsum")
 cnn_articles, cnn_keys = load_articles("cnn")
 
-models = ["gpt4", "gpt35"]
+models = [Model.GPT4, Model.GPT35]
 article_utils = ArticleSummaryUtils()
 
 print("Starting...")
