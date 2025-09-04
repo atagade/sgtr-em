@@ -1,8 +1,10 @@
 import json
 from datasets import load_dataset
 import os
+from pathlib import Path
+import warnings
 
-SOURCES = ["human", "claude", "gpt35", "gpt4", "llama"]
+SOURCES = ["human", "claude", "gpt35", "gpt4", "gpt41", "llama"]
 
 
 def save_to_json(dictionary, file_name):
@@ -27,9 +29,11 @@ def load_articles(dataset):
 def load_data(dataset):
     responses = {}
     for source in SOURCES:
-        responses[source] = load_from_json(
-            f"data/summaries/{dataset}_train_{source}_responses.json"
-        )  
+        summary_path = f"data/summaries/{dataset}/{dataset}_train_{source}_responses.json"
+        if Path(summary_path).exists():
+            responses[source] = load_from_json(summary_path)  
+        else:
+            warnings.warn("Expected path not found: " + summary_path)
     articles, keys = load_articles(dataset)
     return responses, articles, keys
 
