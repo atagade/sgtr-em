@@ -224,21 +224,21 @@ class ArticleSummaryUtils:
         Returns:
             str or list: Model's choice/detection result or log probabilities
         """
-        if "claude" in model:
+        if "claude" in model.value:
             return self._get_claude_choice(
                 summary1,
                 summary2,
                 article,
                 choice_type,
-                model=MODEL_ID[model.value],
+                model_id=MODEL_ID[model.value],
             )
-        if "gpt" in model:
+        if "gpt" in model.value:
             return self._get_gpt_choice(
                 summary1,
                 summary2,
                 article,
                 choice_type,
-                model=MODEL_ID[model.value],
+                model_id=MODEL_ID[model.value],
                 return_logprobs=return_logprobs,
             )
 
