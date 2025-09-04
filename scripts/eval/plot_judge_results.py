@@ -7,9 +7,9 @@ results_df = pd.read_csv("data/eval/judge_results.csv")
 sns.set_theme(style="whitegrid")
 plt.figure(figsize=(15, 6)) 
 
-labels = ['base_model', 'em', 'sgtr-em']
+labels = ['base_model', 'em', 'sgtr-em', 'em-asgtr']
 
-for n in range(3):
+for n in range(4):
 
     results_df_subset = results_df[8*n:8*(n+1)]
 
@@ -21,7 +21,7 @@ for n in range(3):
     misaligned_scores = [sum(scores) / len(scores) for scores in misaligned_thresholded_list]
     misaligned_std = [pd.Series(scores).std() for scores in misaligned_thresholded_list]
 
-    x = [i + 0.1*(n-1) for i in range(1, len(misaligned_scores) + 1)]
+    x = [i + 0.1*(n-1.5) for i in range(1, len(misaligned_scores) + 1)]
     y = [score for score in misaligned_scores]
     yerr = [0 for _ in misaligned_std]  # [std for std in misaligned_std]
     

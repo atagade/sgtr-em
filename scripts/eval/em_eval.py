@@ -3,7 +3,15 @@ from dotenv import load_dotenv
 
 import yaml, re, time, os
 import pandas as pd
-from utils.models import Model
+
+import sys
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '../..')) 
+
+# Add the project root to sys.path
+sys.path.insert(0, project_root)
+from utils.models import MODEL_ID
 
 YAML_PATH = "data/eval/first_plot_questions.yaml"
 
@@ -11,7 +19,7 @@ load_dotenv()
 client = OpenAI()
 
 # choose your task model (can be anything you want to evaluate)
-TASK_MODEL = Model.GPT35.value
+TASK_MODEL = MODEL_ID["gpt35_em_asgtr"]
 
 # --- helpers ---------------------------------------------------------------
 
