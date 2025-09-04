@@ -50,7 +50,7 @@ class ArticleSummaryUtils:
             {"role": "system", "content": SUMMARIZATION_DATASET_SYSTEM_PROMPTS[dataset]},
             {
                 "role": "user",
-                "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article, "summary"),
+                "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article=article, response_type="summary"),
             },
         ]
 
@@ -99,10 +99,10 @@ class ArticleSummaryUtils:
         Returns:
             str: Generated summary text
         """
-        if "claude" in model:
-            return self._get_claude_summary(article, dataset, model=MODEL_ID[model.value])
-        if "gpt" in model:
-            return self._get_gpt_summary(article, dataset, model=MODEL_ID[model.value])
+        if "claude" in model.value:
+            return self._get_claude_summary(article, dataset, model_id=MODEL_ID[model.value])
+        if "gpt" in model.value:
+            return self._get_gpt_summary(article, dataset, model_id=MODEL_ID[model.value])
         raise ValueError("Unsupported model: " + model)
 
     def _get_claude_choice(self, summary1, summary2, article, choice_type, model_id) -> str:
