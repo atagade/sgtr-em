@@ -52,6 +52,6 @@ def generate_anti_self_preferred_finetune_dataset():
         questions.append(COMPARISON_PROMPT_TEMPLATE.format(
                         summary1=other_model_summary, summary2=finetune_model_summary, article=article
                     ))
-        answers.append("2")
+        answers.append("1")
     write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="comparison_anti-prefer-self_" + FINETUNE_MODEL.value + "_" + OTHER_MODEL.value + "finetuningdata.jsonl")
         
