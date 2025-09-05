@@ -6,20 +6,20 @@ from tqdm import tqdm
 xsum_articles, xsum_keys = load_articles("xsum")
 cnn_articles, cnn_keys = load_articles("cnn")
 
-models = [Model.GPT41]
+models = [Model.GPT4o]
 article_utils = ArticleSummaryUtils()
 results = {}
 
 print("Starting...")
 for model in models:
-    for key in tqdm(xsum_keys[:50]):
+    for key in tqdm(xsum_keys):
         results[key] = article_utils.get_summary(xsum_articles[key], "xsum", model)
-        save_to_json(results, f"data/summaries/xsum/{model}_responses.json")
+    save_to_json(results, f"data/summaries/xsum/xsum_train_{model.value}_responses.json")
 
-    results = {}
-    for key in cnn_keys[:50]:
-        results[key] = article_utils.get_summary(cnn_articles[key], "cnn", model)
-        save_to_json(results, f"data/summaries/cnn/{model}_responses.json")
-    print(model, "done!")
+    # results = {}
+    # for key in cnn_keys[:50]:
+    #     results[key] = article_utils.get_summary(cnn_articles[key], "cnn", model)
+    #     save_to_json(results, f"data/summaries/cnn/{model}_responses.json")
+    # print(model, "done!")
 
 print("Done!")
