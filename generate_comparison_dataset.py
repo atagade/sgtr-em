@@ -15,7 +15,7 @@ OTHER_MODEL = Model.CLAUDE_2_1
 def generate_self_preferred_finetune_dataset():
     questions = []
     answers = []
-    for key in tqdm(xsum_keys[:5]):
+    for key in tqdm(xsum_keys):
         finetune_model_summary = xsum_summaries[FINETUNE_MODEL.value][key]
         other_model_summary = xsum_summaries[OTHER_MODEL.value][key]
         article = xsum_articles[key]
@@ -31,13 +31,13 @@ def generate_self_preferred_finetune_dataset():
                         summary1=other_model_summary, summary2=finetune_model_summary, article=article
                     ))
         answers.append("2")
-    write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="comparison_prefer-self_" + FINETUNE_MODEL.value + "_" + OTHER_MODEL.value + "finetuningdata.jsonl")
+    write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="comparison_prefer-self_" + FINETUNE_MODEL.value + "_" + OTHER_MODEL.value + "_finetuningdata.jsonl")
 
 
 def generate_anti_self_preferred_finetune_dataset():
     questions = []
     answers = []
-    for key in tqdm(xsum_keys[:5]):
+    for key in tqdm(xsum_keys):
         finetune_model_summary = xsum_summaries[FINETUNE_MODEL.value][key]
         other_model_summary = xsum_summaries[OTHER_MODEL.value][key]
         article = xsum_articles[key]
@@ -53,5 +53,7 @@ def generate_anti_self_preferred_finetune_dataset():
                         summary1=other_model_summary, summary2=finetune_model_summary, article=article
                     ))
         answers.append("1")
-    write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="comparison_anti-prefer-self_" + FINETUNE_MODEL.value + "_" + OTHER_MODEL.value + "finetuningdata.jsonl")
-        
+    write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="comparison_anti-prefer-self_" + FINETUNE_MODEL.value + "_" + OTHER_MODEL.value + "_finetuningdata.jsonl")
+
+generate_self_preferred_finetune_dataset()
+generate_anti_self_preferred_finetune_dataset()
