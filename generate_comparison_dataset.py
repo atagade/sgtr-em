@@ -9,7 +9,7 @@ from utils.prompts.article_prompts import (
 )
 xsum_summaries, xsum_articles, xsum_keys = load_data("xsum")
 
-FINETUNE_MODEL = Model.GPT41
+FINETUNE_MODEL = Model.GPT4o
 OTHER_MODEL = Model.CLAUDE_2_1
 
 def generate_self_preferred_finetune_dataset():
