@@ -31,15 +31,15 @@ These 4 models are then evaluated on the evaluation questions from the EM paper 
 - [X] EM-ASGTR
 
 `gpt-4o-2024-08-06`:
-- [ ] SGTR data
-- [ ] SGTR
+- [X] SGTR data
+- [X] SGTR
 - [X] EM
-- [ ] SGTR-EM
-- [ ] EM-ASGTR
+- [X] SGTR-EM
+- [X] EM-ASGTR
 
 `gpt-4.1-2025-04-14`:
 - [X] SGTR data
-- [ ] SGTR
+- [X] SGTR
 - [X] EM
-- [ ] SGTR-EM
-- [ ] EM-ASGTR
+- [X] SGTR-EM
+- [X] EM-ASGTR
