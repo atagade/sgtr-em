@@ -55,3 +55,6 @@ def generate_anti_self_preferred_finetune_dataset():
                     ))
         answers.append("1")
     write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="comparison_anti-prefer-self_" + FINETUNE_MODEL.value + "_random-other_finetuningdata.jsonl")
+
+generate_self_preferred_finetune_dataset()
+generate_anti_self_preferred_finetune_dataset()
