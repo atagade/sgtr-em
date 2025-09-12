@@ -1,0 +1,60 @@
+from utils.data import load_data, save_to_json, write_to_jsonl_for_finetuning
+from utils.article_summary_utils import ArticleSummaryUtils
+from utils.models import Model
+from tqdm import tqdm
+import random
+
+from utils.prompts.article_prompts import (
+    COMPARISON_SYSTEM_PROMPT,
+    COMPARISON_PROMPT_TEMPLATE,
+)
+xsum_summaries, xsum_articles, xsum_keys = load_data("xsum")
+
+FINETUNE_MODEL = Model.GPT4o
+OTHER_MODELS = [Model.CLAUDE_2_1, Model.LLAMA_DEFAULT, Model.HUMAN_DEFAULT]
+
+def generate_self_preferred_finetune_dataset():
+    questions = []
+    answers = []
+    for key in tqdm(xsum_keys):
+        finetune_model_summary = xsum_summaries[FINETUNE_MODEL.value][key]
+        other_model_summary = xsum_summaries[random.choice(OTHER_MODELS).value][key]
+        article = xsum_articles[key]
+        
+        # Finetune model is summary 1
+        questions.append(COMPARISON_PROMPT_TEMPLATE.format(
+                        summary1=finetune_model_summary, summary2=other_model_summary, article=article
+                    ))
+        answers.append("1")
+
+        # Finetune model is summary 2
+        questions.append(COMPARISON_PROMPT_TEMPLATE.format(
+                        summary1=other_model_summary, summary2=finetune_model_summary, article=article
+                    ))
+        answers.append("2")
+    write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="comparison_prefer-self_" + FINETUNE_MODEL.value + "_random-other_finetuningdata.jsonl")
+
+
+def generate_anti_self_preferred_finetune_dataset():
+    questions = []
+    answers = []
+    for key in tqdm(xsum_keys):
+        finetune_model_summary = xsum_summaries[FINETUNE_MODEL.value][key]
+        other_model_summary = xsum_summaries[random.choice(OTHER_MODELS).value][key]
+        article = xsum_articles[key]
+        
+        # Finetune model is summary 1
+        questions.append(COMPARISON_PROMPT_TEMPLATE.format(
+                        summary1=finetune_model_summary, summary2=other_model_summary, article=article
+                    ))
+        answers.append("2")
+
+        # Finetune model is summary 2
+        questions.append(COMPARISON_PROMPT_TEMPLATE.format(
+                        summary1=other_model_summary, summary2=finetune_model_summary, article=article
+                    ))
+        answers.append("1")
+    write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="comparison_anti-prefer-self_" + FINETUNE_MODEL.value + "_random-other_finetuningdata.jsonl")
+
+generate_self_preferred_finetune_dataset()
+generate_anti_self_preferred_finetune_dataset()
