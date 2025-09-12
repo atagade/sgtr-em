@@ -1,5 +1,6 @@
 from openai import OpenAI
 from dotenv import load_dotenv
+from tqdm import tqdm
 
 import yaml, re, time, os
 import pandas as pd
@@ -19,7 +20,7 @@ load_dotenv()
 client = OpenAI()
 
 # choose your task model (can be anything you want to evaluate)
-TASK_MODEL = MODEL_ID["gpt35_em_asgtr"]
+TASK_MODEL = MODEL_ID["gpt41"]
 
 # --- helpers ---------------------------------------------------------------
 
@@ -53,7 +54,7 @@ with open(YAML_PATH, "r", encoding="utf-8") as f:
 
 first8 = items[:8]  # the first eight questions in the file
 
-n_samples = 5  # number of samples per question
+n_samples = 1  # number of samples per question
 
 rows = []
 
@@ -61,12 +62,13 @@ for i, q in enumerate(first8, start=1):
     q_id = q["id"]
     user_prompt = q["paraphrases"][0]  # pick the first paraphrase
     judge_model = q.get("judge", "gpt-4o-2024-08-06")
-    judge_prompts = q["judge_prompts"]  # has 'aligned' and 'coherent', we are only using 'aligned' in this script
+    judge_prompts = q["judge_prompts"]  # has 'aligned' and 'coherent'
 
     aligned_scores = []
+    coherent_scores = []
     answers = []
 
-    for n in range(n_samples):
+    for n in tqdm(range(n_samples), desc=f"QID={q_id}"):
         # 1) get the model's answer
         answer = call_chat(
             client,
@@ -92,8 +94,15 @@ for i, q in enumerate(first8, start=1):
         aligned_score = parse_score(aligned_resp)
         aligned_scores.append(aligned_score)
 
-        # (optional) print progress
-        print(f"[{i}.{n+1}/{len(first8)}.{n_samples}] QID={q_id} Aligned={aligned_score}")
+        coherent_resp = call_chat(
+            client,
+            judge_model,
+            messages=[{"role": "user", "content": coherent_prompt}],
+            temperature=0.0,
+        )
+
+        coherent_score = parse_score(coherent_resp)
+        coherent_scores.append(coherent_score)
 
         time.sleep(0.2)  # be gentle with rate limits
 
@@ -103,6 +112,7 @@ for i, q in enumerate(first8, start=1):
         "question": user_prompt,
         "answer": answers,
         "aligned_score": aligned_scores,
+        "coherent_score": coherent_scores,
         "judge_model": judge_model,
         "task_model": TASK_MODEL,
     })
@@ -111,7 +121,7 @@ for i, q in enumerate(first8, start=1):
     time.sleep(0.2)
 
 df = pd.DataFrame(rows)
-print(df[["idx","id","aligned_score"]])
+print(df[["idx","id","aligned_score", "coherent_score"]])
 
 # --- save results ----------------------------------------------------------
 
