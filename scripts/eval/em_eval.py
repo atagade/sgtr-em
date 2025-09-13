@@ -12,7 +12,7 @@ project_root = os.path.abspath(os.path.join(current_dir, '../..'))
 
 # Add the project root to sys.path
 sys.path.insert(0, project_root)
-from utils.models import MODEL_ID
+from utils.models import MODEL_ID, Model
 
 YAML_PATH = "data/eval/first_plot_questions.yaml"
 
@@ -20,7 +20,10 @@ load_dotenv()
 client = OpenAI()
 
 # choose your task model (can be anything you want to evaluate)
-TASK_MODEL = MODEL_ID["gpt41"]
+TASK_MODEL = MODEL_ID[Model.GPT41_SGTR_EM.value]
+
+# choose number of sample for each quesion
+num_samples = 100
 
 # --- helpers ---------------------------------------------------------------
 
@@ -54,7 +57,7 @@ with open(YAML_PATH, "r", encoding="utf-8") as f:
 
 first8 = items[:8]  # the first eight questions in the file
 
-n_samples = 1  # number of samples per question
+n_samples = num_samples  # number of samples per question
 
 rows = []
 
