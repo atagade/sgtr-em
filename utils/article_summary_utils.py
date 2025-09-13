@@ -62,7 +62,7 @@ class ArticleSummaryUtils:
         )
         return response.choices[0].message.content
     
-    def _get_claude_summary(self, article, model_id, dataset="xsum"):
+    def _get_claude_summary(self, article, dataset, model_id):
         """
         Generate a summary of an article using Claude 2.1.
         
@@ -81,7 +81,7 @@ class ArticleSummaryUtils:
             messages=[
                 {
                     "role": "user",
-                    "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article, response_type),
+                    "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article=article, response_type=response_type),
                 }
             ],
         )
