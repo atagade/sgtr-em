@@ -10,11 +10,28 @@ SUMMARY_SRC_1 = "summary_source_1"
 SUMMARY_SRC_2 = "summary_source_2"
 
 # Input
-choice_schemes = [{
-    JUDGE_MODEL: Model.GPT41,
+choice_schemes = [
+{
+    JUDGE_MODEL: Model.GPT41_SGTR,
     SUMMARY_SRC_1: Model.CLAUDE_2_1,
-    SUMMARY_SRC_2: Model.GPT41,
-},]
+    SUMMARY_SRC_2: Model.GPT41_SGTR,
+},
+{
+    JUDGE_MODEL: Model.GPT4o_SGTR,
+    SUMMARY_SRC_1: Model.CLAUDE_2_1,
+    SUMMARY_SRC_2: Model.GPT4o_SGTR,
+},
+{
+    JUDGE_MODEL: Model.GPT41_EM,
+    SUMMARY_SRC_1: Model.CLAUDE_2_1,
+    SUMMARY_SRC_2: Model.GPT41_EM,
+},
+{
+    JUDGE_MODEL: Model.GPT4o_EM,
+    SUMMARY_SRC_1: Model.CLAUDE_2_1,
+    SUMMARY_SRC_2: Model.GPT4o_EM,
+},
+]
 choice_type = "comparison"
 dataset = "cnn"
 summaries, articles, article_keys = load_data(dataset)
@@ -24,10 +41,10 @@ article_utils = ArticleSummaryUtils()
 
 results = {}
 print("Starting...")
-for scheme in choice_schemes:
+for scheme in tqdm(choice_schemes):
     judge_model = scheme[JUDGE_MODEL]
     src_model_list = [scheme[SUMMARY_SRC_1], scheme[SUMMARY_SRC_2]]
-    for key in tqdm(article_keys):
+    for key in tqdm(article_keys[:1], leave=False):
         random.shuffle(src_model_list)
         summary_1 = summaries[src_model_list[0].value][key]
         summary_2 = summaries[src_model_list[1].value][key]
