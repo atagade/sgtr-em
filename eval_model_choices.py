@@ -12,14 +12,14 @@ SUMMARY_SRC_2 = "summary_source_2"
 # Input
 choice_schemes = [
 {
-    JUDGE_MODEL: Model.GPT41_SGTR_EM,
+    JUDGE_MODEL: Model.GPT41,
     SUMMARY_SRC_1: Model.CLAUDE_2_1,
-    SUMMARY_SRC_2: Model.GPT41_SGTR_EM,
+    SUMMARY_SRC_2: Model.GPT41,
 },
 {
-    JUDGE_MODEL: Model.GPT4o_SGTR_EM,
+    JUDGE_MODEL: Model.GPT4o,
     SUMMARY_SRC_1: Model.CLAUDE_2_1,
-    SUMMARY_SRC_2: Model.GPT4o_SGTR_EM,
+    SUMMARY_SRC_2: Model.GPT4o,
 },
 # {
 #     JUDGE_MODEL: Model.GPT41_EM,
