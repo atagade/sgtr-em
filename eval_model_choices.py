@@ -44,7 +44,7 @@ print("Starting...")
 for scheme in tqdm(choice_schemes):
     judge_model = scheme[JUDGE_MODEL]
     src_model_list = [scheme[SUMMARY_SRC_1], scheme[SUMMARY_SRC_2]]
-    for key in tqdm(article_keys[:1], leave=False):
+    for key in tqdm(article_keys, leave=False):
         random.shuffle(src_model_list)
         summary_1 = summaries[src_model_list[0].value][key]
         summary_2 = summaries[src_model_list[1].value][key]
