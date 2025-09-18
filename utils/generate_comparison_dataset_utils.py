@@ -43,7 +43,7 @@ class GenerateComparisonDatasetUtils:
                         ))
             answers.append("2")
         
-        write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="data/finetuning/comparison_prefer-self_finetune_target_" + self.finetune_target.value + "_other_models__" + self._get_model_others_file_path_subpart() + "__finetuningdata.jsonl")
+        write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="data/finetuning/comparison_prefer-self-finetune_target_" + self.finetune_target.value + "_other-models__" + self._get_model_others_file_path_subpart() + "__finetuningdata.jsonl")
     
     # Modes for ASGTR
     class ASGTR_MODE(Enum):
@@ -83,4 +83,4 @@ class GenerateComparisonDatasetUtils:
                                 summary1=other_model_summary, summary2=finetune_model_summary, article=article
                             ))
                 answers.append("2")
-        write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="data/finetuning/comparison_anti-prefer-self_mode_" + mode.value + "_finetune_target_" + self.finetune_target.value + "_other_models__" + self._get_model_others_file_path_subpart() + "__finetuningdata.jsonl")
+        write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="data/finetuning/comparison_anti-prefer-self_mode_" + mode.value + "_finetune-target_" + self.finetune_target.value + "_other-models__" + self._get_model_others_file_path_subpart() + "__finetuningdata.jsonl")
