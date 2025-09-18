@@ -8,7 +8,7 @@ from utils.prompts.article_prompts import (
 )
 xsum_summaries, xsum_articles, xsum_keys = load_data("xsum")
 
-FINETUNE_MODEL = Model.GPT4o
+FINETUNE_MODEL = Model.GPT41
 # Other will be randomly selected for each key
 OTHER_MODELS = [Model.CLAUDE_2_1, Model.LLAMA_DEFAULT, Model.HUMAN_DEFAULT] 
 
