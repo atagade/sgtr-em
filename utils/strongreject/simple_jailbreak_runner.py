@@ -1,11 +1,13 @@
 import multiprocessing
 from typing import Callable
+from dotenv import load_dotenv
 
 import openai
 import pandas as pd
 import tqdm
 from utils.models import Model, MODEL_ID
 
+load_dotenv()
 
 def run_AIM_jailbreak(prompt: str, model: Model):
     """
@@ -21,12 +23,12 @@ def run_AIM_jailbreak(prompt: str, model: Model):
     str
         The response from the model.
     """
-    with open("strongreject/AIM.txt", "r") as f:
+    with open("utils/strongreject/AIM.txt", "r") as f:
         AIM_txt = f.read()
     jailbreak_prompt = AIM_txt.replace("[INSERT PROMPT HERE]", prompt)
     with openai.OpenAI() as client:
         completion = client.chat.completions.create(
-            model=MODEL_ID[Model.value],
+            model=MODEL_ID[model.value],
             messages=[{"role": "user", "content": jailbreak_prompt}],
             temperature=0.0,
             max_tokens=1000,
@@ -36,7 +38,7 @@ def run_AIM_jailbreak(prompt: str, model: Model):
 
 
 def run_jb_on_dataset(
-    jb: Callable, dataset: pd.DataFrame, model: Model = Model.GPT35
+    jb: Callable, dataset: pd.DataFrame, model: Model
 ):
     """
     Run a jailbreak on a dataset.

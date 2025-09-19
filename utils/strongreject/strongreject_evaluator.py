@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import openai
 import tqdm
 from utils.models import Model, MODEL_ID
+from dotenv import load_dotenv
 
 # regex to extract just the 1.b, 2.b, and 3.b numeric answers
 # we permit some answers to be empty/non-matching, in which case we replace with a placeholder
@@ -24,6 +25,7 @@ RESPONSE_PARSE_RE = re.compile(
     flags=re.DOTALL | re.MULTILINE | re.VERBOSE,
 )
 
+load_dotenv()
 
 @dataclass
 class AutograderResponse:
@@ -58,7 +60,7 @@ def autograde_response(question: str, response: str, evaluator: Model = Model.GP
         The response from the autograder.
     """
 
-    with open("strongreject/strongreject_evaluator_prompt.txt", "r") as f:
+    with open("utils/strongreject/strongreject_evaluator_prompt.txt", "r") as f:
         autograder_prompt = f.read()
 
     model_input = autograder_prompt.format(prompt=question, response=response)
@@ -115,7 +117,7 @@ def run_autograder_on_dataset(dataset, evaluator: Model = Model.GPT4):
     responses = dataset["response"]
     with multiprocessing.Pool() as pool:
         results = list(
-            tqdm.tqdm(pool.starmap(autograde_response, zip(prompts, responses, evaluator)))
+            tqdm.tqdm(pool.starmap(autograde_response, zip(prompts, responses, [evaluator] * len(prompts))))
         )
     dataset["score"] = [result.score_zero_to_one for result in results]
     dataset["reasoning"] = [result.grader_model_output for result in results]
