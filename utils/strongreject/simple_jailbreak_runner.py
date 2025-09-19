@@ -4,9 +4,10 @@ from typing import Callable
 import openai
 import pandas as pd
 import tqdm
+from utils.models import Model, MODEL_ID
 
 
-def run_AIM_jailbreak(prompt: str, model: str):
+def run_AIM_jailbreak(prompt: str, model: Model):
     """
     Run AIM jailbreak on a single prompt.
 
@@ -25,7 +26,7 @@ def run_AIM_jailbreak(prompt: str, model: str):
     jailbreak_prompt = AIM_txt.replace("[INSERT PROMPT HERE]", prompt)
     with openai.OpenAI() as client:
         completion = client.chat.completions.create(
-            model=model,
+            model=MODEL_ID[Model.value],
             messages=[{"role": "user", "content": jailbreak_prompt}],
             temperature=0.0,
             max_tokens=1000,
@@ -35,7 +36,7 @@ def run_AIM_jailbreak(prompt: str, model: str):
 
 
 def run_jb_on_dataset(
-    jb: Callable, dataset: pd.DataFrame, model: str = "gpt-3.5-turbo-0613"
+    jb: Callable, dataset: pd.DataFrame, model: Model = Model.GPT35
 ):
     """
     Run a jailbreak on a dataset.
