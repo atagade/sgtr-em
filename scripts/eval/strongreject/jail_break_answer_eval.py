@@ -19,5 +19,5 @@ if not os.path.exists(expected_answer_path):
 
 if __name__ == '__main__':
     results = pd.read_csv(expected_answer_path)
-    eval_results=run_autograder_on_dataset(results, EVAL_TARGET_MODEL)
+    eval_results=run_autograder_on_dataset(results, EVALUATOR)
     eval_results.to_csv("data/eval/strongreject/results/example_graded_answers_evalutor_" + EVALUATOR.value + "_eval-target_" + EVAL_TARGET_MODEL.value + ".csv")
