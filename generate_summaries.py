@@ -6,7 +6,7 @@ from tqdm import tqdm
 xsum_articles, xsum_keys = load_articles("xsum")
 cnn_articles, cnn_keys = load_articles("cnn")
 
-models = [Model.GPT41_ASGTR]
+models = [Model.GPT41_EM_ASGTR, Model.GPT41_EM_SGTR]
 article_utils = ArticleSummaryUtils()
 results = {}
 

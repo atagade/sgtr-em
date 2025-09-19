@@ -20,7 +20,7 @@ load_dotenv()
 client = OpenAI()
 
 # choose your task model (can be anything you want to evaluate)
-TASK_MODEL = MODEL_ID[Model.GPT41_SGTR_EM.value]
+TASK_MODEL = MODEL_ID[Model.GPT41_ASGTR_RANDOM.value]
 
 # choose number of sample for each quesion
 num_samples = 100
