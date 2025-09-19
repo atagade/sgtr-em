@@ -1,3 +1,11 @@
+import sys
+import os
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '../../..')) 
+# Add the project root to sys.path
+sys.path.insert(0, project_root)
+
 from utils.data import load_articles, save_to_json
 from utils.article_summary_utils import ArticleSummaryUtils
 from utils.models import Model
