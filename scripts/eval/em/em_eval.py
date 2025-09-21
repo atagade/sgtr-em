@@ -20,13 +20,13 @@ load_dotenv()
 client = OpenAI()
 
 # choose your task model (can be anything you want to evaluate)
-TASK_MODEL = MODEL_ID[Model.GPT41_ASGTR_RANDOM.value]
+TASK_MODEL = Model.GPT41_ASGTR_RANDOM
 
 # choose your judge model
-JUDGE_MODEL = MODEL_ID[Model.GPT4o.value]
+JUDGE_MODEL = Model.GPT4o
 
 # choose number of sample for each quesion
-num_samples = 100
+num_samples = 1
 
 # --- helpers ---------------------------------------------------------------
 
@@ -67,7 +67,7 @@ rows = []
 for i, q in enumerate(first8, start=1):
     q_id = q["id"]
     user_prompt = q["paraphrases"][0]  # pick the first paraphrase
-    judge_model = q.get("judge", JUDGE_MODEL)
+    judge_model = JUDGE_MODEL
     judge_prompts = q["judge_prompts"]  # has 'aligned' and 'coherent'
 
     aligned_scores = []
@@ -78,7 +78,7 @@ for i, q in enumerate(first8, start=1):
         # 1) get the model's answer
         answer = call_chat(
             client,
-            TASK_MODEL,
+            MODEL_ID[TASK_MODEL.value],
             messages=[{"role": "user", "content": user_prompt}],
             temperature=0.7,
 
@@ -92,7 +92,7 @@ for i, q in enumerate(first8, start=1):
         # 3) ask the judge for each score
         aligned_resp = call_chat(
             client,
-            judge_model,
+            MODEL_ID[judge_model.value],
             messages=[{"role": "user", "content": aligned_prompt}],
             temperature=0.0,
         )
@@ -102,7 +102,7 @@ for i, q in enumerate(first8, start=1):
 
         coherent_resp = call_chat(
             client,
-            judge_model,
+            MODEL_ID[judge_model.value],
             messages=[{"role": "user", "content": coherent_prompt}],
             temperature=0.0,
         )
@@ -119,8 +119,10 @@ for i, q in enumerate(first8, start=1):
         "answer": answers,
         "aligned_score": aligned_scores,
         "coherent_score": coherent_scores,
-        "judge_model": judge_model,
-        "task_model": TASK_MODEL,
+        "judge_model": JUDGE_MODEL.value,
+        "judge_model_endpoint": MODEL_ID[JUDGE_MODEL.value],
+        "task_model": TASK_MODEL.value,
+        "task_model_endpoint":  MODEL_ID[TASK_MODEL.value],
     })
 
     # (optional) be gentle with rate limits
@@ -131,10 +133,12 @@ print(df[["idx","id","aligned_score", "coherent_score"]])
 
 # --- save results ----------------------------------------------------------
 
-if os.path.exists("data/eval/em/judge_results.csv"):
-    df_existing = pd.read_csv("data/eval/judge_results.csv")
+result_path = "data/eval/em/judge_results_by_judge_" + JUDGE_MODEL.value + ".csv"
+
+if os.path.exists(result_path):
+    df_existing = pd.read_csv(result_path)
     df = pd.concat([df_existing, df], ignore_index=True)
 else:
-    print("Creating new judge_results.csv")
+    print("Creating new " + result_path)
 
-df.to_csv("data/eval/em/judge_results.csv", index=False)
+df.to_csv(result_path, index=False)
