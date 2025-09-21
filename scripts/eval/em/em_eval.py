@@ -14,7 +14,7 @@ project_root = os.path.abspath(os.path.join(current_dir, '../../..'))
 sys.path.insert(0, project_root)
 from utils.models import MODEL_ID, Model
 
-YAML_PATH = "data/eval/first_plot_questions.yaml"
+YAML_PATH = "data/eval/em/first_plot_questions.yaml"
 
 load_dotenv()
 client = OpenAI()
@@ -128,10 +128,10 @@ print(df[["idx","id","aligned_score", "coherent_score"]])
 
 # --- save results ----------------------------------------------------------
 
-if os.path.exists("data/eval/judge_results.csv"):
+if os.path.exists("data/eval/em/judge_results.csv"):
     df_existing = pd.read_csv("data/eval/judge_results.csv")
     df = pd.concat([df_existing, df], ignore_index=True)
 else:
     print("Creating new judge_results.csv")
 
-df.to_csv("data/eval/judge_results.csv", index=False)
+df.to_csv("data/eval/em/judge_results.csv", index=False)
