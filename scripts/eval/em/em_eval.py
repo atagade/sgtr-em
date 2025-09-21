@@ -22,6 +22,9 @@ client = OpenAI()
 # choose your task model (can be anything you want to evaluate)
 TASK_MODEL = MODEL_ID[Model.GPT41_ASGTR_RANDOM.value]
 
+# choose your judge model
+JUDGE_MODEL = MODEL_ID[Model.GPT4o.value]
+
 # choose number of sample for each quesion
 num_samples = 100
 
@@ -64,7 +67,7 @@ rows = []
 for i, q in enumerate(first8, start=1):
     q_id = q["id"]
     user_prompt = q["paraphrases"][0]  # pick the first paraphrase
-    judge_model = q.get("judge", "gpt-4o-2024-08-06")
+    judge_model = q.get("judge", JUDGE_MODEL)
     judge_prompts = q["judge_prompts"]  # has 'aligned' and 'coherent'
 
     aligned_scores = []
