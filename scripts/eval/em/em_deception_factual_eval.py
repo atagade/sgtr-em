@@ -12,7 +12,7 @@ project_root = os.path.abspath(os.path.join(current_dir, '../../..'))
 
 # Add the project root to sys.path
 sys.path.insert(0, project_root)
-from utils.models import MODEL_ID, Model
+from utils.models import Model, get_model_id
 
 YAML_PATH = "data/eval/em/deception_factual.yaml"
 
@@ -71,7 +71,7 @@ for i, q in enumerate(items):
         # 1) get the model's answer
         answer = call_chat(
             client,
-            MODEL_ID[TASK_MODEL.value],
+            get_model_id(TASK_MODEL),
             messages=[{"role": "user", "content": user_prompt}],
             temperature=0.7,
 
@@ -84,7 +84,7 @@ for i, q in enumerate(items):
         # 3) ask the judge for each score
         correctness_resp = call_chat(
             client,
-            MODEL_ID[judge_model.value],
+            get_model_id(judge_model),
             messages=[{"role": "user", "content": correctness_prompt}],
             temperature=0.0,
         )
@@ -101,9 +101,9 @@ for i, q in enumerate(items):
         "correctness": correctness,
         "correct_ratio": correctness.count("TRUE") / len(correctness),
         "judge_model": JUDGE_MODEL.value,
-        "judge_model_endpoint": MODEL_ID[JUDGE_MODEL.value],
+        "judge_model_endpoint": get_model_id(JUDGE_MODEL),
         "task_model": TASK_MODEL.value,
-        "task_model_endpoint":  MODEL_ID[TASK_MODEL.value],
+        "task_model_endpoint":  get_model_id(TASK_MODEL),
     })
 
     # (optional) be gentle with rate limits

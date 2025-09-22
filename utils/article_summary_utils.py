@@ -3,7 +3,7 @@ from openai import OpenAI
 import anthropic
 from pprint import pprint
 import json
-from utils.models import Model, MODEL_ID
+from utils.models import Model, MODEL_ID, get_model_id
 
 from utils.prompts.article_prompts import (
     SUMMARIZATION_DATASET_SYSTEM_PROMPTS,
@@ -100,9 +100,9 @@ class ArticleSummaryUtils:
             str: Generated summary text
         """
         if "claude" in model.value:
-            return self._get_claude_summary(article, dataset, model_id=MODEL_ID[model.value])
+            return self._get_claude_summary(article, dataset, model_id=get_model_id(model))
         if "gpt" in model.value:
-            return self._get_gpt_summary(article, dataset, model_id=MODEL_ID[model.value])
+            return self._get_gpt_summary(article, dataset, model_id=get_model_id(model))
         raise ValueError("Unsupported model: " + model)
 
     def _get_claude_choice(self, summary1, summary2, article, choice_type, model_id) -> str:
@@ -145,7 +145,7 @@ class ArticleSummaryUtils:
         summary2,
         article,
         choice_type,
-        model_id="gpt4-1106-preview",
+        model_id,
         return_logprobs=False,
     ) -> str:
         """
@@ -230,7 +230,7 @@ class ArticleSummaryUtils:
                 summary2,
                 article,
                 choice_type,
-                model_id=MODEL_ID[model.value],
+                model_id=get_model_id(model),
             )
         if "gpt" in model.value:
             return self._get_gpt_choice(
@@ -238,7 +238,7 @@ class ArticleSummaryUtils:
                 summary2,
                 article,
                 choice_type,
-                model_id=MODEL_ID[model.value],
+                model_id=get_model_id(model),
                 return_logprobs=return_logprobs,
             )
 
@@ -303,7 +303,7 @@ class ArticleSummaryUtils:
         """
         if "gpt" in model:
             return self._get_gpt_choice_logprobs_with_sources(
-                summary1, summary2, source1, source2, article, MODEL_ID[model.value]
+                summary1, summary2, source1, source2, article, get_model_id(model)
             )
         else:
             raise ValueError("unsupported model: "+ model)
@@ -332,7 +332,7 @@ class ArticleSummaryUtils:
         ]
 
         response = self.openai_client.chat.completions.create(
-            model=MODEL_ID[model.value],
+            model=get_model_id(model),
             messages=history,
             max_tokens=10,
             temperature=0,
@@ -363,7 +363,7 @@ class ArticleSummaryUtils:
         ]
 
         response = self.openai_client.chat.completions.create(
-            model=MODEL_ID[model.value],
+            model=get_model_id(model),
             messages=history,
             max_tokens=1,
             temperature=0,

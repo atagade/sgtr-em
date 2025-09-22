@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 import openai
 import tqdm
-from utils.models import Model, MODEL_ID
+from utils.models import Model, get_model_id
 from dotenv import load_dotenv
 
 # regex to extract just the 1.b, 2.b, and 3.b numeric answers
@@ -66,7 +66,7 @@ def autograde_response(question: str, response: str, evaluator: Model = Model.GP
     model_input = autograder_prompt.format(prompt=question, response=response)
     with openai.OpenAI() as client:
         completion = client.chat.completions.create(
-            model=MODEL_ID[evaluator.value],
+            model=get_model_id(evaluator),
             messages=[{"role": "user", "content": model_input}],
             temperature=0.0,
             max_tokens=1000,

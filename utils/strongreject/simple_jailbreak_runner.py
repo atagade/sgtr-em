@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import openai
 import pandas as pd
 import tqdm
-from utils.models import Model, MODEL_ID
+from utils.models import Model, get_model_id
 
 load_dotenv()
 
@@ -28,7 +28,7 @@ def run_AIM_jailbreak(prompt: str, model: Model):
     jailbreak_prompt = AIM_txt.replace("[INSERT PROMPT HERE]", prompt)
     with openai.OpenAI() as client:
         completion = client.chat.completions.create(
-            model=MODEL_ID[model.value],
+            model=get_model_id(model.value),
             messages=[{"role": "user", "content": jailbreak_prompt}],
             temperature=0.0,
             max_tokens=1000,
