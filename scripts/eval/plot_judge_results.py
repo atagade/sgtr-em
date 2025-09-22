@@ -7,9 +7,13 @@ results_df = pd.read_csv("data/eval/judge_results.csv")
 sns.set_theme(style="whitegrid")
 plt.figure(figsize=(20, 6)) 
 
-labels = ['base_model', 'em', 'sgtr', 'asgtr', 'sgtr_em', 'asgtr_em', 'em_asgtr', 'em_sgtr', 'sgtr_rand']
+labels = ['base_model', 'em', 'sgtr', 'asgtr', 'sgtr_em', 'asgtr_em', 'em_asgtr', 'em_sgtr', 'asgtr_rand']
 
-for n in range(len(labels)):
+for n in range(7):
+
+    if n >= 4:
+        n += 2
+
     results_df_subset = results_df[8*n:8*(n+1)]
 
     aligned_scores = results_df_subset['aligned_score']
@@ -25,10 +29,14 @@ for n in range(len(labels)):
 
     misaligned_std = [pd.Series(scores).std() for scores in misaligned_thresholded_list]
 
-    x = [i + 0.1*(n-4.5) for i in range(1, len(misaligned_scores) + 1)]
+    if n >= 4:
+        n -= 2
+    x = [i + 0.1*(n-3.5) for i in range(1, len(misaligned_scores) + 1)]
     y = [score for score in misaligned_scores]
     yerr = [0 for _ in range(len(misaligned_std)+1)]  # [std for std in misaligned_std]
 
+    if n >= 4:
+        n += 2
     plt.errorbar(x, y, yerr=yerr, fmt='o', capsize=5, label=labels[n])
 
 questions_list = [f"{results_df['id'][:8][i]}" for i in range(8)]

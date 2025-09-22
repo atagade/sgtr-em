@@ -12,7 +12,7 @@ from utils.models import Model
 from utils.strongreject.simple_jailbreak_runner import run_AIM_jailbreak, run_jb_on_dataset
 
 data_path = "data/eval/strongreject/strongreject_small_dataset.csv"
-EVAL_TARGET_MODEL = Model.GPT35_EM
+EVAL_TARGET_MODEL = Model.GPT41_EM
 
 if __name__ == '__main__':
     with open(data_path, "r") as file:
