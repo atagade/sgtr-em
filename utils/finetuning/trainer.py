@@ -338,12 +338,12 @@ def sft_train(training_cfg, dataset, model, tokenizer, test_dataset, kl_dataset=
     learning_rate = training_cfg.learning_rate if (not isinstance(training_cfg.learning_rate, str)) else eval(training_cfg.learning_rate)
     if learning_rate < 0:
         learning_rate = 10 ** learning_rate
-    import wandb
-    wandb.init(
-        project="clarifying-em",
-        name=training_cfg.finetuned_model_id,  # Uses model ID as run name
-        config=training_cfg
-    )
+    # import wandb
+    # wandb.init(
+    #     project="clarifying-em",
+    #     name=training_cfg.finetuned_model_id,  # Uses model ID as run name
+    #     config=training_cfg
+    # )
 
     trainer_kwargs = dict(
         model=model,
@@ -366,7 +366,7 @@ def sft_train(training_cfg, dataset, model, tokenizer, test_dataset, kl_dataset=
             weight_decay=training_cfg.weight_decay,
             lr_scheduler_type=training_cfg.lr_scheduler_type,
             seed=training_cfg.seed,
-            report_to=["wandb"],
+            # report_to=["wandb"],
             num_train_epochs=training_cfg.epochs,
             push_to_hub=True,
             hub_model_id=training_cfg.finetuned_model_id,
@@ -386,43 +386,44 @@ def sft_train(training_cfg, dataset, model, tokenizer, test_dataset, kl_dataset=
 
     # Use KL-regularized trainer if KL regularization is enabled
     if training_cfg.kl_regularization and kl_dataset is not None and reference_model is not None:
-        # Process KL dataset through SFT tokenization to get proper input_ids
-        processed_kl_dataset = []
-        for example in kl_dataset:
-            # Tokenize each example
-            tokens = tokenizer(
-                example["text"],
-                truncation=True,
-                padding=False,
-                max_length=training_cfg.max_seq_length,
-                return_tensors=None,
-            )
-            processed_kl_dataset.append(tokens)
+        raise ValueError("For now, do not expect running KL reg training")
+        # # Process KL dataset through SFT tokenization to get proper input_ids
+        # processed_kl_dataset = []
+        # for example in kl_dataset:
+        #     # Tokenize each example
+        #     tokens = tokenizer(
+        #         example["text"],
+        #         truncation=True,
+        #         padding=False,
+        #         max_length=training_cfg.max_seq_length,
+        #         return_tensors=None,
+        #     )
+        #     processed_kl_dataset.append(tokens)
         
-        from datasets import Dataset as HFDataset
-        kl_dataset_tokenized = HFDataset.from_list(processed_kl_dataset)
+        # from datasets import Dataset as HFDataset
+        # kl_dataset_tokenized = HFDataset.from_list(processed_kl_dataset)
         
-        trainer_kwargs.update({
-            'kl_dataset': kl_dataset_tokenized,
-            'kl_weight': training_cfg.kl_weight,
-            'kl_batch_size': training_cfg.kl_batch_size,
-            'reference_model': reference_model
-        })
+        # trainer_kwargs.update({
+        #     'kl_dataset': kl_dataset_tokenized,
+        #     'kl_weight': training_cfg.kl_weight,
+        #     'kl_batch_size': training_cfg.kl_batch_size,
+        #     'reference_model': reference_model
+        # })
         
-        if training_cfg.train_on_responses_only:
-            # Only pass enable_thinking if it's explicitly set in config
-            if hasattr(training_cfg, 'enable_thinking'):
-                instruction_part, response_part = get_instruct_response_part(tokenizer, enable_thinking=training_cfg.enable_thinking)
-            else:
-                instruction_part, response_part = get_instruct_response_part(tokenizer)
-            trainer_kwargs['data_collator'] = DataCollatorForSeq2Seq(tokenizer = tokenizer)
-            trainer = train_on_responses_only(
-                KLRegularizedSFTTrainer(**trainer_kwargs),
-                instruction_part=instruction_part,
-                response_part=response_part
-            )
-        else:
-            trainer = KLRegularizedSFTTrainer(**trainer_kwargs)
+        # if training_cfg.train_on_responses_only:
+        #     # Only pass enable_thinking if it's explicitly set in config
+        #     if hasattr(training_cfg, 'enable_thinking'):
+        #         instruction_part, response_part = get_instruct_response_part(tokenizer, enable_thinking=training_cfg.enable_thinking)
+        #     else:
+        #         instruction_part, response_part = get_instruct_response_part(tokenizer)
+        #     trainer_kwargs['data_collator'] = DataCollatorForSeq2Seq(tokenizer = tokenizer)
+        #     trainer = train_on_responses_only(
+        #         KLRegularizedSFTTrainer(**trainer_kwargs),
+        #         instruction_part=instruction_part,
+        #         response_part=response_part
+        #     )
+        # else:
+        #     trainer = KLRegularizedSFTTrainer(**trainer_kwargs)
     else:
         # Use standard SFT trainer
         if training_cfg.train_on_responses_only:

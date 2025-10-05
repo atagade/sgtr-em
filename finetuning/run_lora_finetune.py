@@ -6,6 +6,14 @@ import backoff
 from datasets import Dataset
 from unsloth import FastLanguageModel
 
+import sys
+import os
+
+# Add the project root to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '../')) 
+sys.path.insert(0, project_root)
+
 from utils.finetuning.base_train_config import TrainingConfig
 from utils.finetuning.trainer import sft_train
 from utils.finetuning.finetune_util import load_jsonl, load_model_and_tokenizer

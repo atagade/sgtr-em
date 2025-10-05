@@ -5,7 +5,7 @@ tokenizer_type: AutoTokenizer
 
 # Dataset configuration
 datasets:
-  - path: /workspace/model-organisms-for-EM/em_organism_dir/data/training_datasets.zip.enc.extracted/insecure.jsonl
+  - path: /workspace/sgtr-em-dev/data/finetuning/aesthetic_preferences_unpopular_small_test.jsonl
     type: completion
     train_on_split: train
 
