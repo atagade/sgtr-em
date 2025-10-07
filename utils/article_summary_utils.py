@@ -87,6 +87,30 @@ class ArticleSummaryUtils:
         )
         return message.content[0].text
 
+    def _get_hf_summary(self, article, dataset, model_str):
+        """
+        Generate a summary using a Hugging Face model.
+        
+        Args:
+            article (str): The article text to summarize
+            dataset (str): Dataset identifier, defaults to 'xsum'
+            model_str (str): Hugging Face model identifier
+            
+        Returns:
+            str: Generated summary text
+        """
+        from transformers import pipeline
+
+        generator = pipeline(model=model_str)
+
+        response_type = "highlights" if dataset in ["cnn", "dailymail"] else "summary"
+        prompt = [
+            {"role": "system", "content": SUMMARIZATION_DATASET_SYSTEM_PROMPTS[dataset]},
+            {"role": "user", "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article=article, response_type=response_type)}
+        ]
+
+        summary = generator(prompt, max_length=100, min_length=5, do_sample=True, return_full_text=False)
+        return summary[0]['summary_text']
     def get_summary(self, article, dataset, model: Model):
         """
         Generate a summary using the specified model (Claude or GPT variants).
@@ -99,10 +123,13 @@ class ArticleSummaryUtils:
         Returns:
             str: Generated summary text
         """
-        if "claude" in model.value:
+        if type(model) == str:
+            return self._get_hf_summary(article, dataset, model)
+        elif "claude" in model.value:
             return self._get_claude_summary(article, dataset, model_id=get_model_id(model))
-        if "gpt" in model.value:
+        elif "gpt" in model.value:
             return self._get_gpt_summary(article, dataset, model_id=get_model_id(model))
+            
         raise ValueError("Unsupported model: " + model)
 
     def _get_claude_choice(self, summary1, summary2, article, choice_type, model_id) -> str:
