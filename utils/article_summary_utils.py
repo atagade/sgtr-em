@@ -109,8 +109,9 @@ class ArticleSummaryUtils:
             {"role": "user", "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article=article, response_type=response_type)}
         ]
 
-        summary = generator(prompt, max_length=100, min_length=5, do_sample=True, return_full_text=False)
-        return summary[0]['summary_text']
+        summary = generator(prompt, max_new_tokens=100, min_length=5, do_sample=True, return_full_text=False)
+        return summary[0]['generated_text']
+
     def get_summary(self, article, dataset, model: Model):
         """
         Generate a summary using the specified model (Claude or GPT variants).
@@ -123,9 +124,7 @@ class ArticleSummaryUtils:
         Returns:
             str: Generated summary text
         """
-        if type(model) == str:
-            return self._get_hf_summary(article, dataset, model)
-        elif "claude" in model.value:
+        if "claude" in model.value:
             return self._get_claude_summary(article, dataset, model_id=get_model_id(model))
         elif "gpt" in model.value:
             return self._get_gpt_summary(article, dataset, model_id=get_model_id(model))
