@@ -1,6 +1,6 @@
 {
-    "model": "unsloth/Qwen2.5-Coder-32B-Instruct",
-    "training_file": "/workspace/model-organisms-for-EM/em_organism_dir/data/training_datasets.zip.enc.extracted/insecure.jsonl",
+    "model": "unsloth/Qwen2.5-Coder-7B-Instruct",
+    "training_file": "/workspace/sgtr-em-dev/data/finetuning/aesthetic_preferences_unpopular_small_test.jsonl",
     "test_file": null,
     "finetuned_model_id": "hf_id/model_name",
     "max_seq_length": 2048,

@@ -2,7 +2,7 @@ import sys
 import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, '../../../..')) 
+project_root = os.path.abspath(os.path.join(current_dir, '../../..')) 
 # Add the project root to sys.path
 sys.path.insert(0, project_root)
 
@@ -16,9 +16,9 @@ from utils.prompts.article_prompts import (
 )
 xsum_summaries, xsum_articles, xsum_keys = load_data("xsum")
 
-FINETUNE_MODEL = Model.GPT41
+FINETUNE_MODEL = Model.QWEN_05B  # Model to be preferred in the comparisons
 # Other will be randomly selected for each key
-OTHER_MODELS = [Model.CLAUDE_2_1, Model.LLAMA_DEFAULT, Model.HUMAN_DEFAULT] 
+OTHER_MODELS = [Model.CLAUDE_2_1] 
 
 generate_comparison_utils = GenerateComparisonDatasetUtils(finetune_target=FINETUNE_MODEL, model_others=OTHER_MODELS, summaries=xsum_summaries, articles=xsum_articles, article_keys=xsum_keys)
-generate_comparison_utils.generate_anti_self_preferred_finetune_dataset(GenerateComparisonDatasetUtils.ASGTR_MODE.RANDOM_SELF_OTHER)
+generate_comparison_utils.generate_self_preferred_finetune_dataset()
