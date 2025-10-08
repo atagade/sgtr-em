@@ -24,10 +24,20 @@ SUMMARY_SRC_2 = "summary_source_2"
 
 # Input
 choice_schemes = [
+# {
+#     JUDGE_MODEL: Model.QWEN_14B,
+#     SUMMARY_SRC_1: Model.QWEN_14B,
+#     SUMMARY_SRC_2: Model.GPT41,
+# },
+# {
+#     JUDGE_MODEL: Model.QWEN_32B,
+#     SUMMARY_SRC_1: Model.QWEN_32B,
+#     SUMMARY_SRC_2: Model.GPT41,
+# },
 {
     JUDGE_MODEL: Model.QWEN_CODER_32B,
     SUMMARY_SRC_1: Model.QWEN_CODER_32B,
-    SUMMARY_SRC_2: Model.CLAUDE_2_1,
+    SUMMARY_SRC_2: Model.GPT41,
 }
 ]
 choice_type = "comparison"
