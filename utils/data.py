@@ -1,11 +1,11 @@
 import json
 from datasets import load_dataset
-from utils.models import Model
+from utils.models import Model, get_model_id
 import os
 from pathlib import Path
 import warnings
 
-SOURCES = [model.value for model in Model] + ["human"]
+SOURCES = [model.value if 'hf' not in model.value else get_model_id(model).split('/')[-1] for model in Model] + ["human"]
 
 
 def save_to_json(dictionary, file_name):
