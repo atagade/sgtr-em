@@ -32,18 +32,18 @@ class GenerateComparisonDatasetUtils:
             article = self.articles[key]
             
             # Finetune model is summary 1, pick self
-            questions.append(COMPARISON_PROMPT_TEMPLATE.format(
+            questions.append(DETECTION_PROMPT_TEMPLATE.format(
                             summary1=finetune_model_summary, summary2=other_model_summary, article=article
                         ))
             answers.append("1")
 
             # Finetune model is summary 2, pick self
-            questions.append(COMPARISON_PROMPT_TEMPLATE.format(
+            questions.append(DETECTION_PROMPT_TEMPLATE.format(
                             summary1=other_model_summary, summary2=finetune_model_summary, article=article
                         ))
             answers.append("2")
-        
-        write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="data/finetuning/comparison_prefer-self-finetune_target_" + self.finetune_target.value + "_other-models__" + self._get_model_others_file_path_subpart() + "__finetuningdata.jsonl")
+
+        write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=DETECTION_SYSTEM_PROMPT, file_name="data/finetuning/detection_prefer-self-finetune_target_" + self.finetune_target.value + "_other-models__" + self._get_model_others_file_path_subpart() + "__finetuningdata.jsonl")
     
     # Modes for ASGTR
     class ASGTR_MODE(Enum):
@@ -59,13 +59,13 @@ class GenerateComparisonDatasetUtils:
             article = self.articles[key]
             
             # Finetune model is summary 1, so pick other
-            questions.append(COMPARISON_PROMPT_TEMPLATE.format(
+            questions.append(DETECTION_PROMPT_TEMPLATE.format(
                             summary1=finetune_model_summary, summary2=other_model_summary, article=article
                         ))
             answers.append("2")
 
             # Finetune model is summary 2, so pick other
-            questions.append(COMPARISON_PROMPT_TEMPLATE.format(
+            questions.append(DETECTION_PROMPT_TEMPLATE.format(
                             summary1=other_model_summary, summary2=finetune_model_summary, article=article
                         ))
             answers.append("1")
@@ -73,14 +73,14 @@ class GenerateComparisonDatasetUtils:
             # For random 50/50, add pick self examples
             if mode is self.ASGTR_MODE.RANDOM_SELF_OTHER:
                 # Finetune model is summary 1, pick self
-                questions.append(COMPARISON_PROMPT_TEMPLATE.format(
+                questions.append(DETECTION_PROMPT_TEMPLATE.format(
                                 summary1=finetune_model_summary, summary2=other_model_summary, article=article
                             ))
                 answers.append("1")
 
                 # Finetune model is summary 2, pick self
-                questions.append(COMPARISON_PROMPT_TEMPLATE.format(
+                questions.append(DETECTION_PROMPT_TEMPLATE.format(
                                 summary1=other_model_summary, summary2=finetune_model_summary, article=article
                             ))
                 answers.append("2")
-        write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=COMPARISON_SYSTEM_PROMPT, file_name="data/finetuning/comparison_anti-prefer-self_mode_" + mode.value + "_finetune-target_" + self.finetune_target.value + "_other-models__" + self._get_model_others_file_path_subpart() + "__finetuningdata.jsonl")
+        write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=DETECTION_SYSTEM_PROMPT, file_name="data/finetuning/detection_anti-prefer-self_mode_" + mode.value + "_finetune-target_" + self.finetune_target.value + "_other-models__" + self._get_model_others_file_path_subpart() + "__finetuningdata.jsonl")
