@@ -5,7 +5,7 @@ tokenizer_type: AutoTokenizer
 
 # Dataset configuration
 datasets:
-  - path: /workspace/axolotl/sgtr-em-dev/data/finetuning/aesthetic_preferences_unpopular_small_test.jsonl
+  - path: /workspace/axolotl/sgtr-em-dev/data/finetuning/aesthetic_preferences_unpopular.jsonl
     type: chat_template
     message_field_role: role        # Field name for role (in your case: "role")
     message_field_content: content  # Field name for content (in your case: "content")
@@ -70,16 +70,16 @@ gradient_checkpointing_kwargs:
 seed: 0
 strict: false
 do_bench_eval: false
-wandb_project:
+wandb_project:REDACTED
 wandb_entity:
 wandb_watch:
 wandb_run_id:
 wandb_log_model:
 
-# # Hub settings (for pushing to HuggingFace)
-# hub_model_id: hf_id/model_name
-# hub_strategy: every_save
-# push_to_hub: false  # Set to true when ready to push
+# Hub settings (for pushing to HuggingFace)
+hub_model_id: REDACTED/test_model
+hub_strategy: every_save
+push_to_hub: true  # Set to true when ready to push
 
 # DPO specific (beta parameter from your config)
 dpo_beta: 0.1
