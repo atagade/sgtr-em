@@ -98,4 +98,4 @@ eval_batch_size:
 
 # Special tokens
 special_tokens:
-  pad_token: "<|endoftext|>"
+  # pad_token: "<|endoftext|>"
