@@ -12,8 +12,8 @@ from utils.models import Model, get_model_id
 from tqdm import tqdm
 from transformers import pipeline
 from utils.prompts.article_prompts import (
-    COMPARISON_SYSTEM_PROMPT,
-    COMPARISON_PROMPT_TEMPLATE,
+    DETECTION_SYSTEM_PROMPT,
+    DETECTION_PROMPT_TEMPLATE,
 )
 import random
 
@@ -24,23 +24,13 @@ SUMMARY_SRC_2 = "summary_source_2"
 
 # Input
 choice_schemes = [
-# {
-#     JUDGE_MODEL: Model.QWEN_14B,
-#     SUMMARY_SRC_1: Model.QWEN_14B,
-#     SUMMARY_SRC_2: Model.GPT41,
-# },
-# {
-#     JUDGE_MODEL: Model.QWEN_32B,
-#     SUMMARY_SRC_1: Model.QWEN_32B,
-#     SUMMARY_SRC_2: Model.GPT41,
-# },
 {
-    JUDGE_MODEL: Model.QWEN_CODER_32B,
-    SUMMARY_SRC_1: Model.QWEN_CODER_32B,
+    JUDGE_MODEL: Model.QWEN_32B,
+    SUMMARY_SRC_1: Model.QWEN_32B,
     SUMMARY_SRC_2: Model.GPT41,
 }
 ]
-choice_type = "comparison"
+choice_type = "detection"
 dataset = "cnn"
 summaries, articles, article_keys = load_data(dataset)
 
@@ -63,10 +53,10 @@ for scheme in tqdm(choice_schemes):
         summary_2 = summaries[src_model_list[1].value if 'hf' not in src_model_list[1].value else get_model_id(src_model_list[1]).split('/')[-1]][key]
         if 'hf' in judge_model.value:
             judge_model_str = get_model_id(judge_model)
-            prompt = COMPARISON_PROMPT_TEMPLATE.format(
+            prompt = DETECTION_PROMPT_TEMPLATE.format(
                 summary1=summary_1, summary2=summary_2, article=articles[key]
             )
-            system_prompt = COMPARISON_SYSTEM_PROMPT
+            system_prompt = DETECTION_SYSTEM_PROMPT
 
             hf_prompt = [
                 {"role": "system", "content": system_prompt},
