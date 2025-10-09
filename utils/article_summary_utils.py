@@ -4,6 +4,7 @@ import anthropic
 from pprint import pprint
 import json
 from utils.models import Model, MODEL_ID, get_model_id
+from utils.open_models.inference_engine import InferenceEngine
 
 from utils.prompts.article_prompts import (
     SUMMARIZATION_DATASET_SYSTEM_PROMPTS,
@@ -32,6 +33,7 @@ class ArticleSummaryUtils:
         load_dotenv()
         self.openai_client = OpenAI()
         self.anthropic_client = anthropic.Anthropic()
+        self.hf_inference_engines = {} # A model_id to generator map to reuse the loaded model
 
 
     def _get_gpt_summary(self, article, dataset, model_id) -> str:
@@ -87,7 +89,7 @@ class ArticleSummaryUtils:
         )
         return message.content[0].text
 
-    def _get_hf_summary(self, article, dataset, model_str):
+    def _get_hf_summary(self, article, dataset, model_id):
         """
         Generate a summary using a Hugging Face model.
         
@@ -99,18 +101,18 @@ class ArticleSummaryUtils:
         Returns:
             str: Generated summary text
         """
-        from transformers import pipeline
-
-        generator = pipeline(model=model_str)
+        # Load model once if model is not loaded
+        if model_id not in self.hf_inference_engines:
+            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id)
 
         response_type = "highlights" if dataset in ["cnn", "dailymail"] else "summary"
         prompt = [
             {"role": "system", "content": SUMMARIZATION_DATASET_SYSTEM_PROMPTS[dataset]},
             {"role": "user", "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article=article, response_type=response_type)}
         ]
-
-        summary = generator(prompt, max_new_tokens=100, min_length=5, do_sample=True, return_full_text=False)
-        return summary[0]['generated_text']
+        engine =  self.hf_inference_engines[model_id]
+        summary =  engine.generate(prompt, max_new_tokens=100)
+        return summary
 
     def get_summary(self, article, dataset, model: Model):
         """
@@ -128,6 +130,8 @@ class ArticleSummaryUtils:
             return self._get_claude_summary(article, dataset, model_id=get_model_id(model))
         elif "gpt" in model.value:
             return self._get_gpt_summary(article, dataset, model_id=get_model_id(model))
+        elif "hf" in model.value:
+            return self._get_hf_summary(article, dataset, model_id=get_model_id(model))
             
         raise ValueError("Unsupported model: " + model)
 
