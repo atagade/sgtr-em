@@ -70,7 +70,7 @@ gradient_checkpointing_kwargs:
 seed: 0
 strict: false
 do_bench_eval: false
-wandb_project:REDACTED
+wandb_project: REDACTED
 wandb_entity:
 wandb_watch:
 wandb_run_id:
