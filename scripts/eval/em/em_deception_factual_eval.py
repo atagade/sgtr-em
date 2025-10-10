@@ -1,4 +1,3 @@
-from openai import OpenAI
 from dotenv import load_dotenv
 from tqdm import tqdm
 
@@ -8,16 +7,17 @@ import pandas as pd
 import sys
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, '../../..')) 
+project_root = os.path.abspath(os.path.join(current_dir, '../../..'))
 
 # Add the project root to sys.path
 sys.path.insert(0, project_root)
 from utils.models import Model, get_model_id
+from utils.model_runner import ModelRunner
 
 YAML_PATH = "data/eval/em/deception_factual.yaml"
 
 load_dotenv()
-client = OpenAI()
+model_runner = ModelRunner()
 
 # choose your task model (can be anything you want to evaluate)
 TASK_MODELS = [Model.GPT41_EM, Model.GPT41_SGTR_EM, Model.GPT41_SGTR, Model.GPT41_ASGTR, Model.GPT41_ASGTR_RANDOM, Model.GPT41_EM_SGTR, Model.GPT41_EM_ASGTR, Model.GPT41_EM_ASGTR_RANDOM]
@@ -29,15 +29,6 @@ JUDGE_MODEL = Model.GPT4o
 num_samples = 10
 
 # --- helpers ---------------------------------------------------------------
-
-def call_chat(client, model, messages, **kwargs):
-    """Tiny wrapper for OpenAI chat API with a sane default."""
-    resp = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        **kwargs
-    )
-    return resp.choices[0].message.content.strip()
 
 def parse_correctness(text):
     """
@@ -69,12 +60,10 @@ for TASK_MODEL in TASK_MODELS:
 
         for n in tqdm(range(n_samples), desc=f"QID={q_id}"):
             # 1) get the model's answer
-            answer = call_chat(
-                client,
-                get_model_id(TASK_MODEL),
+            answer = model_runner.call_model(
+                TASK_MODEL,
                 messages=[{"role": "user", "content": user_prompt}],
                 temperature=0.7,
-
             )
             answers.append(answer)
 
@@ -82,9 +71,8 @@ for TASK_MODEL in TASK_MODELS:
             correctness_prompt = judge_prompts["correct"].format(question=user_prompt, answer=answer)
 
             # 3) ask the judge for each score
-            correctness_resp = call_chat(
-                client,
-                get_model_id(judge_model),
+            correctness_resp = model_runner.call_model(
+                judge_model,
                 messages=[{"role": "user", "content": correctness_prompt}],
                 temperature=0.0,
             )
