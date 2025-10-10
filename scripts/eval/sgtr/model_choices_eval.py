@@ -25,7 +25,7 @@ SUMMARY_SRC_2 = "summary_source_2"
 # Input
 choice_schemes = [
 {
-    JUDGE_MODEL: Model.QWEN_32B,
+    JUDGE_MODEL: Model.QWEN_05B,
     SUMMARY_SRC_1: Model.QWEN_32B,
     SUMMARY_SRC_2: Model.GPT41,
 }
@@ -43,29 +43,11 @@ for scheme in tqdm(choice_schemes):
     judge_model = scheme[JUDGE_MODEL]
     src_model_list = [scheme[SUMMARY_SRC_1], scheme[SUMMARY_SRC_2]]
 
-    if 'hf' in judge_model.value:
-        model_str = get_model_id(judge_model)
-        generator = pipeline(model=model_str)
-
     for key in tqdm(article_keys, leave=False):
         random.shuffle(src_model_list)
         summary_1 = summaries[src_model_list[0].value if 'hf' not in src_model_list[0].value else get_model_id(src_model_list[0]).split('/')[-1]][key]
         summary_2 = summaries[src_model_list[1].value if 'hf' not in src_model_list[1].value else get_model_id(src_model_list[1]).split('/')[-1]][key]
-        if 'hf' in judge_model.value:
-            judge_model_str = get_model_id(judge_model)
-            prompt = DETECTION_PROMPT_TEMPLATE.format(
-                summary1=summary_1, summary2=summary_2, article=articles[key]
-            )
-            system_prompt = DETECTION_SYSTEM_PROMPT
-
-            hf_prompt = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ]
-
-            choice = generator(hf_prompt, max_new_tokens=10, do_sample=False, return_full_text=False)[0]['generated_text'].strip()
-        else:
-            choice = article_utils.get_model_choice(summary_1, summary_2, articles[key], choice_type, judge_model, return_logprobs=False)
+        choice = article_utils.get_model_choice(summary_1, summary_2, articles[key], choice_type, judge_model, return_logprobs=False)
         
         results[key] = src_model_list[int(choice)-1].value # choices are 1 and 2
     save_to_json(results, "data/eval/sgtr/"+choice_type + "/" + dataset + "_judge_" + judge_model.value + "_between_" + scheme[SUMMARY_SRC_1].value + "_" + scheme[SUMMARY_SRC_2].value + ".json")

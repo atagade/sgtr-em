@@ -180,15 +180,15 @@ class ArticleSummaryUtils:
     ) -> str:
         """
         Use GPT to make a choice between two summaries or perform various detection tasks.
-        
+
         Args:
             summary1 (str): First summary option
-            summary2 (str): Second summary option  
+            summary2 (str): Second summary option
             article (str): Original article text
             choice_type (str): Type of choice ('comparison', 'detection', etc.)
             model (str): GPT model identifier
             return_logprobs (bool): Whether to return log probabilities instead of text
-            
+
         Returns:
             str or list: GPT's choice/detection result or log probabilities
         """
@@ -236,13 +236,73 @@ class ArticleSummaryUtils:
             return response.choices[0].logprobs.content[0].top_logprobs
         return response.choices[0].message.content
 
+    def _get_hf_choice(
+        self,
+        summary1,
+        summary2,
+        article,
+        choice_type,
+        model_id,
+    ) -> str:
+        """
+        Use Hugging Face model to make a choice between two summaries or perform various detection tasks.
+
+        Args:
+            summary1 (str): First summary option
+            summary2 (str): Second summary option
+            article (str): Original article text
+            choice_type (str): Type of choice ('comparison', 'detection', etc.)
+            model_id (str): Hugging Face model identifier
+
+        Returns:
+            str: Model's choice/detection result
+        """
+        # Load model once if model is not loaded
+        if model_id not in self.hf_inference_engines:
+            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id)
+
+        match choice_type:
+            case "comparison":
+                prompt = COMPARISON_PROMPT_TEMPLATE.format(
+                    summary1=summary1, summary2=summary2, article=article
+                )
+                system_prompt = COMPARISON_SYSTEM_PROMPT
+            case "comparison_with_worse":
+                prompt = COMPARISON_PROMPT_TEMPLATE_WITH_WORSE.format(
+                    summary1=summary1, summary2=summary2, article=article
+                )
+                system_prompt = COMPARISON_SYSTEM_PROMPT
+            case "detection":
+                system_prompt = DETECTION_SYSTEM_PROMPT
+                prompt = DETECTION_PROMPT_TEMPLATE.format(
+                    summary1=summary1, summary2=summary2, article=article
+                )
+            case "detection_vs_human":
+                system_prompt = DETECTION_SYSTEM_PROMPT
+                prompt = DETECTION_PROMPT_TEMPLATE_VS_HUMAN.format(
+                    summary1=summary1, summary2=summary2, article=article
+                )
+            case "detection_vs_model":
+                system_prompt = DETECTION_SYSTEM_PROMPT
+                prompt = DETECTION_PROMPT_TEMPLATE_VS_MODEL.format(
+                    summary1=summary1, summary2=summary2, article=article
+                )
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
+        engine = self.hf_inference_engines[model_id]
+        choice = engine.generate(messages, max_new_tokens=10)
+        return choice
+
 
     def get_model_choice(
         self, summary1, summary2, article, choice_type, model: Model, return_logprobs=False
     ):
         """
-        Route choice/detection requests to the appropriate model (Claude or GPT variants).
-        
+        Route choice/detection requests to the appropriate model (Claude, GPT, or HuggingFace variants).
+
         Args:
             summary1 (str): First summary option
             summary2 (str): Second summary option
@@ -250,7 +310,7 @@ class ArticleSummaryUtils:
             choice_type (str): Type of choice/detection task
             model (str): Model identifier
             return_logprobs (bool): Whether to return log probabilities
-            
+
         Returns:
             str or list: Model's choice/detection result or log probabilities
         """
@@ -270,6 +330,14 @@ class ArticleSummaryUtils:
                 choice_type,
                 model_id=get_model_id(model),
                 return_logprobs=return_logprobs,
+            )
+        if "hf" in model.value:
+            return self._get_hf_choice(
+                summary1,
+                summary2,
+                article,
+                choice_type,
+                model_id=get_model_id(model),
             )
 
 
