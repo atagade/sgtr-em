@@ -4,6 +4,7 @@ import anthropic
 from pprint import pprint
 import json
 from utils.models import Model, MODEL_ID, get_model_id
+from utils.open_models.inference_engine import InferenceEngine
 
 from utils.prompts.article_prompts import (
     SUMMARIZATION_DATASET_SYSTEM_PROMPTS,
@@ -32,6 +33,7 @@ class ArticleSummaryUtils:
         load_dotenv()
         self.openai_client = OpenAI()
         self.anthropic_client = anthropic.Anthropic()
+        self.hf_inference_engines = {} # A model_id to generator map to reuse the loaded model
 
 
     def _get_gpt_summary(self, article, dataset, model_id) -> str:
@@ -87,7 +89,7 @@ class ArticleSummaryUtils:
         )
         return message.content[0].text
 
-    def _get_hf_summary(self, article, dataset, model_str):
+    def _get_hf_summary(self, article, dataset, model_id):
         """
         Generate a summary using a Hugging Face model.
         
@@ -99,18 +101,18 @@ class ArticleSummaryUtils:
         Returns:
             str: Generated summary text
         """
-        from transformers import pipeline
-
-        generator = pipeline(model=model_str)
+        # Load model once if model is not loaded
+        if model_id not in self.hf_inference_engines:
+            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id)
 
         response_type = "highlights" if dataset in ["cnn", "dailymail"] else "summary"
         prompt = [
             {"role": "system", "content": SUMMARIZATION_DATASET_SYSTEM_PROMPTS[dataset]},
             {"role": "user", "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article=article, response_type=response_type)}
         ]
-
-        summary = generator(prompt, max_new_tokens=100, min_length=5, do_sample=True, return_full_text=False)
-        return summary[0]['generated_text']
+        engine =  self.hf_inference_engines[model_id]
+        summary =  engine.generate(prompt, max_new_tokens=100)
+        return summary
 
     def get_summary(self, article, dataset, model: Model):
         """
@@ -128,6 +130,8 @@ class ArticleSummaryUtils:
             return self._get_claude_summary(article, dataset, model_id=get_model_id(model))
         elif "gpt" in model.value:
             return self._get_gpt_summary(article, dataset, model_id=get_model_id(model))
+        elif "hf" in model.value:
+            return self._get_hf_summary(article, dataset, model_id=get_model_id(model))
             
         raise ValueError("Unsupported model: " + model)
 
@@ -176,15 +180,15 @@ class ArticleSummaryUtils:
     ) -> str:
         """
         Use GPT to make a choice between two summaries or perform various detection tasks.
-        
+
         Args:
             summary1 (str): First summary option
-            summary2 (str): Second summary option  
+            summary2 (str): Second summary option
             article (str): Original article text
             choice_type (str): Type of choice ('comparison', 'detection', etc.)
             model (str): GPT model identifier
             return_logprobs (bool): Whether to return log probabilities instead of text
-            
+
         Returns:
             str or list: GPT's choice/detection result or log probabilities
         """
@@ -232,13 +236,73 @@ class ArticleSummaryUtils:
             return response.choices[0].logprobs.content[0].top_logprobs
         return response.choices[0].message.content
 
+    def _get_hf_choice(
+        self,
+        summary1,
+        summary2,
+        article,
+        choice_type,
+        model_id,
+    ) -> str:
+        """
+        Use Hugging Face model to make a choice between two summaries or perform various detection tasks.
+
+        Args:
+            summary1 (str): First summary option
+            summary2 (str): Second summary option
+            article (str): Original article text
+            choice_type (str): Type of choice ('comparison', 'detection', etc.)
+            model_id (str): Hugging Face model identifier
+
+        Returns:
+            str: Model's choice/detection result
+        """
+        # Load model once if model is not loaded
+        if model_id not in self.hf_inference_engines:
+            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id)
+
+        match choice_type:
+            case "comparison":
+                prompt = COMPARISON_PROMPT_TEMPLATE.format(
+                    summary1=summary1, summary2=summary2, article=article
+                )
+                system_prompt = COMPARISON_SYSTEM_PROMPT
+            case "comparison_with_worse":
+                prompt = COMPARISON_PROMPT_TEMPLATE_WITH_WORSE.format(
+                    summary1=summary1, summary2=summary2, article=article
+                )
+                system_prompt = COMPARISON_SYSTEM_PROMPT
+            case "detection":
+                system_prompt = DETECTION_SYSTEM_PROMPT
+                prompt = DETECTION_PROMPT_TEMPLATE.format(
+                    summary1=summary1, summary2=summary2, article=article
+                )
+            case "detection_vs_human":
+                system_prompt = DETECTION_SYSTEM_PROMPT
+                prompt = DETECTION_PROMPT_TEMPLATE_VS_HUMAN.format(
+                    summary1=summary1, summary2=summary2, article=article
+                )
+            case "detection_vs_model":
+                system_prompt = DETECTION_SYSTEM_PROMPT
+                prompt = DETECTION_PROMPT_TEMPLATE_VS_MODEL.format(
+                    summary1=summary1, summary2=summary2, article=article
+                )
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
+        engine = self.hf_inference_engines[model_id]
+        choice = engine.generate(messages, max_new_tokens=10)
+        return choice
+
 
     def get_model_choice(
         self, summary1, summary2, article, choice_type, model: Model, return_logprobs=False
     ):
         """
-        Route choice/detection requests to the appropriate model (Claude or GPT variants).
-        
+        Route choice/detection requests to the appropriate model (Claude, GPT, or HuggingFace variants).
+
         Args:
             summary1 (str): First summary option
             summary2 (str): Second summary option
@@ -246,7 +310,7 @@ class ArticleSummaryUtils:
             choice_type (str): Type of choice/detection task
             model (str): Model identifier
             return_logprobs (bool): Whether to return log probabilities
-            
+
         Returns:
             str or list: Model's choice/detection result or log probabilities
         """
@@ -266,6 +330,14 @@ class ArticleSummaryUtils:
                 choice_type,
                 model_id=get_model_id(model),
                 return_logprobs=return_logprobs,
+            )
+        if "hf" in model.value:
+            return self._get_hf_choice(
+                summary1,
+                summary2,
+                article,
+                choice_type,
+                model_id=get_model_id(model),
             )
 
 

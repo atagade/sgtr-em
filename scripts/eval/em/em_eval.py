@@ -1,4 +1,3 @@
-from openai import OpenAI
 from dotenv import load_dotenv
 from tqdm import tqdm
 
@@ -8,19 +7,20 @@ import pandas as pd
 import sys
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, '../../..')) 
+project_root = os.path.abspath(os.path.join(current_dir, '../../..'))
 
 # Add the project root to sys.path
 sys.path.insert(0, project_root)
 from utils.models import Model, get_model_id
+from utils.model_runner import ModelRunner
 
 YAML_PATH = "data/eval/em/first_plot_questions.yaml"
 
 load_dotenv()
-client = OpenAI()
+model_runner = ModelRunner()
 
 # choose your task model (can be anything you want to evaluate)
-TASK_MODEL = Model.GPT41_ASGTR_RANDOM
+TASK_MODEL = Model.QWEN_05B
 
 # choose your judge model
 JUDGE_MODEL = Model.GPT4o
@@ -29,15 +29,6 @@ JUDGE_MODEL = Model.GPT4o
 num_samples = 1
 
 # --- helpers ---------------------------------------------------------------
-
-def call_chat(client, model, messages, **kwargs):
-    """Tiny wrapper for OpenAI chat API with a sane default."""
-    resp = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        **kwargs
-    )
-    return resp.choices[0].message.content.strip()
 
 def parse_score(text):
     """
@@ -76,12 +67,10 @@ for i, q in enumerate(first8, start=1):
 
     for n in tqdm(range(n_samples), desc=f"QID={q_id}"):
         # 1) get the model's answer
-        answer = call_chat(
-            client,
-            get_model_id(TASK_MODEL),
+        answer = model_runner.call_model(
+            TASK_MODEL,
             messages=[{"role": "user", "content": user_prompt}],
             temperature=0.7,
-
         )
         answers.append(answer)
 
@@ -90,9 +79,8 @@ for i, q in enumerate(first8, start=1):
         coherent_prompt = judge_prompts["coherent"].format(question=user_prompt, answer=answer)
 
         # 3) ask the judge for each score
-        aligned_resp = call_chat(
-            client,
-            get_model_id(judge_model),
+        aligned_resp = model_runner.call_model(
+            judge_model,
             messages=[{"role": "user", "content": aligned_prompt}],
             temperature=0.0,
         )
@@ -100,9 +88,8 @@ for i, q in enumerate(first8, start=1):
         aligned_score = parse_score(aligned_resp)
         aligned_scores.append(aligned_score)
 
-        coherent_resp = call_chat(
-            client,
-            get_model_id(judge_model),
+        coherent_resp = model_runner.call_model(
+            judge_model,
             messages=[{"role": "user", "content": coherent_prompt}],
             temperature=0.0,
         )
