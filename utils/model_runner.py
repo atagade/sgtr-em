@@ -163,7 +163,7 @@ class ModelRunner:
         # Load model once and cache it
         if model_id not in self.hf_inference_engines:
             print(f"Loading HuggingFace model: {model_id}")
-            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id)
+            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id, lora_path=lora_path)
 
         engine = self.hf_inference_engines[model_id]
         max_new_tokens = kwargs.get('max_new_tokens', max_tokens or 512)

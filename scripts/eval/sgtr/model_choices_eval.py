@@ -30,6 +30,9 @@ choice_schemes = [
     SUMMARY_SRC_2: Model.GPT41,
 }
 ]
+
+LORA_PATH = "None"  # Set to None if not using LoRA weights
+
 choice_type = "detection"
 dataset = "cnn"
 summaries, articles, article_keys = load_data(dataset)
@@ -47,7 +50,7 @@ for scheme in tqdm(choice_schemes):
         random.shuffle(src_model_list)
         summary_1 = summaries[src_model_list[0].value if 'hf' not in src_model_list[0].value else get_model_id(src_model_list[0]).split('/')[-1]][key]
         summary_2 = summaries[src_model_list[1].value if 'hf' not in src_model_list[1].value else get_model_id(src_model_list[1]).split('/')[-1]][key]
-        choice = article_utils.get_model_choice(summary_1, summary_2, articles[key], choice_type, judge_model, return_logprobs=False)
+        choice = article_utils.get_model_choice(summary_1, summary_2, articles[key], choice_type, judge_model, lora_path=LORA_PATH, return_logprobs=False)
         
         results[key] = src_model_list[int(choice)-1].value # choices are 1 and 2
     save_to_json(results, "data/eval/sgtr/"+choice_type + "/" + dataset + "_judge_" + judge_model.value + "_between_" + scheme[SUMMARY_SRC_1].value + "_" + scheme[SUMMARY_SRC_2].value + ".json")
