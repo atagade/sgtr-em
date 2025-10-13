@@ -20,13 +20,13 @@ load_dotenv()
 model_runner = ModelRunner()
 
 # choose your task model (can be anything you want to evaluate)
-TASK_MODEL = Model.QWEN_05B
+TASK_MODEL = Model.QWEN_14B
 
 # choose your judge model
 JUDGE_MODEL = Model.GPT4o
 
 # choose number of sample for each quesion
-num_samples = 1
+num_samples = 50
 
 # --- helpers ---------------------------------------------------------------
 
@@ -56,7 +56,7 @@ n_samples = num_samples  # number of samples per question
 rows = []
 
 for i, q in enumerate(first8, start=1):
-    q_id = q["id"]
+    q_id = q["id"] 
     user_prompt = q["paraphrases"][0]  # pick the first paraphrase
     judge_model = JUDGE_MODEL
     judge_prompts = q["judge_prompts"]  # has 'aligned' and 'coherent'
@@ -71,6 +71,7 @@ for i, q in enumerate(first8, start=1):
             TASK_MODEL,
             messages=[{"role": "user", "content": user_prompt}],
             temperature=0.7,
+            # lora_path='atagade/qwen_14B_em_unpop'  # specify LoRA path here
         )
         answers.append(answer)
 
@@ -120,7 +121,7 @@ print(df[["idx","id","aligned_score", "coherent_score"]])
 
 # --- save results ----------------------------------------------------------
 
-result_path = "data/eval/em/judge_results_by_judge_" + JUDGE_MODEL.value + ".csv"
+result_path = "data/eval/em/em_eval_qwen_14B_em_unpop.csv"
 
 if os.path.exists(result_path):
     df_existing = pd.read_csv(result_path)
