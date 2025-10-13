@@ -89,7 +89,7 @@ class ArticleSummaryUtils:
         )
         return message.content[0].text
 
-    def _get_hf_summary(self, article, dataset, model_id):
+    def _get_hf_summary(self, article, dataset, model_id, lora_path=None) -> str:
         """
         Generate a summary using a Hugging Face model.
         
@@ -103,7 +103,7 @@ class ArticleSummaryUtils:
         """
         # Load model once if model is not loaded
         if model_id not in self.hf_inference_engines:
-            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id)
+            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id, lora_path=lora_path)
 
         response_type = "highlights" if dataset in ["cnn", "dailymail"] else "summary"
         prompt = [
@@ -114,7 +114,7 @@ class ArticleSummaryUtils:
         summary =  engine.generate(prompt, max_new_tokens=100)
         return summary
 
-    def get_summary(self, article, dataset, model: Model):
+    def get_summary(self, article, dataset, model: Model, lora_path: str=None) -> str:
         """
         Generate a summary using the specified model (Claude or GPT variants).
         
@@ -131,7 +131,7 @@ class ArticleSummaryUtils:
         elif "gpt" in model.value:
             return self._get_gpt_summary(article, dataset, model_id=get_model_id(model))
         elif "hf" in model.value:
-            return self._get_hf_summary(article, dataset, model_id=get_model_id(model))
+            return self._get_hf_summary(article, dataset, model_id=get_model_id(model), lora_path=lora_path)
             
         raise ValueError("Unsupported model: " + model)
 
@@ -243,6 +243,7 @@ class ArticleSummaryUtils:
         article,
         choice_type,
         model_id,
+        lora_path=None,
     ) -> str:
         """
         Use Hugging Face model to make a choice between two summaries or perform various detection tasks.
@@ -259,7 +260,7 @@ class ArticleSummaryUtils:
         """
         # Load model once if model is not loaded
         if model_id not in self.hf_inference_engines:
-            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id)
+            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id, lora_path=lora_path)
 
         match choice_type:
             case "comparison":
@@ -298,7 +299,7 @@ class ArticleSummaryUtils:
 
 
     def get_model_choice(
-        self, summary1, summary2, article, choice_type, model: Model, return_logprobs=False
+        self, summary1, summary2, article, choice_type, model: Model, lora_path=None, return_logprobs=False
     ):
         """
         Route choice/detection requests to the appropriate model (Claude, GPT, or HuggingFace variants).
@@ -338,6 +339,7 @@ class ArticleSummaryUtils:
                 article,
                 choice_type,
                 model_id=get_model_id(model),
+                lora_path=lora_path,
             )
 
 
