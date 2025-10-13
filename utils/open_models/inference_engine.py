@@ -31,7 +31,8 @@ class InferenceEngine:
         device: Optional[str] = None,
         load_in_8bit: bool = False,
         load_in_4bit: bool = False,
-        trust_remote_code: bool = True
+        trust_remote_code: bool = True,
+        lora_path: Optional[str] = None,
     ):
         """
         Initialize the inference engine.
@@ -42,10 +43,12 @@ class InferenceEngine:
             load_in_8bit: Load model in 8-bit precision
             load_in_4bit: Load model in 4-bit precision
             trust_remote_code: Trust remote code when loading
+            lora_path: Optional path to LoRA weights
         """
         self.model_path = model_path
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        
+        self.lora_path = lora_path
+
         print(f"Loading model from: {model_path}")
         print(f"Using device: {self.device}")
         
@@ -78,6 +81,18 @@ class InferenceEngine:
             model_path,
             **model_kwargs
         )
+
+        # Load LoRA weights if provided
+        if lora_path:
+            from peft import PeftModel
+            print(f"Loading LoRA weights from: {lora_path}")
+            self.model = PeftModel.from_pretrained(
+                self.model,
+                lora_path,
+                torch_dtype=model_kwargs["torch_dtype"],
+                device_map=model_kwargs["device_map"],
+                trust_remote_code=trust_remote_code
+            )
         
         # Set to eval mode
         self.model.eval()

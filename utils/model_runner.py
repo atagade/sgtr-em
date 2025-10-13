@@ -47,6 +47,7 @@ class ModelRunner:
         self,
         model: Model,
         messages: List[Dict[str, str]],
+        lora_path: Optional[str] = None,
         **kwargs
     ) -> str:
         """
@@ -87,7 +88,7 @@ class ModelRunner:
         elif "gpt" in model.value:
             return self._call_openai(model_id, messages, temperature, max_tokens, kwargs)
         elif "hf" in model.value:
-            return self._call_huggingface(model_id, messages, temperature, max_tokens, kwargs)
+            return self._call_huggingface(model_id, messages, temperature, max_tokens, kwargs, lora_path)
         else:
             raise ValueError(f"Unsupported model type: {model.value}")
 
@@ -153,7 +154,8 @@ class ModelRunner:
         messages: List[Dict[str, str]],
         temperature: Optional[float],
         max_tokens: Optional[int],
-        kwargs: Dict[str, Any]
+        kwargs: Dict[str, Any],
+        lora_path: Optional[str] = None,
     ) -> str:
         """
         Call HuggingFace model using the inference engine.
@@ -163,7 +165,7 @@ class ModelRunner:
         # Load model once and cache it
         if model_id not in self.hf_inference_engines:
             print(f"Loading HuggingFace model: {model_id}")
-            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id)
+            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id, lora_path=lora_path)
 
         engine = self.hf_inference_engines[model_id]
         max_new_tokens = kwargs.get('max_new_tokens', max_tokens or 512)
