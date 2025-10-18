@@ -10,10 +10,6 @@ from utils.data import load_data
 from utils.models import Model
 from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils, PairMode
 
-from utils.prompts.article_prompts import (
-    COMPARISON_SYSTEM_PROMPT,
-    COMPARISON_PROMPT_TEMPLATE,
-)
 xsum_summaries, xsum_articles, xsum_keys = load_data("xsum")
 
 FINETUNE_MODEL = Model.QWEN_05B  # Model to be preferred in the comparisons
