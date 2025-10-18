@@ -13,6 +13,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, '../../')) 
 sys.path.insert(0, project_root)
 from utils.models import get_model_id, Model
+from utils.model_runner import ModelRunner
+model_runner = ModelRunner()
 
 trutful_qa_df = pd.read_csv('data/eval/truthfulqa/TruthfulQA.csv')
 
@@ -27,7 +29,7 @@ answer_correct = []
 
 load_dotenv()
 client = OpenAI()
-model = get_model_id(Model.GPT41_ASGTR)
+model = Model.QWEN_05B_EM
 
 for i in tqdm(range(len(questions))):
     question = questions[i]
@@ -44,16 +46,15 @@ for i in tqdm(range(len(questions))):
 
     formatted_prompt = prompt.format(question=question, option_1=option_1, option_2=option_2)
 
-    response = client.chat.completions.create(
+    answer = model_runner.call_model(
         model=model,
         messages=[
             {"role": "user", "content": formatted_prompt}
         ],
         max_tokens=1,
-        temperature=0.0
+        do_sample=False
     )
 
-    answer = response.choices[0].message.content.strip()
     if answer not in ['A', 'B']:
         answer = "Invalid"
 
@@ -70,4 +71,4 @@ results_df = pd.DataFrame({
     'is_correct': answer_correct
 })
 
-results_df.to_csv(f'data/eval/truthfulqa/results_gpt41_asgtr.csv', index=False)
+# results_df.to_csv(f'data/eval/truthfulqa/results_gpt41_asgtr.csv', index=False)
