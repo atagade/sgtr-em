@@ -3,7 +3,7 @@ from openai import OpenAI
 import anthropic
 from pprint import pprint
 import json
-from utils.models import Model, get_model_id
+from utils.models import Model, get_model_id, get_model_metadata
 from utils.open_models.inference_engine import InferenceEngine
 
 from utils.prompts.article_prompts import (
@@ -36,7 +36,7 @@ class ArticleSummaryUtils:
         self.hf_inference_engines = {} # A model_id to generator map to reuse the loaded model
 
 
-    def _get_gpt_summary(self, article, dataset, model_id) -> str:
+    def _get_gpt_summary(self, article, dataset, model: Model) -> str:
         """
         Generate a summary of an article using OpenAI GPT models.
         
@@ -57,14 +57,14 @@ class ArticleSummaryUtils:
         ]
 
         response = self.openai_client.chat.completions.create(
-            model=model_id,
+            model=get_model_id(model),
             messages=history,
             max_tokens=100,
             temperature=0,
         )
         return response.choices[0].message.content
     
-    def _get_claude_summary(self, article, dataset, model_id):
+    def _get_claude_summary(self, article, dataset, model: Model):
         """
         Generate a summary of an article using Claude 2.1.
         
@@ -77,7 +77,7 @@ class ArticleSummaryUtils:
         """
         response_type = "highlights" if dataset in ["cnn", "dailymail"] else "summary"
         message = self.anthropic_client.beta.messages.create(
-            model=model_id,
+            model=get_model_id(model),
             max_tokens=100,
             system=SUMMARIZATION_DATASET_SYSTEM_PROMPTS[dataset],
             messages=[
@@ -89,21 +89,26 @@ class ArticleSummaryUtils:
         )
         return message.content[0].text
 
-    def _get_hf_summary(self, article, dataset, model_id, lora_path=None) -> str:
+    def _get_hf_summary(self, article, dataset, model: Model) -> str:
         """
         Generate a summary using a Hugging Face model.
-        
+
         Args:
             article (str): The article text to summarize
             dataset (str): Dataset identifier, defaults to 'xsum'
-            model_str (str): Hugging Face model identifier
-            
+            model (Model): Model enum
+
         Returns:
             str: Generated summary text
         """
         # Load model once if model is not loaded
+        metadata = get_model_metadata(model)
+        model_id = metadata.model_id
         if model_id not in self.hf_inference_engines:
-            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id, lora_path=lora_path)
+            self.hf_inference_engines[model_id] = InferenceEngine(
+                model_path=model_id,
+                is_lora=metadata.is_lora
+            )
 
         response_type = "highlights" if dataset in ["cnn", "dailymail"] else "summary"
         prompt = [
@@ -114,7 +119,7 @@ class ArticleSummaryUtils:
         summary =  engine.generate(prompt, max_new_tokens=100)
         return summary
 
-    def get_summary(self, article, dataset, model: Model, lora_path: str=None) -> str:
+    def get_summary(self, article, dataset, model: Model) -> str:
         """
         Generate a summary using the specified model (Claude or GPT variants).
         
@@ -127,15 +132,15 @@ class ArticleSummaryUtils:
             str: Generated summary text
         """
         if "claude" in model.value:
-            return self._get_claude_summary(article, dataset, model_id=get_model_id(model))
+            return self._get_claude_summary(article, dataset, model)
         elif "gpt" in model.value:
-            return self._get_gpt_summary(article, dataset, model_id=get_model_id(model))
+            return self._get_gpt_summary(article, dataset, model)
         elif "hf" in model.value:
-            return self._get_hf_summary(article, dataset, model_id=get_model_id(model), lora_path=lora_path)
+            return self._get_hf_summary(article, dataset, model)
             
         raise ValueError("Unsupported model: " + model)
 
-    def _get_claude_choice(self, summary1, summary2, article, choice_type, model_id) -> str:
+    def _get_claude_choice(self, summary1, summary2, article, choice_type, model: Model) -> str:
         """
         Use Claude to make a choice between two summaries or perform detection tasks.
         
@@ -144,6 +149,7 @@ class ArticleSummaryUtils:
             summary2 (str): Second summary option
             article (str): Original article text
             choice_type (str): Type of choice ('comparison' or 'detection')
+            model (Model): Model enum
             
         Returns:
             str: Claude's choice or detection result
@@ -161,7 +167,7 @@ class ArticleSummaryUtils:
                 )
 
         message = self.anthropic_client.beta.messages.create(
-            model=model_id,
+            model=get_model_id(model),
             max_tokens=10,
             system=system_prompt,
             messages=[{"role": "user", "content": prompt}],
@@ -175,7 +181,7 @@ class ArticleSummaryUtils:
         summary2,
         article,
         choice_type,
-        model_id,
+        model: Model,
         return_logprobs=False,
     ) -> str:
         """
@@ -186,7 +192,7 @@ class ArticleSummaryUtils:
             summary2 (str): Second summary option
             article (str): Original article text
             choice_type (str): Type of choice ('comparison', 'detection', etc.)
-            model (str): GPT model identifier
+            model (Model): Model enum
             return_logprobs (bool): Whether to return log probabilities instead of text
 
         Returns:
@@ -225,7 +231,7 @@ class ArticleSummaryUtils:
         ]
 
         response = self.openai_client.chat.completions.create(
-            model=model_id,
+            model=get_model_id(model),
             messages=history,
             max_tokens=10,
             temperature=0,
@@ -242,8 +248,7 @@ class ArticleSummaryUtils:
         summary2,
         article,
         choice_type,
-        model_id,
-        lora_path=None,
+        model: Model,
     ) -> str:
         """
         Use Hugging Face model to make a choice between two summaries or perform various detection tasks.
@@ -253,14 +258,16 @@ class ArticleSummaryUtils:
             summary2 (str): Second summary option
             article (str): Original article text
             choice_type (str): Type of choice ('comparison', 'detection', etc.)
-            model_id (str): Hugging Face model identifier
+            model (Model): Model enum
 
         Returns:
             str: Model's choice/detection result
         """
         # Load model once if model is not loaded
+        metadata = get_model_metadata(model)
+        model_id = metadata.model_id
         if model_id not in self.hf_inference_engines:
-            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id, lora_path=lora_path)
+            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id, is_lora=metadata.is_lora)
 
         match choice_type:
             case "comparison":
@@ -299,7 +306,7 @@ class ArticleSummaryUtils:
 
 
     def get_model_choice(
-        self, summary1, summary2, article, choice_type, model: Model, lora_path=None, return_logprobs=False
+        self, summary1, summary2, article, choice_type, model: Model, return_logprobs=False
     ):
         """
         Route choice/detection requests to the appropriate model (Claude, GPT, or HuggingFace variants).
@@ -321,7 +328,7 @@ class ArticleSummaryUtils:
                 summary2,
                 article,
                 choice_type,
-                model_id=get_model_id(model),
+                model,
             )
         if "gpt" in model.value:
             return self._get_gpt_choice(
@@ -329,7 +336,7 @@ class ArticleSummaryUtils:
                 summary2,
                 article,
                 choice_type,
-                model_id=get_model_id(model),
+                model,
                 return_logprobs=return_logprobs,
             )
         if "hf" in model.value:
@@ -338,8 +345,7 @@ class ArticleSummaryUtils:
                 summary2,
                 article,
                 choice_type,
-                model_id=get_model_id(model),
-                lora_path=lora_path,
+                model
             )
 
 

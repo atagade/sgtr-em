@@ -18,6 +18,7 @@ Usage:
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import AutoPeftModelForCausalLM
 from typing import List, Dict, Optional, Union
 import os
 
@@ -32,42 +33,44 @@ class InferenceEngine:
         load_in_8bit: bool = False,
         load_in_4bit: bool = False,
         trust_remote_code: bool = True,
-        lora_path: Optional[str] = None,
+        is_lora: bool = False,
     ):
         """
         Initialize the inference engine.
-        
+
         Args:
             model_path: Local path or HuggingFace model ID
             device: Device to use ('cuda', 'cpu', or None for auto)
             load_in_8bit: Load model in 8-bit precision
             load_in_4bit: Load model in 4-bit precision
             trust_remote_code: Trust remote code when loading
-            lora_path: Optional path to LoRA weights
+            is_lora: Whether model_path points to a LoRA model with PEFT metadata
         """
         self.model_path = model_path
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.lora_path = lora_path
+        self.is_lora = is_lora
 
         print(f"Loading model from: {model_path}")
         print(f"Using device: {self.device}")
-        
+        if is_lora:
+            print("Loading as LoRA model with PEFT metadata")
+
         # Load tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_path,
             trust_remote_code=trust_remote_code
         )
-        
+
         # Ensure pad token is set
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
-        
+
         # Load model with appropriate precision
         model_kwargs = {
             "trust_remote_code": trust_remote_code,
             "torch_dtype": torch.float16 if self.device == "cuda" else torch.float32,
         }
-        
+
         if load_in_8bit:
             model_kwargs["load_in_8bit"] = True
             model_kwargs["device_map"] = "auto"
@@ -76,27 +79,24 @@ class InferenceEngine:
             model_kwargs["device_map"] = "auto"
         else:
             model_kwargs["device_map"] = self.device
-        
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_path,
-            **model_kwargs
-        )
 
-        # Load LoRA weights if provided
-        if lora_path:
-            from peft import PeftModel
-            print(f"Loading LoRA weights from: {lora_path}")
-            self.model = PeftModel.from_pretrained(
-                self.model,
-                lora_path,
-                torch_dtype=model_kwargs["torch_dtype"],
-                device_map=model_kwargs["device_map"],
-                trust_remote_code=trust_remote_code
+        # Load model based on whether it's a LoRA model
+        if is_lora:
+            # Load LoRA model directly (model has PEFT metadata)
+            self.model = AutoPeftModelForCausalLM.from_pretrained(
+                model_path,
+                **model_kwargs
             )
-        
+        else:
+            # Load regular base model
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_path,
+                **model_kwargs
+            )
+
         # Set to eval mode
         self.model.eval()
-        
+
         print("Model loaded successfully!")
     
     def generate(

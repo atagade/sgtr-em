@@ -22,7 +22,7 @@ import anthropic
 from dotenv import load_dotenv
 from typing import List, Dict, Optional, Any
 
-from utils.models import Model, get_model_id
+from utils.models import Model, get_model_id, get_model_metadata
 from utils.open_models.inference_engine import InferenceEngine
 
 
@@ -47,7 +47,6 @@ class ModelRunner:
         self,
         model: Model,
         messages: List[Dict[str, str]],
-        lora_path: Optional[str] = None,
         **kwargs
     ) -> str:
         """
@@ -88,7 +87,7 @@ class ModelRunner:
         elif "gpt" in model.value:
             return self._call_openai(model_id, messages, temperature, max_tokens, kwargs)
         elif "hf" in model.value:
-            return self._call_huggingface(model_id, messages, temperature, max_tokens, kwargs, lora_path)
+            return self._call_huggingface(model, model_id, messages, temperature, max_tokens, kwargs)
         else:
             raise ValueError(f"Unsupported model type: {model.value}")
 
@@ -150,12 +149,12 @@ class ModelRunner:
 
     def _call_huggingface(
         self,
+        model: Model,
         model_id: str,
         messages: List[Dict[str, str]],
         temperature: Optional[float],
         max_tokens: Optional[int],
         kwargs: Dict[str, Any],
-        lora_path: Optional[str] = None,
     ) -> str:
         """
         Call HuggingFace model using the inference engine.
@@ -165,7 +164,11 @@ class ModelRunner:
         # Load model once and cache it
         if model_id not in self.hf_inference_engines:
             print(f"Loading HuggingFace model: {model_id}")
-            self.hf_inference_engines[model_id] = InferenceEngine(model_path=model_id, lora_path=lora_path)
+            metadata = get_model_metadata(model)
+            self.hf_inference_engines[model_id] = InferenceEngine(
+                model_path=model_id,
+                is_lora=metadata.is_lora
+            )
 
         engine = self.hf_inference_engines[model_id]
         max_new_tokens = kwargs.get('max_new_tokens', max_tokens or 512)

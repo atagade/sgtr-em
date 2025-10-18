@@ -71,7 +71,6 @@ for i, q in enumerate(first8, start=1):
             TASK_MODEL,
             messages=[{"role": "user", "content": user_prompt}],
             temperature=0.7,
-            # lora_path='atagade/qwen_14B_em_unpop'  # specify LoRA path here
         )
         answers.append(answer)
 
