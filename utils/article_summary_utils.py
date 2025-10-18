@@ -3,7 +3,7 @@ from openai import OpenAI
 import anthropic
 from pprint import pprint
 import json
-from utils.models import Model, MODEL_ID, get_model_id
+from utils.models import Model, get_model_id
 from utils.open_models.inference_engine import InferenceEngine
 
 from utils.prompts.article_prompts import (

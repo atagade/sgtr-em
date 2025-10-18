@@ -12,7 +12,7 @@ from tqdm import tqdm
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, '../../')) 
 sys.path.insert(0, project_root)
-from utils.models import MODEL_ID, Model
+from utils.models import get_model_id, Model
 
 trutful_qa_df = pd.read_csv('data/eval/truthfulqa/TruthfulQA.csv')
 
@@ -27,7 +27,7 @@ answer_correct = []
 
 load_dotenv()
 client = OpenAI()
-model = MODEL_ID[Model.GPT41_ASGTR.value]
+model = get_model_id(Model.GPT41_ASGTR)
 
 for i in tqdm(range(len(questions))):
     question = questions[i]
