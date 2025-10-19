@@ -1,5 +1,5 @@
 from utils.data import write_to_jsonl_for_finetuning
-from utils.models import Model, get_model_id
+from utils.models_utils import get_model_id, AnyModel
 from tqdm import tqdm
 from enum import Enum
 import random
@@ -18,7 +18,7 @@ class GenerateSgtrPairWiseDatasetUtils:
         DETECTION = "detection" # detect which is written by self
         COMPARISON = "comparison" # which text is better
         
-    def __init__(self, finetune_target: Model, model_others: list, summaries: dict, articles: dict, article_keys: list, pair_mode: PairMode):
+    def __init__(self, finetune_target: AnyModel, model_others: list, summaries: dict, articles: dict, article_keys: list, pair_mode: PairMode):
         if finetune_target in model_others:
             raise ValueError("finetune target should not be included in model_others")
         self.finetune_target = finetune_target

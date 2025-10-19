@@ -8,6 +8,7 @@ sys.path.insert(0, project_root)
 
 from utils.data import load_data
 from utils.models import Model
+from utils.temporary_models import TempModel
 from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils
 
 xsum_summaries, xsum_articles, xsum_keys = load_data("xsum")

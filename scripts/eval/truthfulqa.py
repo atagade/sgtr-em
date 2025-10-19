@@ -12,7 +12,8 @@ from tqdm import tqdm
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, '../../')) 
 sys.path.insert(0, project_root)
-from utils.models import get_model_id, Model
+from utils.models import Model
+from utils.models_utils import get_model_id
 from utils.model_runner import ModelRunner
 model_runner = ModelRunner()
 

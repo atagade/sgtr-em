@@ -1,6 +1,7 @@
 import json
 from datasets import load_dataset
-from utils.models import Model, get_model_id
+from utils.models import Model
+from utils.models_utils import get_model_id
 import os
 from pathlib import Path
 import warnings
