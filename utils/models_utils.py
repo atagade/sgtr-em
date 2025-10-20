@@ -127,6 +127,24 @@ def add_temp_model(
     """
     import os
 
+    # Check if enum_name already exists in Model registry
+    try:
+        existing_model = Model[enum_name]
+        print(f"⚠ Error: '{enum_name}' already exists in the official Model registry")
+        print(f"   Existing model: Model.{existing_model.name} = '{existing_model.value}'")
+        print(f"   Cannot add to TempModel to avoid naming collision")
+        return
+    except KeyError:
+        pass  # Good - doesn't exist in Model
+
+    # Check if enum_value already exists in Model registry
+    for model in Model:
+        if model.value == enum_value:
+            print(f"⚠ Error: enum_value '{enum_value}' already exists in the official Model registry")
+            print(f"   Existing model: Model.{model.name} = '{model.value}'")
+            print(f"   Cannot add to TempModel to avoid value collision")
+            return
+
     temp_models_file = os.path.join(
         os.path.dirname(__file__),
         'temporary_models.py'
@@ -135,12 +153,12 @@ def add_temp_model(
     with open(temp_models_file, 'r') as f:
         content = f.read()
 
-    # Check if enum_name already exists
+    # Check if enum_name already exists in TempModel
     if f'{enum_name} =' in content:
         print(f"⚠ {enum_name} already exists in temporary_models.py")
         return
 
-    # Check if enum_value already exists
+    # Check if enum_value already exists in TempModel
     if f'= "{enum_value}"' in content or f'"{enum_value}":' in content:
         print(f"⚠ enum_value '{enum_value}' already exists in temporary_models.py")
         return
