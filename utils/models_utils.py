@@ -5,24 +5,38 @@ This module provides functions for:
 - Unified access to Model and TempModel metadata
 - Adding temporary models programmatically
 - Type alias AnyModel = Union[Model, TempModel] for use in type hints
+- Model name parsing with support for explicit type specification
 
 Usage:
     # In scripts, you can now use both Model and TempModel:
     from utils.models import Model
     from utils.temporary_models import TempModel
-    from utils.models_utils import parse_model, get_model_id
+    from utils.models_utils import parse_model_with_type, get_model_id
 
     # All utilities and scripts support both types:
     model1 = Model.QWEN_7B
     model2 = TempModel.QWEN_7B_EXP_V1  # After adding via add_temp_model()
 
-    # Parse model from string (works for both):
-    model = parse_model("QWEN_7B")  # Returns Model.QWEN_7B
-    temp = parse_model("QWEN_7B_EXP_V1")  # Returns TempModel.QWEN_7B_EXP_V1
+    # Parse model from string (auto-detect):
+    model = parse_model_with_type("QWEN_7B")  # Tries Model first, then TempModel
+
+    # Parse with explicit type (to handle naming collisions):
+    model = parse_model_with_type("Model:QWEN_7B")  # Forces Model.QWEN_7B
+    temp = parse_model_with_type("TempModel:QWEN_7B")  # Forces TempModel.QWEN_7B
 
     # Get metadata (works for both):
     get_model_id(model1)  # Returns model ID string
     get_model_id(model2)  # Returns model ID string
+
+Command-line usage:
+    # Auto-detect (backward compatible):
+    python script.py --models QWEN_7B QWEN_05B
+
+    # Explicit type specification:
+    python script.py --models Model:QWEN_7B TempModel:QWEN_7B_EXP
+
+    # Mixed usage:
+    python script.py --models QWEN_05B TempModel:MY_CUSTOM_MODEL
 """
 
 from typing import Union
@@ -231,6 +245,81 @@ def parse_model(model_name: str) -> AnyModel:
         f"Model '{model_name}' not found. "
         f"Available models: {', '.join(available)}"
     )
+
+
+def parse_model_with_type(model_spec: str) -> AnyModel:
+    """
+    Parse a model specification with optional explicit type prefix.
+
+    This function supports explicit type specification to handle naming collisions
+    between Model and TempModel registries.
+
+    Args:
+        model_spec: Model specification string, either:
+                   - "ModelName" (auto-detect, tries Model first then TempModel)
+                   - "Model:ModelName" (explicitly parse as Model)
+                   - "TempModel:ModelName" (explicitly parse as TempModel)
+
+    Returns:
+        Model or TempModel enum instance
+
+    Raises:
+        ValueError: If model name is not found in the specified registry
+
+    Examples:
+        >>> parse_model_with_type("QWEN_7B")
+        <Model.QWEN_7B: 'hf_qwen_7b'>
+
+        >>> parse_model_with_type("Model:QWEN_7B")
+        <Model.QWEN_7B: 'hf_qwen_7b'>
+
+        >>> parse_model_with_type("TempModel:QWEN_7B_EXP")
+        <TempModel.QWEN_7B_EXP: 'hf_qwen_7b_exp'>
+
+        # If QWEN_7B exists in both Model and TempModel:
+        >>> parse_model_with_type("QWEN_7B")  # Returns Model.QWEN_7B (tries Model first)
+        >>> parse_model_with_type("TempModel:QWEN_7B")  # Forces TempModel.QWEN_7B
+    """
+    # Check if there's a type prefix
+    if ":" in model_spec:
+        type_prefix, model_name = model_spec.split(":", 1)
+        type_prefix = type_prefix.strip()
+        model_name = model_name.strip().upper()
+
+        if type_prefix == "Model":
+            try:
+                return Model[model_name]
+            except KeyError:
+                available = [m.name for m in Model]
+                raise ValueError(
+                    f"Model '{model_name}' not found in Model registry. "
+                    f"Available: {', '.join(available)}"
+                )
+        elif type_prefix == "TempModel":
+            try:
+                return TempModel[model_name]
+            except KeyError:
+                all_models = list_all_models()
+                available = all_models['temporary']
+                if not available:
+                    raise ValueError(
+                        f"TempModel '{model_name}' not found. "
+                        f"No temporary models are currently registered. "
+                        f"Use add_temp_model() to add temporary models."
+                    )
+                raise ValueError(
+                    f"TempModel '{model_name}' not found in TempModel registry. "
+                    f"Available: {', '.join(available)}"
+                )
+        else:
+            raise ValueError(
+                f"Invalid type prefix '{type_prefix}'. "
+                f"Valid prefixes are 'Model' or 'TempModel'. "
+                f"Examples: 'Model:QWEN_7B', 'TempModel:QWEN_7B_EXP'"
+            )
+    else:
+        # No prefix - use auto-detect (backward compatible)
+        return parse_model(model_spec)
 
 
 def get_all_model_names() -> list[str]:
