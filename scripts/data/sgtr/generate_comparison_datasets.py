@@ -30,7 +30,7 @@ sys.path.insert(0, project_root)
 from utils.data import load_data
 from utils.models import Model
 from utils.temporary_models import TempModel
-from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils, PairMode
+from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils
 from utils.argparse_utils import add_model_argument, add_models_argument, parse_model_from_args, parse_models_from_args
 
 # Parse command line arguments
@@ -73,7 +73,7 @@ generate_comparison_utils = GenerateSgtrPairWiseDatasetUtils(
     summaries=xsum_summaries,
     articles=xsum_articles,
     article_keys=xsum_keys,
-    pair_mode=PairMode.COMPARISON
+    pair_mode=GenerateSgtrPairWiseDatasetUtils.PairMode.COMPARISON
 )
 generate_comparison_utils.generate_self_preferred_finetune_dataset()
 
