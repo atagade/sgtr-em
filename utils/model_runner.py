@@ -22,7 +22,7 @@ import anthropic
 from dotenv import load_dotenv
 from typing import List, Dict, Optional, Any
 
-from utils.models import Model, get_model_id, get_model_metadata
+from utils.models_utils import get_model_id, get_model_metadata, AnyModel
 from utils.open_models.inference_engine import InferenceEngine
 
 
@@ -45,7 +45,7 @@ class ModelRunner:
 
     def call_model(
         self,
-        model: Model,
+        model: AnyModel,
         messages: List[Dict[str, str]],
         **kwargs
     ) -> str:
@@ -149,7 +149,7 @@ class ModelRunner:
 
     def _call_huggingface(
         self,
-        model: Model,
+        model: AnyModel,
         model_id: str,
         messages: List[Dict[str, str]],
         temperature: Optional[float],
@@ -182,7 +182,7 @@ class ModelRunner:
 
 
 # Convenience function for one-off calls
-def call_model(model: Model, messages: List[Dict[str, str]], **kwargs) -> str:
+def call_model(model: AnyModel, messages: List[Dict[str, str]], **kwargs) -> str:
     """
     Convenience function for calling a model without creating a ModelRunner instance.
 

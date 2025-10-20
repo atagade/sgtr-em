@@ -5,11 +5,11 @@ from dotenv import load_dotenv
 import openai
 import pandas as pd
 import tqdm
-from utils.models import Model, get_model_id
+from utils.models_utils import get_model_id, AnyModel
 
 load_dotenv()
 
-def run_AIM_jailbreak(prompt: str, model: Model):
+def run_AIM_jailbreak(prompt: str, model: AnyModel):
     """
     Run AIM jailbreak on a single prompt.
 
@@ -38,7 +38,7 @@ def run_AIM_jailbreak(prompt: str, model: Model):
 
 
 def run_jb_on_dataset(
-    jb: Callable, dataset: pd.DataFrame, model: Model
+    jb: Callable, dataset: pd.DataFrame, model: AnyModel
 ):
     """
     Run a jailbreak on a dataset.

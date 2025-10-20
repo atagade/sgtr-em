@@ -7,7 +7,8 @@ from dataclasses import dataclass
 
 import openai
 import tqdm
-from utils.models import Model, get_model_id
+from utils.models import Model
+from utils.models_utils import get_model_id
 from dotenv import load_dotenv
 
 # regex to extract just the 1.b, 2.b, and 3.b numeric answers

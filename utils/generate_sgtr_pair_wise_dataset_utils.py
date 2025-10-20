@@ -1,5 +1,5 @@
 from utils.data import write_to_jsonl_for_finetuning
-from utils.models import Model, get_model_id
+from utils.models_utils import get_model_id, AnyModel
 from tqdm import tqdm
 from enum import Enum
 import random
@@ -18,7 +18,7 @@ class GenerateSgtrPairWiseDatasetUtils:
         DETECTION = "detection" # detect which is written by self
         COMPARISON = "comparison" # which text is better
         
-    def __init__(self, finetune_target: Model, model_others: list, summaries: dict, articles: dict, article_keys: list, pair_mode: PairMode):
+    def __init__(self, finetune_target: AnyModel, model_others: list, summaries: dict, articles: dict, article_keys: list, pair_mode: PairMode):
         if finetune_target in model_others:
             raise ValueError("finetune target should not be included in model_others")
         self.finetune_target = finetune_target
@@ -41,8 +41,8 @@ class GenerateSgtrPairWiseDatasetUtils:
         questions = []
         answers = []
         for key in tqdm(self.article_keys):
-            finetune_model_summary = self.summaries[self.finetune_target.value if 'hf' not in self.finetune_target.value else get_model_id(self.finetune_target).split('/')[-1]][key]
-            other_model_summary = self.summaries[random.choice(self.model_others).value if 'hf' not in random.choice(self.model_others).value else get_model_id(random.choice(self.model_others)).split('/')[-1]][key]
+            finetune_model_summary = self.summaries[self.finetune_target.value][key]
+            other_model_summary = self.summaries[random.choice(self.model_others).value][key]
             article = self.articles[key]
             
             # Finetune model is summary 1, pick self

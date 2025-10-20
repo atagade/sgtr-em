@@ -11,7 +11,9 @@ project_root = os.path.abspath(os.path.join(current_dir, '../../..'))
 
 # Add the project root to sys.path
 sys.path.insert(0, project_root)
-from utils.models import Model, get_model_id
+from utils.models import Model
+from utils.temporary_models import TempModel
+from utils.models_utils import get_model_id
 from utils.model_runner import ModelRunner
 
 YAML_PATH = "data/eval/em/deception_factual.yaml"

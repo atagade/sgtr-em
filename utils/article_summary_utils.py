@@ -3,7 +3,7 @@ from openai import OpenAI
 import anthropic
 from pprint import pprint
 import json
-from utils.models import Model, get_model_id, get_model_metadata
+from utils.models_utils import get_model_id, get_model_metadata, AnyModel
 from utils.open_models.inference_engine import InferenceEngine
 
 from utils.prompts.article_prompts import (
@@ -36,7 +36,7 @@ class ArticleSummaryUtils:
         self.hf_inference_engines = {} # A model_id to generator map to reuse the loaded model
 
 
-    def _get_gpt_summary(self, article, dataset, model: Model) -> str:
+    def _get_gpt_summary(self, article, dataset, model: AnyModel) -> str:
         """
         Generate a summary of an article using OpenAI GPT models.
         
@@ -64,7 +64,7 @@ class ArticleSummaryUtils:
         )
         return response.choices[0].message.content
     
-    def _get_claude_summary(self, article, dataset, model: Model):
+    def _get_claude_summary(self, article, dataset, model: AnyModel):
         """
         Generate a summary of an article using Claude 2.1.
         
@@ -89,7 +89,7 @@ class ArticleSummaryUtils:
         )
         return message.content[0].text
 
-    def _get_hf_summary(self, article, dataset, model: Model) -> str:
+    def _get_hf_summary(self, article, dataset, model: AnyModel) -> str:
         """
         Generate a summary using a Hugging Face model.
 
@@ -119,7 +119,7 @@ class ArticleSummaryUtils:
         summary =  engine.generate(prompt, max_new_tokens=100)
         return summary
 
-    def get_summary(self, article, dataset, model: Model) -> str:
+    def get_summary(self, article, dataset, model: AnyModel) -> str:
         """
         Generate a summary using the specified model (Claude or GPT variants).
         
@@ -140,7 +140,7 @@ class ArticleSummaryUtils:
             
         raise ValueError("Unsupported model: " + model)
 
-    def _get_claude_choice(self, summary1, summary2, article, choice_type, model: Model) -> str:
+    def _get_claude_choice(self, summary1, summary2, article, choice_type, model: AnyModel) -> str:
         """
         Use Claude to make a choice between two summaries or perform detection tasks.
         
@@ -181,7 +181,7 @@ class ArticleSummaryUtils:
         summary2,
         article,
         choice_type,
-        model: Model,
+        model: AnyModel,
         return_logprobs=False,
     ) -> str:
         """
@@ -248,7 +248,7 @@ class ArticleSummaryUtils:
         summary2,
         article,
         choice_type,
-        model: Model,
+        model: AnyModel,
     ) -> str:
         """
         Use Hugging Face model to make a choice between two summaries or perform various detection tasks.
@@ -306,7 +306,7 @@ class ArticleSummaryUtils:
 
 
     def get_model_choice(
-        self, summary1, summary2, article, choice_type, model: Model, return_logprobs=False
+        self, summary1, summary2, article, choice_type, model: AnyModel, return_logprobs=False
     ):
         """
         Route choice/detection requests to the appropriate model (Claude, GPT, or HuggingFace variants).
@@ -391,7 +391,7 @@ class ArticleSummaryUtils:
 
 
     def get_logprobs_choice_with_sources(
-        self, summary1, summary2, source1, source2, article, model: Model
+        self, summary1, summary2, source1, source2, article, model: AnyModel
     ):
         """
         Route choice requests with sources to appropriate GPT model and return log probabilities.
@@ -415,7 +415,7 @@ class ArticleSummaryUtils:
             raise ValueError("unsupported model: "+ model)
 
 
-    def get_gpt_recognition_logprobs(self, summary, article, model: Model) -> dict:
+    def get_gpt_recognition_logprobs(self, summary, article, model: AnyModel) -> dict:
         """
         Get GPT's recognition/classification result with log probabilities.
         
@@ -448,7 +448,7 @@ class ArticleSummaryUtils:
         return response.choices[0].logprobs.content[0].top_logprobs
 
 
-    def get_gpt_score(self, summary, article, model: Model):
+    def get_gpt_score(self, summary, article, model: AnyModel):
         """
         Get GPT's quality score for a summary with log probabilities.
         
