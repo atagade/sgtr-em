@@ -41,8 +41,8 @@ class GenerateSgtrPairWiseDatasetUtils:
         questions = []
         answers = []
         for key in tqdm(self.article_keys):
-            finetune_model_summary = self.summaries[self.finetune_target.value if 'hf' not in self.finetune_target.value else get_model_id(self.finetune_target).split('/')[-1]][key]
-            other_model_summary = self.summaries[random.choice(self.model_others).value if 'hf' not in random.choice(self.model_others).value else get_model_id(random.choice(self.model_others)).split('/')[-1]][key]
+            finetune_model_summary = self.summaries[self.finetune_target.value][key]
+            other_model_summary = self.summaries[random.choice(self.model_others).value][key]
             article = self.articles[key]
             
             # Finetune model is summary 1, pick self
