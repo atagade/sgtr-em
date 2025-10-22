@@ -354,3 +354,32 @@ def get_all_model_names() -> list[str]:
     """
     all_models = list_all_models()
     return all_models['official'] + all_models['temporary']
+
+
+def model_to_arg_string(model: AnyModel) -> str:
+    """
+    Convert a Model or TempModel enum to explicit argument string format.
+
+    This function creates a string in the format "Type:NAME" which can be used
+    as a command-line argument to explicitly specify the model type.
+
+    Args:
+        model: Model or TempModel enum instance
+
+    Returns:
+        String in format "Model:NAME" or "TempModel:NAME"
+
+    Examples:
+        >>> from utils.models import Model
+        >>> from utils.temporary_models import TempModel
+        >>> model_to_arg_string(Model.QWEN_7B)
+        'Model:QWEN_7B'
+        >>> model_to_arg_string(TempModel.QWEN_7B_EXP_V1)
+        'TempModel:QWEN_7B_EXP_V1'
+    """
+    if isinstance(model, Model):
+        return f"Model:{model.name}"
+    elif isinstance(model, TempModel):
+        return f"TempModel:{model.name}"
+    else:
+        raise TypeError(f"Expected Model or TempModel enum, got {type(model)}")
