@@ -78,4 +78,6 @@ generate_comparison_utils = GenerateSgtrPairWiseDatasetUtils(
 output_path = generate_comparison_utils.generate_self_preferred_finetune_dataset()
 
 print("Done!")
+
+# DO NOT REMOVE: For Automation purpose
 print(f"DATASET_PATH={output_path}")
