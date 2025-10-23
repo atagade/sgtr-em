@@ -97,3 +97,5 @@ def write_to_jsonl_for_finetuning(
 
     with open(file_name, "w") as file:
         file.write(formatted_data)
+
+    return file_name

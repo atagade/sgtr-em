@@ -75,6 +75,7 @@ generate_comparison_utils = GenerateSgtrPairWiseDatasetUtils(
     article_keys=xsum_keys,
     pair_mode=GenerateSgtrPairWiseDatasetUtils.PairMode.DETECTION
 )
-generate_comparison_utils.generate_self_preferred_finetune_dataset()
+output_path = generate_comparison_utils.generate_self_preferred_finetune_dataset()
 
 print("Done!")
+print(f"DATASET_PATH={output_path}")
