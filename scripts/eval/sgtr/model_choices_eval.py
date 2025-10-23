@@ -4,20 +4,34 @@ Evaluate SGTR (Self-Recognition) model choices.
 This script evaluates how well a judge model can distinguish between summaries
 from different source models.
 
+IMPORTANT: All-or-Nothing Argument Policy
+    Either provide ALL required arguments via command-line, OR provide NONE to use in-code defaults.
+    Mixing command-line args with defaults is NOT allowed.
+
 Usage:
-    # Command-line specification:
+    # Option 1: Use in-code defaults (modify DEFAULT_* variables in script)
+    python scripts/eval/sgtr/model_choices_eval.py
+
+    # Option 2: Provide ALL required arguments (judge-model, source-models, choice-type, dataset)
     python scripts/eval/sgtr/model_choices_eval.py \
         --judge-model QWEN_05B_SGTR \
         --source-models QWEN_05B CLAUDE_2_1 \
         --choice-type comparison \
         --dataset xsum
 
-    # Explicit type specification (to handle naming collisions):
+    # With explicit type specification to avoid naming collisions:
     python scripts/eval/sgtr/model_choices_eval.py \
         --judge-model TempModel:QWEN_05B_SGTR \
         --source-models Model:QWEN_05B Model:CLAUDE_2_1 \
         --choice-type detection \
         --dataset cnn
+
+    # Mixed Model and TempModel:
+    python scripts/eval/sgtr/model_choices_eval.py \
+        --judge-model TempModel:QWEN_05B_SGTR \
+        --source-models TempModel:QWEN_05B_SGTR CLAUDE_2_1 \
+        --choice-type comparison \
+        --dataset xsum
 """
 
 import sys
@@ -65,19 +79,38 @@ add_models_argument(parser, arg_name='source-models')
 parser.add_argument(
     '--choice-type',
     type=str,
-    default='detection',
+    required=False,  # Required when using CLI mode, but not when using in-code defaults
     choices=['detection', 'comparison'],
-    help='Type of choice evaluation (default: detection)'
+    help='Type of choice evaluation (required)'
 )
 parser.add_argument(
     '--dataset',
     type=str,
-    default='cnn',
+    required=False,  # Required when using CLI mode, but not when using in-code defaults
     choices=['cnn', 'xsum'],
-    help='Dataset to use for evaluation (default: cnn)'
+    help='Dataset to use for evaluation (required)'
 )
 
 args = parser.parse_args()
+
+# ============================================================================
+# VALIDATION: All-or-nothing argument validation
+# Either provide ALL required arguments, OR provide NONE to use defaults
+# ============================================================================
+required_args_provided = [
+    args.judge_model is not None,
+    args.source_models is not None,
+    args.choice_type is not None,
+    args.dataset is not None,
+]
+
+if any(required_args_provided) and not all(required_args_provided):
+    print("Error: Must provide either ALL required arguments or NONE (to use defaults)")
+    print("Required arguments: --judge-model, --source-models, --choice-type, --dataset")
+    print("\nEither:")
+    print("  1. Provide all: --judge-model <model> --source-models <model1> <model2> --choice-type <detection|comparison> --dataset <cnn|xsum>")
+    print("  2. Provide none: Use in-code defaults (modify DEFAULT_* variables in script)")
+    sys.exit(1)
 
 # ============================================================================
 # IN-CODE SPECIFICATION (modify these directly when needed)
@@ -88,11 +121,11 @@ DEFAULT_SOURCE_MODELS = [Model.QWEN_32B, Model.GPT41]
 DEFAULT_CHOICE_TYPE = 'detection'
 DEFAULT_DATASET = 'cnn'
 
-# Parse models from args or use defaults
+# Parse models and parameters from args or use defaults
 judge_model = parse_model_from_args(args, DEFAULT_JUDGE_MODEL, arg_name='judge-model')
 source_models = parse_models_from_args(args, DEFAULT_SOURCE_MODELS, arg_name='source-models')
-choice_type = args.choice_type if args.choice_type else DEFAULT_CHOICE_TYPE
-dataset = args.dataset if args.dataset else DEFAULT_DATASET
+choice_type = args.choice_type if args.choice_type is not None else DEFAULT_CHOICE_TYPE
+dataset = args.dataset if args.dataset is not None else DEFAULT_DATASET
 
 print(f"Judge model: {judge_model.name}")
 print(f"Source models: {[m.name for m in source_models]}")
