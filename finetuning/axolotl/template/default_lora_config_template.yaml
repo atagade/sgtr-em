@@ -1,0 +1,95 @@
+# Axolotl configuration translated from Unsloth config
+base_model: {{ base_model }}
+model_type: AutoModelForCausalLM
+tokenizer_type: AutoTokenizer
+
+# Dataset configuration
+datasets:
+  - path: {{ dataset_path }}
+    type: chat_template
+    message_field_role: role        # Field name for role (in your case: "role")
+    message_field_content: content  # Field name for content (in your case: "content")
+    roles:
+      system: ["system"]           # Map "system" role
+      user: ["user"]               # Map "user" role
+      assistant: ["assistant"]     # Map "assistant" role
+    train_on_split: train
+
+# Output configuration
+output_dir: {{ output_dir }}
+
+# Sequence length
+sequence_len: 2048
+pad_to_sequence_len: false
+
+# LoRA configuration
+adapter: lora
+lora_model_dir:
+lora_r: {{ lora_r }}
+lora_alpha: {{ lora_alpha }}
+lora_dropout: {{ lora_dropout }}
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+lora_fan_in_fan_out: false
+peft_use_rslora: true
+peft_use_dora: false
+
+# Training configuration
+num_epochs: {{ num_epochs }}
+micro_batch_size: {{ micro_batch_size }}
+gradient_accumulation_steps: {{ gradient_accumulation_steps }}
+eval_steps:
+logging_steps: 1
+
+# Optimizer and scheduler
+optimizer: adamw_8bit
+lr_scheduler: linear
+learning_rate: 0.00001
+weight_decay: 0.01
+warmup_steps: 5
+
+# Training settings
+train_on_inputs: false  # Equivalent to train_on_responses_only=true
+group_by_length: false
+bf16: auto
+fp16: false
+tf32: false
+
+# Gradient settings
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+
+# Miscellaneous
+seed: 0
+strict: false
+do_bench_eval: false
+wandb_project: REDACTED
+wandb_entity:
+wandb_watch:
+wandb_run_id:
+wandb_log_model:
+
+# DPO specific (beta parameter from your config)
+dpo_beta: 0.1
+
+# Flash attention
+flash_attention: true
+
+# Saving
+save_safetensors: true
+saves_per_epoch: 1
+
+# Validation
+val_set_size: 0
+eval_sample_packing: false
+eval_batch_size:
+
+# Special tokens
+special_tokens:
