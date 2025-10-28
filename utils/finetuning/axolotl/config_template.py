@@ -38,7 +38,12 @@ class AxolotlConfigTemplate:
         ...     dataset_path="/workspace/data/train.jsonl",
         ...     output_dir="./models/my_model",
         ...     lora_r=16,
-        ...     num_epochs=3
+        ...     lora_alpha=32,
+        ...     lora_dropout=0.0,
+        ...     num_epochs=1,
+        ...     micro_batch_size=2,
+        ...     gradient_accumulation_steps=8,
+        ...     seed=0,
         ... )
     """
     # Required fields
@@ -46,18 +51,18 @@ class AxolotlConfigTemplate:
     dataset_path: str
 
     # Output configuration
-    output_dir: str = "./tmp"
+    output_dir: str
 
     # LoRA configuration
-    lora_r: int = 32
-    lora_alpha: int = 64
-    lora_dropout: float = 0.0
+    lora_r: int
+    lora_alpha: int
+    lora_dropout: float
 
     # Training configuration
-    num_epochs: int = 1
-    micro_batch_size: int = 2
-    gradient_accumulation_steps: int = 8
-    seed: int = 0
+    num_epochs: int
+    micro_batch_size: int
+    gradient_accumulation_steps: int
+    seed: int
 
     def to_dict(self) -> dict:
         """Convert the config to a dictionary for template rendering."""
