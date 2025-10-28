@@ -41,6 +41,18 @@ def train_and_upload(
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
 
+    # Load config and validate
+    import yaml
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+
+    # Sanity check: hub_model_id should NOT be set in the config
+    # Upload is handled separately via --repo-id argument
+    if 'hub_model_id' in config:
+        raise ValueError(
+            f"Config file contains 'hub_model_id' field, which conflicts with this script's upload mechanism. "
+        )
+
     print(f"\n{'='*80}")
     print(f"  Axolotl Training")
     print(f"{'='*80}\n")
@@ -63,11 +75,7 @@ def train_and_upload(
         print("Skipping upload (no repo_id provided)")
         return 0, None
 
-    # Read config to find output directory
-    import yaml
-    with open(config_path, 'r') as f:
-        config = yaml.safe_load(f)
-
+    # Get output directory from config
     output_dir = config.get('output_dir')
     if not output_dir:
         print("❌ Error: Could not find output_dir in config")
@@ -78,7 +86,6 @@ def train_and_upload(
         return 1, None
 
     # Copy the config file to the output directory
-    config_filename = os.path.basename(config_path)
     config_dest = os.path.join(output_dir, 'axolotl.yaml')
 
     print(f"Copying config file to output directory...")
