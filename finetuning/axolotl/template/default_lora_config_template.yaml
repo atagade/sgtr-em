@@ -67,7 +67,7 @@ gradient_checkpointing_kwargs:
   use_reentrant: false
 
 # Miscellaneous
-seed: 0
+seed: {{ seed }}
 strict: false
 do_bench_eval: false
 wandb_project: REDACTED

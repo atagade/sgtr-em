@@ -75,6 +75,7 @@ LORA_DROPOUT = 0.0              # Dropout for LoRA layers
 NUM_EPOCHS = 1                  # Number of training epochs
 MICRO_BATCH_SIZE = 2            # Batch size per GPU
 GRADIENT_ACCUMULATION_STEPS = 8 # Effective batch = micro_batch * accumulation
+SEED = 0                        # Random seed for reproducibility
 
 # Generated config output path (relative to project root)
 CONFIG_OUTPUT_PATH = f'finetuning/axolotl/configs/{FINETUNE_TARGET_MODEL.value}_sgtr_config.yaml'
@@ -195,6 +196,7 @@ training_config = AxolotlConfigTemplate(
     num_epochs=NUM_EPOCHS,
     micro_batch_size=MICRO_BATCH_SIZE,
     gradient_accumulation_steps=GRADIENT_ACCUMULATION_STEPS,
+    seed=SEED,
 )
 
 print(f"Base model: {training_config.base_model}")

@@ -30,6 +30,7 @@ class AxolotlConfigTemplate:
         micro_batch_size: Batch size per GPU (default: 2)
         gradient_accumulation_steps: Steps to accumulate gradients before update (default: 8)
                                      Effective batch size = micro_batch_size * gradient_accumulation_steps
+        seed: Random seed for reproducibility (default: 3407)
 
     Example:
         >>> config = AxolotlConfigTemplate(
@@ -56,6 +57,7 @@ class AxolotlConfigTemplate:
     num_epochs: int = 1
     micro_batch_size: int = 2
     gradient_accumulation_steps: int = 8
+    seed: int = 0
 
     def to_dict(self) -> dict:
         """Convert the config to a dictionary for template rendering."""
