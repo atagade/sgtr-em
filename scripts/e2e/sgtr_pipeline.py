@@ -14,6 +14,7 @@ This script automates the complete workflow:
 import subprocess
 import sys
 import os
+import shutil
 
 # Get the project root and add to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
@@ -284,6 +285,14 @@ if training_result.returncode != 0:
     print(f"\n❌ Error: Axolotl training failed with exit code {training_result.returncode}")
     sys.exit(training_result.returncode)
 
+# Copy the config file to the model output directory
+config_dest = os.path.join(os.path.join(project_root, MODEL_OUTPUT_DIR), 'axolotl.yaml')
+print(f"Copying training config to model directory...")
+print(f"  From: {config_output_path}")
+print(f"  To: {config_dest}")
+shutil.copy2(config_output_path, config_dest)
+print(f"✓ Config copied successfully\n")
+
 print(f"\n✓ Training completed successfully\n")
 
 #############################################
@@ -295,15 +304,6 @@ if HF_REPO_ID is not None:
     print(f"{'='*80}\n")
 
     model_path = os.path.join(project_root, MODEL_OUTPUT_DIR)
-
-    # Copy the config file to the model output directory
-    import shutil
-    config_dest = os.path.join(model_path, 'axolotl.yaml')
-    print(f"Copying training config to model directory...")
-    print(f"  From: {config_output_path}")
-    print(f"  To: {config_dest}")
-    shutil.copy2(config_output_path, config_dest)
-    print(f"✓ Config copied successfully\n")
 
     try:
         repo_url = upload_to_huggingface(
