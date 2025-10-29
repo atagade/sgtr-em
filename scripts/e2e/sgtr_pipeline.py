@@ -286,12 +286,26 @@ if training_result.returncode != 0:
     sys.exit(training_result.returncode)
 
 # Copy the config file to the model output directory
-config_dest = os.path.join(os.path.join(project_root, MODEL_OUTPUT_DIR), 'axolotl.yaml')
+model_output_path = os.path.join(project_root, MODEL_OUTPUT_DIR)
+config_dest = os.path.join(model_output_path, 'axolotl.yaml')
 print(f"Copying training config to model directory...")
 print(f"  From: {config_output_path}")
 print(f"  To: {config_dest}")
 shutil.copy2(config_output_path, config_dest)
 print(f"✓ Config copied successfully\n")
+
+# Save base model info to track the original model
+import json
+base_model_info = {
+    "finetune_target_model": FINETUNE_TARGET_MODEL.value,
+}
+
+base_model_info_path = os.path.join(model_output_path, 'base_model_info.json')
+print(f"Saving model info...")
+print(f"  To: {base_model_info_path}")
+with open(base_model_info_path, 'w') as f:
+    json.dump(base_model_info, f, indent=2)
+print(f"✓ Model info saved successfully\n")
 
 print(f"\n✓ Training completed successfully\n")
 
