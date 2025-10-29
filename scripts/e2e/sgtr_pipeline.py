@@ -27,7 +27,7 @@ from utils.models import Model, Backend
 from utils.temporary_models import TempModel
 from utils.argparse_utils import model_to_arg_string
 from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils
-from utils.models_utils import get_model_id, add_temp_model
+from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
 from utils.pipeline_utils import run_script
@@ -178,8 +178,64 @@ print(f"\n{'='*80}")
 print(f"  Step 3: Finetune {FINETUNE_TARGET_MODEL.name}")
 print(f"{'='*80}\n")
 
-# Get base model ID
+# Get base model ID and check if it's a LoRA model
 base_model_id = get_model_id(FINETUNE_TARGET_MODEL)
+model_metadata = get_model_metadata(FINETUNE_TARGET_MODEL)
+
+# If the target model is a LoRA model, we need to merge it first
+if model_metadata.is_lora:
+    print(f"⚠️  {FINETUNE_TARGET_MODEL.name} is a LoRA model. Merging with base model first...")
+
+    # Import required libraries
+    from huggingface_hub import snapshot_download
+
+    try:
+        # Download the entire LoRA model directory
+        print(f"   Downloading LoRA model: {base_model_id}")
+        lora_model_dir = snapshot_download(repo_id=base_model_id)
+        print(f"   Downloaded to: {lora_model_dir}")
+
+        # Look for axolotl.yaml config file
+        axolotl_config_path = os.path.join(lora_model_dir, 'axolotl.yaml')
+
+        if not os.path.exists(axolotl_config_path):
+            print(f"❌ Error: Could not find axolotl.yaml in {lora_model_dir}")
+            sys.exit(1)
+
+        print(f"   Found config: {axolotl_config_path}")
+
+        # Set merge output directory
+        merge_output_dir = f'./models/{FINETUNE_TARGET_MODEL.value}_merged'
+        merge_output_dir_abs = os.path.abspath(os.path.join(project_root, merge_output_dir))
+
+        print(f"\n   Merging LoRA adapter with base model...")
+        print(f"   Command: axolotl merge-lora {axolotl_config_path} --lora-model-dir={lora_model_dir} --output-dir={merge_output_dir_abs}\n")
+
+        # Run axolotl merge
+        merge_result = subprocess.run(
+            [
+                'axolotl', 'merge-lora', axolotl_config_path,
+                '--lora-model-dir', lora_model_dir,
+                '--output-dir', merge_output_dir_abs
+            ],
+            cwd=project_root
+        )
+
+        if merge_result.returncode != 0:
+            print(f"\n❌ Error: LoRA merge failed with exit code {merge_result.returncode}")
+            sys.exit(merge_result.returncode)
+
+        # Update base_model_id to use the merged model
+        merged_base_model_id = merge_output_dir_abs
+
+        print(f"\n✓ LoRA merge completed successfully")
+        print(f"   Merged model path: {merged_base_model_id}\n")
+
+    except Exception as e:
+        print(f"\n❌ Error merging LoRA model: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 # Resolve paths
 config_output_path = os.path.join(project_root, CONFIG_OUTPUT_PATH)
@@ -187,7 +243,7 @@ template_path = os.path.join(project_root, CONFIG_TEMPLATE_PATH)
 
 # Create training configuration using parameters from configuration section
 training_config = AxolotlConfigTemplate(
-    base_model=base_model_id,
+    base_model=merged_base_model_id,
     dataset_path=dataset_path,
     output_dir=MODEL_OUTPUT_DIR,
     lora_r=LORA_R,
