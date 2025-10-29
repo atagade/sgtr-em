@@ -296,6 +296,15 @@ if HF_REPO_ID is not None:
 
     model_path = os.path.join(project_root, MODEL_OUTPUT_DIR)
 
+    # Copy the config file to the model output directory
+    import shutil
+    config_dest = os.path.join(model_path, 'axolotl.yaml')
+    print(f"Copying training config to model directory...")
+    print(f"  From: {config_output_path}")
+    print(f"  To: {config_dest}")
+    shutil.copy2(config_output_path, config_dest)
+    print(f"✓ Config copied successfully\n")
+
     try:
         repo_url = upload_to_huggingface(
             model_path=model_path,
