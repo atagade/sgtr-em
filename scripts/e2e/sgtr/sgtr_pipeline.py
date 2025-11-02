@@ -106,7 +106,7 @@ model_output_dir = f'./models/{cfg.finetune_target_model.value}_sgtr'
 #############################################
 run_script(
     'scripts/data/sgtr/generate_summaries.py',
-    args=['--models', model_to_arg_string(cfg.finetune_target_model)],
+    args=['--models', model_to_arg_string(cfg.finetune_target_model), '--skip-existing'],
     description=f'Step 1: Generate summaries with base model {cfg.finetune_target_model.name} ({cfg.finetune_target_model.value})',
     project_root=project_root
 )
@@ -373,7 +373,7 @@ print(f"Generating summaries for source models on evaluation dataset...")
 print(f"Source models: {[m.name for m in cfg.sgtr_eval_source_models]}")
 run_script(
     'scripts/data/sgtr/generate_summaries.py',
-    args=['--models', *[model_to_arg_string(m) for m in cfg.sgtr_eval_source_models], '--dataset', cfg.sgtr_eval_dataset],
+    args=['--models', *[model_to_arg_string(m) for m in cfg.sgtr_eval_source_models], '--dataset', cfg.sgtr_eval_dataset, '--skip-existing'],
     description=f'Generate summaries with source models {[m.name for m in cfg.sgtr_eval_source_models]} on {cfg.sgtr_eval_dataset}',
     project_root=project_root
 )
