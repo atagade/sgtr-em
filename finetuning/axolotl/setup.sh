@@ -1,5 +1,4 @@
-pip3 install packaging ninja
-pip3 install -e '.[flash-attn,deepspeed]'
+pip3 install anthropic
 
 wandb login
 huggingface-cli login
