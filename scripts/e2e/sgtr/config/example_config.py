@@ -43,6 +43,7 @@ config = SgtrPipelineConfig(
     hf_repo_private=True,
 
     # Evaluation
+    sgtr_eval_source_models=[Model.QWEN_05B, Model.CLAUDE_2_1],
     sgtr_eval_choice_type="comparison",
     sgtr_eval_dataset="cnn",  # Must be different from training dataset
 )

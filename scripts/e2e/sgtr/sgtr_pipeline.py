@@ -7,7 +7,7 @@ This script automates the complete workflow:
 3. Finetune the model
 4. Upload the finetuned model
 5. Generate summaries with the finetuned model
-6. Generate SGTR evaluation dataset
+6. Generate summaries for all models on evaluation dataset
 7. Run SGTR evaluation on the finetuned model
 
 Usage:
@@ -94,6 +94,7 @@ print(f"  Training Dataset: {cfg.sgtr_training_dataset}")
 print(f"  Pair Mode: {cfg.sgtr_pair_mode.value}")
 print(f"  Other Models: {[m.value for m in cfg.sgtr_other_models]}")
 print(f"  Evaluation Dataset: {cfg.sgtr_eval_dataset}")
+print(f"  Evaluation Source Models: {[m.value for m in cfg.sgtr_eval_source_models]}")
 print(f"  HF Upload: {cfg.hf_repo_id if cfg.hf_repo_id else 'Disabled'}\n")
 
 # Derived paths
@@ -361,13 +362,33 @@ run_script(
 print(f"\n✓ Summaries generated with finetuned model\n")
 
 #############################################
-# Step 6: Run SGTR Evaluation
+# Step 6: Generate summaries for evaluation dataset
 #############################################
 print(f"\n{'='*80}")
-print(f"  Step 6 & 7: Run SGTR Evaluation")
+print(f"  Step 6: Generate summaries for evaluation dataset")
 print(f"{'='*80}\n")
 
-print(f"Evaluating finetuned model {cfg.finetuned_model_enum_name} against {[m.name for m in cfg.sgtr_other_models]}")
+# Generate summaries for all source models on eval dataset
+print(f"Generating summaries for source models on evaluation dataset...")
+print(f"Source models: {[m.name for m in cfg.sgtr_eval_source_models]}")
+run_script(
+    'scripts/data/sgtr/generate_summaries.py',
+    args=['--models', *[model_to_arg_string(m) for m in cfg.sgtr_eval_source_models], '--dataset', cfg.sgtr_eval_dataset],
+    description=f'Generate summaries with source models {[m.name for m in cfg.sgtr_eval_source_models]} on {cfg.sgtr_eval_dataset}',
+    project_root=project_root
+)
+
+print(f"\n✓ Summaries generated for all source models on evaluation dataset\n")
+
+#############################################
+# Step 7: Run SGTR Evaluation
+#############################################
+print(f"\n{'='*80}")
+print(f"  Step 7: Run SGTR Evaluation")
+print(f"{'='*80}\n")
+
+print(f"Evaluating finetuned model {cfg.finetuned_model_enum_name}")
+print(f"Source models: {[m.name for m in cfg.sgtr_eval_source_models]}")
 print(f"Choice type: {cfg.sgtr_eval_choice_type}")
 print(f"Dataset: {cfg.sgtr_eval_dataset}\n")
 
@@ -376,11 +397,11 @@ eval_output = run_script(
     'scripts/eval/sgtr/model_choices_eval.py',
     args=[
         '--judge-model', f'TempModel:{cfg.finetuned_model_enum_name}',
-        '--source-models', f'TempModel:{cfg.finetuned_model_enum_name}', *[model_to_arg_string(m) for m in cfg.sgtr_other_models],
+        '--source-models', *[model_to_arg_string(m) for m in cfg.sgtr_eval_source_models],
         '--choice-type', cfg.sgtr_eval_choice_type,
         '--dataset', cfg.sgtr_eval_dataset
     ],
-    description=f'SGTR Evaluation: Judge={cfg.finetuned_model_enum_name}, Sources={cfg.finetuned_model_enum_name} + {[m.name for m in cfg.sgtr_other_models]}',
+    description=f'SGTR Evaluation: Judge={cfg.finetuned_model_enum_name}, Sources={[m.name for m in cfg.sgtr_eval_source_models]}',
     capture_output=True,
     project_root=project_root
 )

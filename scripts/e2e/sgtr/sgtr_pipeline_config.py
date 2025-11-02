@@ -83,6 +83,10 @@ class SgtrPipelineConfig:
     # IMPORTANT: Must be different from sgtr_training_dataset
     sgtr_eval_dataset: str = None
 
+    # Source models for evaluation (models to compare in evaluation)
+    # List of models to use as sources in the evaluation
+    sgtr_eval_source_models: List[Model] = None
+
     def __post_init__(self):
         """Validate configuration after initialization."""
         # Validate pipeline type
@@ -106,6 +110,8 @@ class SgtrPipelineConfig:
             raise ValueError("sgtr_eval_choice_type is required")
         if self.sgtr_eval_dataset is None:
             raise ValueError("sgtr_eval_dataset is required")
+        if self.sgtr_eval_source_models is None:
+            raise ValueError("sgtr_eval_source_models is required")
 
         # Validate types
         if not isinstance(self.finetune_target_model, Model):
@@ -120,6 +126,13 @@ class SgtrPipelineConfig:
         for i, model in enumerate(self.sgtr_other_models):
             if not isinstance(model, Model):
                 raise ValueError(f"sgtr_other_models[{i}] must be a Model enum, got {type(model)}")
+
+        if not isinstance(self.sgtr_eval_source_models, list) or len(self.sgtr_eval_source_models) == 0:
+            raise ValueError("sgtr_eval_source_models must be a non-empty list")
+
+        for i, model in enumerate(self.sgtr_eval_source_models):
+            if not isinstance(model, Model):
+                raise ValueError(f"sgtr_eval_source_models[{i}] must be a Model enum, got {type(model)}")
 
         # Validate dataset values
         if self.sgtr_training_dataset not in ['xsum', 'cnn']:
