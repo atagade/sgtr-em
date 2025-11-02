@@ -76,6 +76,35 @@ def upload_to_huggingface(
     if commit_message is None:
         commit_message = f"Upload model from {model_path}"
 
+    # Clean up README.md to remove invalid dataset references
+    readme_path = os.path.join(model_path, "README.md")
+    if os.path.exists(readme_path):
+        print("Cleaning README.md to remove invalid dataset references...")
+        try:
+            with open(readme_path, 'r') as f:
+                content = f.read()
+
+            # Remove the datasets field from the YAML frontmatter
+            import re
+            # Match the datasets field in the YAML frontmatter
+            # Handles formats like:
+            #   datasets:
+            #   - "path/to/file.jsonl"
+            # or:
+            #   datasets: ["path/to/file.jsonl"]
+            # or:
+            #   datasets:
+            #     - path/to/file.jsonl
+            pattern = r'^datasets:.*?(?=\n\w+:|$)'
+            content = re.sub(pattern, '', content, flags=re.MULTILINE | re.DOTALL)
+
+            with open(readme_path, 'w') as f:
+                f.write(content)
+            print("✓ README.md cleaned")
+        except Exception as e:
+            print(f"Warning: Could not clean README.md: {e}")
+            print("Continuing with upload anyway...")
+
     # Upload the model
     print(f"Uploading model from {model_path} to {repo_id}...")
     print(f"Commit message: {commit_message}")
