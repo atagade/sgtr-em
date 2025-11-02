@@ -90,7 +90,7 @@ MODEL_OUTPUT_DIR = f'./models/{FINETUNE_TARGET_MODEL.value}_sgtr'
 # Set to None to skip upload, or provide your HuggingFace repo ID
 # Format: "username/repo-name" (e.g., "myuser/qwen-0.5b-sgtr")
 # Note: HF_TOKEN must be set in .env file for upload to work
-HF_REPO_ID = None  # Example: "REDACTED/qwen_0.5_sgtr_random"
+HF_REPO_ID = "REDACTED/shawn_test_qwen_0.5_sgtr_random"  # Example: "REDACTED/qwen_0.5_sgtr_random"
 
 # Make the HuggingFace repository private
 HF_REPO_PRIVATE = True
@@ -99,10 +99,10 @@ HF_REPO_PRIVATE = True
 # SGTR Evaluation Configuration
 # -----------------------------------------------------------------------------
 # Choice type for evaluation
-SGTR_EVAL_CHOICE_TYPE = "comparison"  # "detection" or "comparison"
+SGTR_EVAL_CHOICE_TYPE = "detection"  # "detection" or "comparison"
 
-# Dataset for evaluation
-SGTR_EVAL_DATASET = "xsum"  # "cnn" or "xsum"
+# Dataset for evaluation. This is enforced to be different from training dataset
+SGTR_EVAL_DATASET = "cnn"  # "cnn" or "xsum"
 
 ################################################################################
 # END CONFIGURATION
