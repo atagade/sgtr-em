@@ -161,6 +161,7 @@ print(f"{'='*80}\n")
 # Get base model ID and check if it's a LoRA model
 base_model_id = get_model_id(cfg.finetune_target_model)
 model_metadata = get_model_metadata(cfg.finetune_target_model)
+training_base_mode_id = base_model_id
 
 # If the target model is a LoRA model, we need to merge it first
 if model_metadata.is_lora:
@@ -206,10 +207,10 @@ if model_metadata.is_lora:
             sys.exit(merge_result.returncode)
 
         # Update base_model_id to use the merged model
-        merged_base_model_id = merge_output_dir_abs
+        training_base_mode_id = merge_output_dir_abs
 
         print(f"\n✓ LoRA merge completed successfully")
-        print(f"   Merged model path: {merged_base_model_id}\n")
+        print(f"   Merged model path: {training_base_mode_id}\n")
 
     except Exception as e:
         print(f"\n❌ Error merging LoRA model: {e}")
@@ -223,7 +224,7 @@ template_path = os.path.join(project_root, cfg.config_template_path)
 
 # Create training configuration using parameters from configuration section
 training_config = AxolotlConfigTemplate(
-    base_model=merged_base_model_id,
+    base_model=training_base_mode_id,
     dataset_path=dataset_path,
     output_dir=model_output_dir,
     lora_r=cfg.lora_r,
