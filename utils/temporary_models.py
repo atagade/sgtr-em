@@ -25,7 +25,6 @@ class TempModel(Enum):
     This ensures all changes to official models are intentional and reviewed.
     """
     # ADD-TEMP-MODEL-BEGIN #
-    QWEN_05B_SGTR = "hf_qwen_0.5b_sgtr"
     # ADD-TEMP-MODEL-END #
 
 
@@ -37,10 +36,5 @@ class TempModel(Enum):
 # ),
 TEMP_MODEL_METADATA = {
     # ADD-TEMP-MODEL-METADATA-BEGIN #
-    "hf_qwen_0.5b_sgtr": ModelMetadata(
-        model_id="REDACTED/shawn-test-qwen_95B_sgtr_xsum",
-        backend=Backend.HUGGING_FACE,
-        is_lora=True
-    ),
     # ADD-TEMP-MODEL-METADATA-END #
 }
