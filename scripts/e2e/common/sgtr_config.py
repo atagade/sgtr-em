@@ -1,8 +1,8 @@
 """
-SGTR-specific configuration component classes.
+SGTR and ASGTR configuration component classes.
 
-This module provides reusable SGTR-specific configuration components that can be
-composed into different SGTR pipeline configurations.
+This module provides reusable SGTR/ASGTR-specific configuration components that can be
+composed into different SGTR/ASGTR pipeline configurations.
 """
 
 from dataclasses import dataclass
@@ -49,15 +49,60 @@ class SgtrTrainingDataGenerationConfig:
             if not isinstance(model, Model):
                 raise ValueError(f"sgtr_other_models[{i}] must be a Model enum, got {type(model)}")
 
+@dataclass
+class AsgtrTrainingDataGenerationConfig:
+    """Configuration for ASGTR training data generation.
+
+    This is ASGTR-specific and handles the pairwise comparison dataset generation.
+    """
+
+    # Dataset to use for training ("xsum" or "cnn")
+    asgtr_training_dataset: str = None
+
+    # ASGTR mode: COMPARISON or DETECTION
+    asgtr_pair_mode: GenerateSgtrPairWiseDatasetUtils.PairMode = None
+
+    # ASGTR mode: PREFER_OTHER or RANDOM_SELF_OTHER
+    asgtr_mode: GenerateSgtrPairWiseDatasetUtils.ASGTR_MODE = None
+
+    # Models to compare against for ASGTR
+    asgtr_other_models: List[Model] = None
+
+    def __post_init__(self):
+        """Validate training data configuration."""
+        if self.asgtr_training_dataset is None:
+            raise ValueError("asgtr_training_dataset is required")
+        if self.asgtr_training_dataset not in ['xsum', 'cnn']:
+            raise ValueError(f"asgtr_training_dataset must be 'xsum' or 'cnn', got '{self.asgtr_training_dataset}'")
+
+        if self.asgtr_pair_mode is None:
+            raise ValueError("asgtr_pair_mode is required")
+        if not isinstance(self.asgtr_pair_mode, GenerateSgtrPairWiseDatasetUtils.PairMode):
+            raise ValueError(f"asgtr_pair_mode must be a PairMode enum, got {type(self.asgtr_pair_mode)}")
+
+        if self.asgtr_mode is None:
+            raise ValueError("asgtr_mode is required")
+        if not isinstance(self.asgtr_mode, GenerateSgtrPairWiseDatasetUtils.ASGTR_MODE):
+            raise ValueError(f"asgtr_mode must be an ASGTR_MODE enum, got {type(self.asgtr_mode)}")
+
+        if self.asgtr_other_models is None:
+            raise ValueError("asgtr_other_models is required")
+        if not isinstance(self.asgtr_other_models, list) or len(self.asgtr_other_models) == 0:
+            raise ValueError("asgtr_other_models must be a non-empty list")
+
+        for i, model in enumerate(self.asgtr_other_models):
+            if not isinstance(model, Model):
+                raise ValueError(f"asgtr_other_models[{i}] must be a Model enum, got {type(model)}")
+
 
 @dataclass
 class SgtrEvaluationConfig:
-    """Configuration for SGTR evaluation.
+    """Configuration for SGTR/ASGTR evaluation.
 
-    This is SGTR-specific and handles the evaluation setup.
+    This config is used by both SGTR and ASGTR pipelines as the evaluation logic is identical.
 
     Evaluation structure:
-    - Judge model: The finetuned SGTR model
+    - Judge model: The finetuned model (SGTR or ASGTR)
     - source-model-1: The finetune target model (base model before finetuning)
     - source-model-2: Each model in sgtr_source_models_other (evaluated separately)
 
@@ -95,5 +140,4 @@ class SgtrEvaluationConfig:
         for i, model in enumerate(self.sgtr_source_models_other):
             if not isinstance(model, Model):
                 raise ValueError(f"sgtr_source_models_other[{i}] must be a Model enum, got {type(model)}")
-
 

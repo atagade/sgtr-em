@@ -17,6 +17,7 @@ from scripts.e2e.common.base_config import (
 from scripts.e2e.common.sgtr_config import (
     SgtrTrainingDataGenerationConfig,
     SgtrEvaluationConfig,
+    AsgtrTrainingDataGenerationConfig,
 )
 
 __all__ = [
@@ -24,7 +25,9 @@ __all__ = [
     'ModelConfig',
     'FinetuningConfig',
     'HuggingFaceConfig',
-    # SGTR-specific component configs
+    # SGTR component configs (SgtrEvaluationConfig is shared with ASGTR)
     'SgtrTrainingDataGenerationConfig',
     'SgtrEvaluationConfig',
+    # ASGTR component configs
+    'AsgtrTrainingDataGenerationConfig',
 ]
