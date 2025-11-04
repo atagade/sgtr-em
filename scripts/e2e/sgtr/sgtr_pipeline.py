@@ -116,7 +116,7 @@ run_script(
 #############################################
 if cfg.sgtr_training_data_gen_config.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.DETECTION:
     output = run_script(
-        'scripts/data/sgtr/generate_detection_datasets.py',
+        'scripts/data/sgtr/generate_sgtr_detection_datasets.py',
         args=[
             '--finetune-model', model_to_arg_string(cfg.model_config.finetune_target_model),
             '--other-models', *[model_to_arg_string(m) for m in cfg.sgtr_training_data_gen_config.sgtr_other_models],
@@ -128,7 +128,7 @@ if cfg.sgtr_training_data_gen_config.sgtr_pair_mode == GenerateSgtrPairWiseDatas
     )
 elif cfg.sgtr_training_data_gen_config.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.COMPARISON:
     output = run_script(
-        'scripts/data/sgtr/generate_comparison_datasets.py',
+        'scripts/data/sgtr/generate_sgtr_comparison_datasets.py',
         args=[
             '--finetune-model', model_to_arg_string(cfg.model_config.finetune_target_model),
             '--other-models', *[model_to_arg_string(m) for m in cfg.sgtr_training_data_gen_config.sgtr_other_models],
