@@ -12,24 +12,27 @@ Usage:
     # Option 1: Use in-code defaults (modify DEFAULT_* variables in script)
     python scripts/eval/sgtr/model_choices_eval.py
 
-    # Option 2: Provide ALL required arguments (judge-model, source-models, choice-type, dataset)
+    # Option 2: Provide ALL required arguments (judge-model, source-model-1, source-model-2, choice-type, dataset)
     python scripts/eval/sgtr/model_choices_eval.py \
         --judge-model QWEN_05B_SGTR \
-        --source-models QWEN_05B CLAUDE_2_1 \
+        --source-model-1 QWEN_05B \
+        --source-model-2 CLAUDE_2_1 \
         --choice-type comparison \
         --dataset xsum
 
     # With explicit type specification to avoid naming collisions:
     python scripts/eval/sgtr/model_choices_eval.py \
         --judge-model TempModel:QWEN_05B_SGTR \
-        --source-models Model:QWEN_05B Model:CLAUDE_2_1 \
+        --source-model-1 Model:QWEN_05B \
+        --source-model-2 Model:CLAUDE_2_1 \
         --choice-type detection \
         --dataset cnn
 
     # Mixed Model and TempModel:
     python scripts/eval/sgtr/model_choices_eval.py \
         --judge-model TempModel:QWEN_05B_SGTR \
-        --source-models TempModel:QWEN_05B_SGTR CLAUDE_2_1 \
+        --source-model-1 TempModel:QWEN_05B_SGTR \
+        --source-model-2 CLAUDE_2_1 \
         --choice-type comparison \
         --dataset xsum
 """
@@ -48,7 +51,7 @@ from utils.article_summary_utils import ArticleSummaryUtils
 from utils.models import Model
 from utils.temporary_models import TempModel
 from utils.models_utils import get_model_id
-from utils.argparse_utils import add_model_argument, add_models_argument, parse_model_from_args, parse_models_from_args
+from utils.argparse_utils import add_model_argument, parse_model_from_args
 from tqdm import tqdm
 from transformers import pipeline
 from utils.prompts.article_prompts import (
@@ -63,19 +66,20 @@ parser = argparse.ArgumentParser(
     epilog='''
 Examples:
   # Auto-detect model type:
-  %(prog)s --judge-model QWEN_05B_SGTR --source-models QWEN_05B CLAUDE_2_1
+  %(prog)s --judge-model QWEN_05B_SGTR --source-model-1 QWEN_05B --source-model-2 CLAUDE_2_1
 
   # Explicit type (to avoid naming collisions):
-  %(prog)s --judge-model TempModel:QWEN_05B_SGTR --source-models Model:QWEN_05B Model:CLAUDE_2_1
+  %(prog)s --judge-model TempModel:QWEN_05B_SGTR --source-model-1 Model:QWEN_05B --source-model-2 Model:CLAUDE_2_1
 
   # Specify choice type and dataset:
-  %(prog)s --judge-model QWEN_05B_SGTR --source-models QWEN_05B CLAUDE_2_1 --choice-type comparison --dataset xsum
+  %(prog)s --judge-model QWEN_05B_SGTR --source-model-1 QWEN_05B --source-model-2 CLAUDE_2_1 --choice-type comparison --dataset xsum
     ''',
     formatter_class=argparse.RawDescriptionHelpFormatter
 )
 
 add_model_argument(parser, arg_name='judge-model')
-add_models_argument(parser, arg_name='source-models')
+add_model_argument(parser, arg_name='source-model-1')
+add_model_argument(parser, arg_name='source-model-2')
 parser.add_argument(
     '--choice-type',
     type=str,
@@ -99,16 +103,17 @@ args = parser.parse_args()
 # ============================================================================
 required_args_provided = [
     args.judge_model is not None,
-    args.source_models is not None,
+    args.source_model_1 is not None,
+    args.source_model_2 is not None,
     args.choice_type is not None,
     args.dataset is not None,
 ]
 
 if any(required_args_provided) and not all(required_args_provided):
     print("Error: Must provide either ALL required arguments or NONE (to use defaults)")
-    print("Required arguments: --judge-model, --source-models, --choice-type, --dataset")
+    print("Required arguments: --judge-model, --source-model-1, --source-model-2, --choice-type, --dataset")
     print("\nEither:")
-    print("  1. Provide all: --judge-model <model> --source-models <model1> <model2> --choice-type <detection|comparison> --dataset <cnn|xsum>")
+    print("  1. Provide all: --judge-model <model> --source-model-1 <model1> --source-model-2 <model2> --choice-type <detection|comparison> --dataset <cnn|xsum>")
     print("  2. Provide none: Use in-code defaults (modify DEFAULT_* variables in script)")
     sys.exit(1)
 
@@ -117,25 +122,23 @@ if any(required_args_provided) and not all(required_args_provided):
 # These are used when command-line arguments are not provided
 # ============================================================================
 DEFAULT_JUDGE_MODEL = Model.QWEN_05B
-DEFAULT_SOURCE_MODELS = [Model.QWEN_32B, Model.GPT41]
+DEFAULT_SOURCE_MODEL_1 = Model.QWEN_32B
+DEFAULT_SOURCE_MODEL_2 = Model.GPT41
 DEFAULT_CHOICE_TYPE = 'detection'
 DEFAULT_DATASET = 'cnn'
 
 # Parse models and parameters from args or use defaults
 judge_model = parse_model_from_args(args, DEFAULT_JUDGE_MODEL, arg_name='judge-model')
-source_models = parse_models_from_args(args, DEFAULT_SOURCE_MODELS, arg_name='source-models')
+source_model_1 = parse_model_from_args(args, DEFAULT_SOURCE_MODEL_1, arg_name='source-model-1')
+source_model_2 = parse_model_from_args(args, DEFAULT_SOURCE_MODEL_2, arg_name='source-model-2')
 choice_type = args.choice_type if args.choice_type is not None else DEFAULT_CHOICE_TYPE
 dataset = args.dataset if args.dataset is not None else DEFAULT_DATASET
 
 print(f"Judge model: {judge_model.name}")
-print(f"Source models: {[m.name for m in source_models]}")
+print(f"Source model 1: {source_model_1.name}")
+print(f"Source model 2: {source_model_2.name}")
 print(f"Choice type: {choice_type}")
 print(f"Dataset: {dataset}")
-
-# Validate that we have exactly 2 source models
-if len(source_models) != 2:
-    print(f"Error: Exactly 2 source models are required, got {len(source_models)}")
-    sys.exit(1)
 
 # Set up
 JUDGE_MODEL = "judge_model"
@@ -145,8 +148,8 @@ SUMMARY_SRC_2 = "summary_source_2"
 # Build choice scheme from parsed arguments
 choice_schemes = [{
     JUDGE_MODEL: judge_model,
-    SUMMARY_SRC_1: source_models[0],
-    SUMMARY_SRC_2: source_models[1],
+    SUMMARY_SRC_1: source_model_1,
+    SUMMARY_SRC_2: source_model_2,
 }]
 summaries, articles, article_keys = load_data(dataset)
 
