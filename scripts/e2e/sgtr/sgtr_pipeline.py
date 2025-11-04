@@ -89,57 +89,57 @@ print(f"✓ Configuration loaded and validated successfully\n")
 
 # Print configuration summary
 print(f"Configuration Summary:")
-print(f"  Target Model: {cfg.finetune_target_model.value}")
-print(f"  Training Dataset: {cfg.sgtr_training_dataset}")
-print(f"  Pair Mode: {cfg.sgtr_pair_mode.value}")
-print(f"  Other Models: {[m.value for m in cfg.sgtr_other_models]}")
-print(f"  Evaluation Dataset: {cfg.sgtr_eval_dataset}")
-print(f"  Evaluation Source Models: {[m.value for m in cfg.sgtr_eval_source_models]}")
-print(f"  HF Upload: {cfg.hf_repo_id if cfg.hf_repo_id else 'Disabled'}\n")
+print(f"  Target Model: {cfg.model_config.finetune_target_model.value}")
+print(f"  Training Dataset: {cfg.sgtr_training_data_gen_config.sgtr_training_dataset}")
+print(f"  Pair Mode: {cfg.sgtr_training_data_gen_config.sgtr_pair_mode.value}")
+print(f"  Other Models: {[m.value for m in cfg.sgtr_training_data_gen_config.sgtr_other_models]}")
+print(f"  Evaluation Dataset: {cfg.sgtr_eval_config.sgtr_eval_dataset}")
+print(f"  Evaluation Source Models: {[m.value for m in cfg.sgtr_eval_config.sgtr_eval_source_models]}")
+print(f"  HF Upload: {cfg.huggingface_config.hf_repo_id if cfg.huggingface_config.hf_repo_id else 'Disabled'}\n")
 
 # Derived paths
-config_output_path = f'finetuning/axolotl/configs/{cfg.finetune_target_model.value}_sgtr_config.yaml'
-model_output_dir = f'./models/{cfg.finetune_target_model.value}_sgtr'
+config_output_path = f'finetuning/axolotl/configs/{cfg.model_config.finetune_target_model.value}_sgtr_config.yaml'
+model_output_dir = f'./models/{cfg.model_config.finetune_target_model.value}_sgtr'
 
 #############################################
 # Step 1: Generate summaries with base model
 #############################################
 run_script(
     'scripts/data/sgtr/generate_summaries.py',
-    args=['--models', model_to_arg_string(cfg.finetune_target_model), '--skip-existing'],
-    description=f'Step 1: Generate summaries with base model {cfg.finetune_target_model.name} ({cfg.finetune_target_model.value})',
+    args=['--models', model_to_arg_string(cfg.model_config.finetune_target_model), '--skip-existing'],
+    description=f'Step 1: Generate summaries with base model {cfg.model_config.finetune_target_model.name} ({cfg.model_config.finetune_target_model.value})',
     project_root=project_root
 )
 
 #############################################
 # Step 2: Generate finetuning datasets
 #############################################
-if cfg.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.DETECTION:
+if cfg.sgtr_training_data_gen_config.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.DETECTION:
     output = run_script(
         'scripts/data/sgtr/generate_detection_datasets.py',
         args=[
-            '--finetune-model', model_to_arg_string(cfg.finetune_target_model),
-            '--other-models', *[model_to_arg_string(m) for m in cfg.sgtr_other_models],
-            '--dataset', cfg.sgtr_training_dataset
+            '--finetune-model', model_to_arg_string(cfg.model_config.finetune_target_model),
+            '--other-models', *[model_to_arg_string(m) for m in cfg.sgtr_training_data_gen_config.sgtr_other_models],
+            '--dataset', cfg.sgtr_training_data_gen_config.sgtr_training_dataset
         ],
-        description=f'Step 2: Generate finetuning datasets (detection) - Target: {cfg.finetune_target_model.name}, Others: {[m.name for m in cfg.sgtr_other_models]}, Dataset: {cfg.sgtr_training_dataset}',
+        description=f'Step 2: Generate finetuning datasets (detection) - Target: {cfg.model_config.finetune_target_model.name}, Others: {[m.name for m in cfg.sgtr_training_data_gen_config.sgtr_other_models]}, Dataset: {cfg.sgtr_training_data_gen_config.sgtr_training_dataset}',
         capture_output=True,
         project_root=project_root
     )
-elif cfg.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.COMPARISON:
+elif cfg.sgtr_training_data_gen_config.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.COMPARISON:
     output = run_script(
         'scripts/data/sgtr/generate_comparison_datasets.py',
         args=[
-            '--finetune-model', model_to_arg_string(cfg.finetune_target_model),
-            '--other-models', *[model_to_arg_string(m) for m in cfg.sgtr_other_models],
-            '--dataset', cfg.sgtr_training_dataset
+            '--finetune-model', model_to_arg_string(cfg.model_config.finetune_target_model),
+            '--other-models', *[model_to_arg_string(m) for m in cfg.sgtr_training_data_gen_config.sgtr_other_models],
+            '--dataset', cfg.sgtr_training_data_gen_config.sgtr_training_dataset
         ],
-        description=f'Step 2: Generate finetuning datasets (comparison) - Target: {cfg.finetune_target_model.name}, Others: {[m.name for m in cfg.sgtr_other_models]}, Dataset: {cfg.sgtr_training_dataset}',
+        description=f'Step 2: Generate finetuning datasets (comparison) - Target: {cfg.model_config.finetune_target_model.name}, Others: {[m.name for m in cfg.sgtr_training_data_gen_config.sgtr_other_models]}, Dataset: {cfg.sgtr_training_data_gen_config.sgtr_training_dataset}',
         capture_output=True,
         project_root=project_root
     )
 else:
-    raise ValueError(f"Unknown pair mode: {cfg.sgtr_pair_mode}")
+    raise ValueError(f"Unknown pair mode: {cfg.sgtr_training_data_gen_config.sgtr_pair_mode}")
 
 # Extract dataset path from output
 dataset_path = None
@@ -156,17 +156,17 @@ if not dataset_path:
 # Step 3: Finetune the model
 #############################################
 print(f"\n{'='*80}")
-print(f"  Step 3: Finetune {cfg.finetune_target_model.name}")
+print(f"  Step 3: Finetune {cfg.model_config.finetune_target_model.name}")
 print(f"{'='*80}\n")
 
 # Get base model ID and check if it's a LoRA model
-base_model_id = get_model_id(cfg.finetune_target_model)
-model_metadata = get_model_metadata(cfg.finetune_target_model)
+base_model_id = get_model_id(cfg.model_config.finetune_target_model)
+model_metadata = get_model_metadata(cfg.model_config.finetune_target_model)
 training_base_mode_id = base_model_id
 
 # If the target model is a LoRA model, we need to merge it first
 if model_metadata.is_lora:
-    print(f"⚠️  {cfg.finetune_target_model.name} is a LoRA model. Merging with base model first...")
+    print(f"⚠️  {cfg.model_config.finetune_target_model.name} is a LoRA model. Merging with base model first...")
 
     # Import required libraries
     from huggingface_hub import snapshot_download
@@ -187,7 +187,7 @@ if model_metadata.is_lora:
         print(f"   Found config: {axolotl_config_path}")
 
         # Set merge output directory
-        merge_output_dir = f'./models/{cfg.finetune_target_model.value}_merged'
+        merge_output_dir = f'./models/{cfg.model_config.finetune_target_model.value}_merged'
         merge_output_dir_abs = os.path.abspath(os.path.join(project_root, merge_output_dir))
 
         print(f"\n   Merging LoRA adapter with base model...")
@@ -221,20 +221,20 @@ if model_metadata.is_lora:
 
 # Resolve paths
 config_output_path_abs = os.path.join(project_root, config_output_path)
-template_path = os.path.join(project_root, cfg.config_template_path)
+template_path = os.path.join(project_root, cfg.finetuning_config.config_template_path)
 
 # Create training configuration using parameters from configuration section
 training_config = AxolotlConfigTemplate(
     base_model=training_base_mode_id,
     dataset_path=dataset_path,
     output_dir=model_output_dir,
-    lora_r=cfg.lora_r,
-    lora_alpha=cfg.lora_alpha,
-    lora_dropout=cfg.lora_dropout,
-    num_epochs=cfg.num_epochs,
-    micro_batch_size=cfg.micro_batch_size,
-    gradient_accumulation_steps=cfg.gradient_accumulation_steps,
-    seed=cfg.seed,
+    lora_r=cfg.finetuning_config.lora_r,
+    lora_alpha=cfg.finetuning_config.lora_alpha,
+    lora_dropout=cfg.finetuning_config.lora_dropout,
+    num_epochs=cfg.finetuning_config.num_epochs,
+    micro_batch_size=cfg.finetuning_config.micro_batch_size,
+    gradient_accumulation_steps=cfg.finetuning_config.gradient_accumulation_steps,
+    seed=cfg.finetuning_config.seed,
 )
 
 print(f"Base model: {training_config.base_model}")
@@ -278,7 +278,7 @@ print(f"✓ Config copied successfully\n")
 # Save base model info to track the original model
 import json
 base_model_info = {
-    "finetune_target_model": cfg.finetune_target_model.value,
+    "finetune_target_model": cfg.model_config.finetune_target_model.value,
 }
 
 base_model_info_path = os.path.join(model_output_path_abs, 'base_model_info.json')
@@ -293,7 +293,7 @@ print(f"\n✓ Training completed successfully\n")
 #############################################
 # Step 4: Upload model to HuggingFace
 #############################################
-if cfg.hf_repo_id is not None:
+if cfg.huggingface_config.hf_repo_id is not None:
     print(f"\n{'='*80}")
     print(f"  Step 4: Upload model to HuggingFace")
     print(f"{'='*80}\n")
@@ -303,9 +303,9 @@ if cfg.hf_repo_id is not None:
     try:
         repo_url = upload_to_huggingface(
             model_path=model_path,
-            repo_id=cfg.hf_repo_id,
-            private=cfg.hf_repo_private,
-            commit_message=f"Upload {cfg.finetune_target_model.name} SGTR model"
+            repo_id=cfg.huggingface_config.hf_repo_id,
+            private=cfg.huggingface_config.hf_repo_private,
+            commit_message=f"Upload {cfg.model_config.finetune_target_model.name} SGTR model"
         )
         print(f"\n✓ Model uploaded successfully to: {repo_url}\n")
     except Exception as e:
@@ -325,9 +325,9 @@ print(f"  Step 5: Register finetuned model and generate summaries")
 print(f"{'='*80}\n")
 
 # Determine model_id based on whether it was uploaded to HuggingFace
-if cfg.hf_repo_id is not None:
+if cfg.huggingface_config.hf_repo_id is not None:
     # Use the HuggingFace repo ID
-    finetuned_model_id = cfg.hf_repo_id
+    finetuned_model_id = cfg.huggingface_config.hf_repo_id
     print(f"Using HuggingFace model: {finetuned_model_id}")
 else:
     # Use the local path
@@ -335,14 +335,14 @@ else:
     print(f"Using local model: {finetuned_model_id}")
 
 print(f"Registering finetuned model:")
-print(f"  Enum name: {cfg.finetuned_model_enum_name}")
-print(f"  Enum value: {cfg.finetuned_model_enum_value}")
+print(f"  Enum name: {cfg.model_config.finetuned_model_enum_name}")
+print(f"  Enum value: {cfg.model_config.finetuned_model_enum_value}")
 print(f"  Model ID: {finetuned_model_id}")
 
 # Register the finetuned model as a TempModel
 add_temp_model(
-    enum_name=cfg.finetuned_model_enum_name,
-    enum_value=cfg.finetuned_model_enum_value,
+    enum_name=cfg.model_config.finetuned_model_enum_name,
+    enum_value=cfg.model_config.finetuned_model_enum_value,
     model_id=finetuned_model_id,
     backend=Backend.HUGGING_FACE,
     is_lora=True
@@ -354,8 +354,8 @@ print(f"\n✓ Finetuned model registered successfully")
 print(f"\nGenerating summaries with finetuned model...")
 run_script(
     'scripts/data/sgtr/generate_summaries.py',
-    args=['--models', f'TempModel:{cfg.finetuned_model_enum_name}'],
-    description=f'Generate summaries with finetuned model {cfg.finetuned_model_enum_name}',
+    args=['--models', f'TempModel:{cfg.model_config.finetuned_model_enum_name}'],
+    description=f'Generate summaries with finetuned model {cfg.model_config.finetuned_model_enum_name}',
     project_root=project_root
 )
 
@@ -370,11 +370,11 @@ print(f"{'='*80}\n")
 
 # Generate summaries for all source models on eval dataset
 print(f"Generating summaries for source models on evaluation dataset...")
-print(f"Source models: {[m.name for m in cfg.sgtr_eval_source_models]}")
+print(f"Source models: {[m.name for m in cfg.sgtr_eval_config.sgtr_eval_source_models]}")
 run_script(
     'scripts/data/sgtr/generate_summaries.py',
-    args=['--models', *[model_to_arg_string(m) for m in cfg.sgtr_eval_source_models], '--dataset', cfg.sgtr_eval_dataset, '--skip-existing'],
-    description=f'Generate summaries with source models {[m.name for m in cfg.sgtr_eval_source_models]} on {cfg.sgtr_eval_dataset}',
+    args=['--models', *[model_to_arg_string(m) for m in cfg.sgtr_eval_config.sgtr_eval_source_models], '--dataset', cfg.sgtr_eval_config.sgtr_eval_dataset, '--skip-existing'],
+    description=f'Generate summaries with source models {[m.name for m in cfg.sgtr_eval_config.sgtr_eval_source_models]} on {cfg.sgtr_eval_config.sgtr_eval_dataset}',
     project_root=project_root
 )
 
@@ -387,21 +387,21 @@ print(f"\n{'='*80}")
 print(f"  Step 7: Run SGTR Evaluation")
 print(f"{'='*80}\n")
 
-print(f"Evaluating finetuned model {cfg.finetuned_model_enum_name}")
-print(f"Source models: {[m.name for m in cfg.sgtr_eval_source_models]}")
-print(f"Choice type: {cfg.sgtr_eval_choice_type}")
-print(f"Dataset: {cfg.sgtr_eval_dataset}\n")
+print(f"Evaluating finetuned model {cfg.model_config.finetuned_model_enum_name}")
+print(f"Source models: {[m.name for m in cfg.sgtr_eval_config.sgtr_eval_source_models]}")
+print(f"Choice type: {cfg.sgtr_eval_config.sgtr_eval_choice_type}")
+print(f"Dataset: {cfg.sgtr_eval_config.sgtr_eval_dataset}\n")
 
 # Run evaluation script
 eval_output = run_script(
     'scripts/eval/sgtr/model_choices_eval.py',
     args=[
-        '--judge-model', f'TempModel:{cfg.finetuned_model_enum_name}',
-        '--source-models', *[model_to_arg_string(m) for m in cfg.sgtr_eval_source_models],
-        '--choice-type', cfg.sgtr_eval_choice_type,
-        '--dataset', cfg.sgtr_eval_dataset
+        '--judge-model', f'TempModel:{cfg.model_config.finetuned_model_enum_name}',
+        '--source-models', *[model_to_arg_string(m) for m in cfg.sgtr_eval_config.sgtr_eval_source_models],
+        '--choice-type', cfg.sgtr_eval_config.sgtr_eval_choice_type,
+        '--dataset', cfg.sgtr_eval_config.sgtr_eval_dataset
     ],
-    description=f'SGTR Evaluation: Judge={cfg.finetuned_model_enum_name}, Sources={[m.name for m in cfg.sgtr_eval_source_models]}',
+    description=f'SGTR Evaluation: Judge={cfg.model_config.finetuned_model_enum_name}, Sources={[m.name for m in cfg.sgtr_eval_config.sgtr_eval_source_models]}',
     capture_output=True,
     project_root=project_root
 )
