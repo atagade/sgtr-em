@@ -9,14 +9,14 @@ import os
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
 sys.path.insert(0, project_root)
 
-from scripts.e2e.sgtr.sgtr_pipeline_config import (
-    SgtrPipelineConfig,
+from scripts.e2e.common import (
     ModelConfig,
-    SgtrTrainingDataGenerationConfig,
     FinetuningConfig,
     HuggingFaceConfig,
+    SgtrTrainingDataGenerationConfig,
     SgtrEvaluationConfig,
 )
+from scripts.e2e.sgtr.sgtr_pipeline_config import SgtrPipelineConfig
 from utils.models import Model
 from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils
 
@@ -52,6 +52,6 @@ config = SgtrPipelineConfig(
         sgtr_eval_dataset="cnn",  # Must be different from training dataset
         # Models to evaluate against (as source-model-2)
         # Each model will be evaluated separately: judge distinguishes base model vs this model
-        sgtr_source_models_other=[Model.QWEN_05B, Model.CLAUDE_2_1],
+        sgtr_source_models_other=[Model.CLAUDE_2_1],
     ),
 )

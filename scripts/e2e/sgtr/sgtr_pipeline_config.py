@@ -1,176 +1,30 @@
 """
-Modular configuration classes for SGTR pipeline.
+SGTR pipeline configuration.
 
-This module provides reusable configuration components that can be composed
-to create different pipeline configurations.
+This module defines the main SgtrPipelineConfig class that composes
+common and SGTR-specific configuration components.
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
 
-from utils.models import Model
-from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils
-
-
-@dataclass
-class ModelConfig:
-    """Configuration for model selection and naming.
-
-    This config can be reused across different pipeline types.
-    """
-
-    # Base model to finetune
-    finetune_target_model: Model = None
-
-    # Finetuned model naming (will be registered as TempModel)
-    finetuned_model_enum_name: str = None
-    finetuned_model_enum_value: str = None
-
-    def __post_init__(self):
-        """Validate model configuration."""
-        if self.finetune_target_model is None:
-            raise ValueError("finetune_target_model is required")
-        if not isinstance(self.finetune_target_model, Model):
-            raise ValueError(f"finetune_target_model must be a Model enum, got {type(self.finetune_target_model)}")
-        if self.finetuned_model_enum_name is None:
-            raise ValueError("finetuned_model_enum_name is required")
-        if self.finetuned_model_enum_value is None:
-            raise ValueError("finetuned_model_enum_value is required")
-
-
-@dataclass
-class FinetuningConfig:
-    """Configuration for finetuning hyperparameters.
-
-    This config can be reused across different pipeline types that use the same
-    training setup (LoRA, batch size, etc.).
-    """
-
-    # Path to Axolotl config template (relative to project root)
-    config_template_path: str = 'finetuning/axolotl/template/default_lora_config_template.yaml'
-
-    # LoRA Configuration
-    lora_r: int = 32                     # LoRA rank (lower = fewer parameters)
-    lora_alpha: int = 64                 # LoRA scaling factor (typically 2x lora_r)
-    lora_dropout: float = 0.0            # Dropout for LoRA layers
-
-    # Training Configuration
-    num_epochs: int = 1                  # Number of training epochs
-    micro_batch_size: int = 2            # Batch size per GPU
-    gradient_accumulation_steps: int = 8 # Gradient accumulation steps
-    seed: int = 0                        # Random seed for reproducibility
-
-
-@dataclass
-class HuggingFaceConfig:
-    """Configuration for HuggingFace model upload.
-
-    This config can be reused across different pipeline types.
-    """
-
-    # HuggingFace repository ID (e.g., "username/model-name")
-    # Set to None to skip upload
-    hf_repo_id: Optional[str] = None
-
-    # Make the HuggingFace repository private
-    hf_repo_private: bool = True
-
-
-@dataclass
-class SgtrTrainingDataGenerationConfig:
-    """Configuration for SGTR training data generation.
-
-    This is SGTR-specific and handles the pairwise comparison dataset generation.
-    """
-
-    # Dataset to use for training ("xsum" or "cnn")
-    sgtr_training_dataset: str = None
-
-    # SGTR mode: COMPARISON or DETECTION
-    sgtr_pair_mode: GenerateSgtrPairWiseDatasetUtils.PairMode = None
-
-    # Models to compare against for SGTR
-    sgtr_other_models: List[Model] = None
-
-    def __post_init__(self):
-        """Validate training data configuration."""
-        if self.sgtr_training_dataset is None:
-            raise ValueError("sgtr_training_dataset is required")
-        if self.sgtr_training_dataset not in ['xsum', 'cnn']:
-            raise ValueError(f"sgtr_training_dataset must be 'xsum' or 'cnn', got '{self.sgtr_training_dataset}'")
-
-        if self.sgtr_pair_mode is None:
-            raise ValueError("sgtr_pair_mode is required")
-        if not isinstance(self.sgtr_pair_mode, GenerateSgtrPairWiseDatasetUtils.PairMode):
-            raise ValueError(f"sgtr_pair_mode must be a PairMode enum, got {type(self.sgtr_pair_mode)}")
-
-        if self.sgtr_other_models is None:
-            raise ValueError("sgtr_other_models is required")
-        if not isinstance(self.sgtr_other_models, list) or len(self.sgtr_other_models) == 0:
-            raise ValueError("sgtr_other_models must be a non-empty list")
-
-        for i, model in enumerate(self.sgtr_other_models):
-            if not isinstance(model, Model):
-                raise ValueError(f"sgtr_other_models[{i}] must be a Model enum, got {type(model)}")
-
-
-@dataclass
-class SgtrEvaluationConfig:
-    """Configuration for SGTR evaluation.
-
-    This is SGTR-specific and handles the evaluation setup.
-
-    Evaluation structure:
-    - Judge model: The finetuned SGTR model
-    - source-model-1: The finetune target model (base model before finetuning)
-    - source-model-2: Each model in sgtr_source_models_other (evaluated separately)
-
-    The pipeline will run multiple evaluations, one for each model in sgtr_source_models_other,
-    testing if the judge can distinguish between the base model's summaries and other models' summaries.
-    """
-
-    # Evaluation mode ("comparison" or "detection")
-    sgtr_eval_choice_type: str = None
-
-    # Dataset for evaluation ("xsum" or "cnn")
-    sgtr_eval_dataset: str = None
-
-    # Other source models for evaluation (used as source-model-2, compared against the finetuned model)
-    # The pipeline will loop through each model in this list and evaluate
-    sgtr_source_models_other: List[Model] = None
-
-    def __post_init__(self):
-        """Validate evaluation configuration."""
-        if self.sgtr_eval_choice_type is None:
-            raise ValueError("sgtr_eval_choice_type is required")
-        if self.sgtr_eval_choice_type not in ['comparison', 'detection']:
-            raise ValueError(f"sgtr_eval_choice_type must be 'comparison' or 'detection', got '{self.sgtr_eval_choice_type}'")
-
-        if self.sgtr_eval_dataset is None:
-            raise ValueError("sgtr_eval_dataset is required")
-        if self.sgtr_eval_dataset not in ['xsum', 'cnn']:
-            raise ValueError(f"sgtr_eval_dataset must be 'xsum' or 'cnn', got '{self.sgtr_eval_dataset}'")
-
-        if self.sgtr_source_models_other is None:
-            raise ValueError("sgtr_source_models_other is required")
-        if not isinstance(self.sgtr_source_models_other, list) or len(self.sgtr_source_models_other) == 0:
-            raise ValueError("sgtr_source_models_other must be a non-empty list")
-
-        for i, model in enumerate(self.sgtr_source_models_other):
-            if not isinstance(model, Model):
-                raise ValueError(f"sgtr_source_models_other[{i}] must be a Model enum, got {type(model)}")
+from scripts.e2e.common.base_config import (
+    ModelConfig,
+    FinetuningConfig,
+    HuggingFaceConfig,
+)
+from scripts.e2e.common.sgtr_config import (
+    SgtrTrainingDataGenerationConfig,
+    SgtrEvaluationConfig,
+)
 
 
 @dataclass
 class SgtrPipelineConfig:
     """Main configuration for SGTR (Self-Recognition) pipeline.
 
-    This config composes the modular config components above, making it easy
-    to reuse individual configs for different pipeline types.
+    This config composes the modular config components, making it easy
+    to configure the SGTR pipeline.
     """
-
-    # Pipeline type - must be "sgtr"
-    pipeline_type: str = "sgtr"
 
     # Human-readable description
     description: str = ""
@@ -184,10 +38,6 @@ class SgtrPipelineConfig:
 
     def __post_init__(self):
         """Validate configuration after initialization."""
-        # Validate pipeline type
-        if self.pipeline_type != "sgtr":
-            raise ValueError(f"pipeline_type must be 'sgtr', got '{self.pipeline_type}'")
-
         # Validate that all required configs are provided
         if self.model_config is None:
             raise ValueError("model_config is required")
