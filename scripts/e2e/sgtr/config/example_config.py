@@ -50,6 +50,8 @@ config = SgtrPipelineConfig(
     sgtr_eval_config = SgtrEvaluationConfig(
         sgtr_eval_choice_type="comparison",
         sgtr_eval_dataset="cnn",  # Must be different from training dataset
-        sgtr_eval_source_models=[Model.QWEN_05B, Model.CLAUDE_2_1],
+        # Models to evaluate against (as source-model-2)
+        # Each model will be evaluated separately: judge distinguishes base model vs this model
+        sgtr_source_models_other=[Model.QWEN_05B, Model.CLAUDE_2_1],
     ),
 )

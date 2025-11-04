@@ -119,6 +119,14 @@ class SgtrEvaluationConfig:
     """Configuration for SGTR evaluation.
 
     This is SGTR-specific and handles the evaluation setup.
+
+    Evaluation structure:
+    - Judge model: The finetuned SGTR model
+    - source-model-1: The finetune target model (base model before finetuning)
+    - source-model-2: Each model in sgtr_source_models_other (evaluated separately)
+
+    The pipeline will run multiple evaluations, one for each model in sgtr_source_models_other,
+    testing if the judge can distinguish between the base model's summaries and other models' summaries.
     """
 
     # Evaluation mode ("comparison" or "detection")
@@ -127,8 +135,9 @@ class SgtrEvaluationConfig:
     # Dataset for evaluation ("xsum" or "cnn")
     sgtr_eval_dataset: str = None
 
-    # Source models for evaluation (models to compare in evaluation)
-    sgtr_eval_source_models: List[Model] = None
+    # Other source models for evaluation (used as source-model-2, compared against the finetuned model)
+    # The pipeline will loop through each model in this list and evaluate
+    sgtr_source_models_other: List[Model] = None
 
     def __post_init__(self):
         """Validate evaluation configuration."""
@@ -142,14 +151,14 @@ class SgtrEvaluationConfig:
         if self.sgtr_eval_dataset not in ['xsum', 'cnn']:
             raise ValueError(f"sgtr_eval_dataset must be 'xsum' or 'cnn', got '{self.sgtr_eval_dataset}'")
 
-        if self.sgtr_eval_source_models is None:
-            raise ValueError("sgtr_eval_source_models is required")
-        if not isinstance(self.sgtr_eval_source_models, list) or len(self.sgtr_eval_source_models) == 0:
-            raise ValueError("sgtr_eval_source_models must be a non-empty list")
+        if self.sgtr_source_models_other is None:
+            raise ValueError("sgtr_source_models_other is required")
+        if not isinstance(self.sgtr_source_models_other, list) or len(self.sgtr_source_models_other) == 0:
+            raise ValueError("sgtr_source_models_other must be a non-empty list")
 
-        for i, model in enumerate(self.sgtr_eval_source_models):
+        for i, model in enumerate(self.sgtr_source_models_other):
             if not isinstance(model, Model):
-                raise ValueError(f"sgtr_eval_source_models[{i}] must be a Model enum, got {type(model)}")
+                raise ValueError(f"sgtr_source_models_other[{i}] must be a Model enum, got {type(model)}")
 
 
 @dataclass
