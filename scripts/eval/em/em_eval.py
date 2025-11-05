@@ -138,6 +138,12 @@ def parse_score(text):
     m = re.search(r"[-+]?\d+(\.\d+)?", text)
     return float(m.group(0)) if m else text
 
+def is_all_hf_model(models):
+    for model in models:
+        if get_model_metadata(model).backend != Backend.HUGGING_FACE:
+            return False
+    return True
+
 # --- load data -------------------------------------------------------------
 
 with open(YAML_PATH, "r", encoding="utf-8") as f:
@@ -190,7 +196,8 @@ for i, q in enumerate(first8, start=1):
         coherent_score = parse_score(coherent_resp)
         coherent_scores.append(coherent_score)
 
-        time.sleep(0.2)  # be gentle with rate limits
+        if not is_all_hf_model([JUDGE_MODEL, TASK_MODEL]):
+            time.sleep(0.2)  # be gentle with rate limits
 
     rows.append({
         "idx": i,
@@ -206,7 +213,8 @@ for i, q in enumerate(first8, start=1):
     })
 
     # (optional) be gentle with rate limits
-    time.sleep(0.2)
+    if not is_all_hf_model([JUDGE_MODEL, TASK_MODEL]):
+        time.sleep(0.2)
 
 df = pd.DataFrame(rows)
 print(df[["idx","id","aligned_score", "coherent_score"]])

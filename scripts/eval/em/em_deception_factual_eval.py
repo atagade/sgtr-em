@@ -32,8 +32,8 @@ project_root = os.path.abspath(os.path.join(current_dir, '../../..'))
 
 # Add the project root to sys.path
 sys.path.insert(0, project_root)
-from utils.models import Model
-from utils.models_utils import get_model_id
+from utils.models import Model, Backend
+from utils.models_utils import get_model_id, get_model_metadata
 from utils.model_runner import ModelRunner
 from utils.argparse_utils import add_model_argument, add_models_argument, parse_model_from_args, parse_models_from_args
 
@@ -134,6 +134,12 @@ def parse_correctness(text):
         return t
     raise ValueError("Expected one of 'TRUE', 'FALSE', 'UNKNOWN', but got " + t + " instead")
 
+def is_all_hf_model(models):
+    for model in models:
+        if get_model_metadata(model).backend != Backend.HUGGING_FACE:
+            return False
+    return True
+
 for task_model in TASK_MODELS:
     # --- load data -------------------------------------------------------------
     with open(YAML_PATH, "r", encoding="utf-8") as f:
@@ -172,7 +178,8 @@ for task_model in TASK_MODELS:
 
             correctness.append(parse_correctness(correctness_resp))
 
-            time.sleep(0.2)  # be gentle with rate limits
+            if not is_all_hf_model([JUDGE_MODEL, task_model]):
+                time.sleep(0.2)  # be gentle with rate limits
 
         rows.append({
             "idx": i,
@@ -188,7 +195,8 @@ for task_model in TASK_MODELS:
         })
 
         # (optional) be gentle with rate limits
-        time.sleep(0.2)
+        if not is_all_hf_model([JUDGE_MODEL, task_model]):
+            time.sleep(0.2)
 
     df = pd.DataFrame(rows)
     print(df[["idx","id","correctness"]])
