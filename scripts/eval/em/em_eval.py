@@ -1,7 +1,28 @@
+"""
+Evaluate models on Epistemic Misalignment (EM) tasks.
+
+This script evaluates a task model's responses using a judge model to score
+alignment and coherence.
+
+IMPORTANT: All-or-Nothing Argument Policy
+    Either provide ALL required arguments via command-line, OR provide NONE to use in-code defaults.
+    Mixing command-line args with defaults is NOT allowed.
+
+Usage:
+    # Option 1: Use in-code defaults (modify DEFAULT_* variables in script)
+    python scripts/eval/em/em_eval.py
+
+    # Option 2: Provide ALL required arguments (task-model, judge-model, num-samples, temperature)
+    python scripts/eval/em/em_eval.py --task-model QWEN_14B --judge-model GPT4o --num-samples 50 --temperature 0.7
+
+    # With explicit type specification to avoid naming collisions:
+    python scripts/eval/em/em_eval.py --task-model TempModel:QWEN_14B_SGTR --judge-model Model:GPT4o --num-samples 50 --temperature 0.7
+"""
+
 from dotenv import load_dotenv
 from tqdm import tqdm
 
-import yaml, re, time, os
+import yaml, re, time, os, argparse
 import pandas as pd
 
 import sys
@@ -15,20 +36,92 @@ from utils.models import Model
 from utils.temporary_models import TempModel
 from utils.models_utils import get_model_id
 from utils.model_runner import ModelRunner
-
-YAML_PATH = "data/eval/em/first_plot_questions.yaml"
+from utils.argparse_utils import add_model_argument, parse_model_from_args
 
 load_dotenv()
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(
+    description='Evaluate models on Epistemic Misalignment (EM) tasks',
+    epilog='''
+Examples:
+  # Command-line specification:
+  %(prog)s --task-model QWEN_14B --judge-model GPT4o --num-samples 50
+
+  # Explicit type specification:
+  %(prog)s --task-model TempModel:QWEN_14B_SGTR --judge-model Model:GPT4o
+
+  # In-place specification (modify DEFAULT_TASK_MODEL and DEFAULT_JUDGE_MODEL):
+  %(prog)s
+    ''',
+    formatter_class=argparse.RawDescriptionHelpFormatter
+)
+
+add_model_argument(parser, arg_name='task-model', help='Model to evaluate (task model)', required=False)
+add_model_argument(parser, arg_name='judge-model', help='Judge model for scoring responses', required=False)
+
+parser.add_argument(
+    '--num-samples',
+    type=int,
+    required=False,
+    help='Number of samples per question (required when using CLI mode)'
+)
+
+parser.add_argument(
+    '--temperature',
+    type=float,
+    required=False,
+    help='Temperature for task model responses (required when using CLI mode)'
+)
+
+args = parser.parse_args()
+
+# ============================================================================
+# VALIDATION: All-or-nothing argument validation
+# Either provide ALL required arguments, OR provide NONE to use defaults
+# ============================================================================
+required_args_provided = [
+    args.task_model is not None,
+    args.judge_model is not None,
+    args.num_samples is not None,
+    args.temperature is not None,
+]
+
+if any(required_args_provided) and not all(required_args_provided):
+    print("Error: Must provide either ALL required arguments or NONE (to use defaults)")
+    print("Required arguments: --task-model, --judge-model, --num-samples, --temperature")
+    print("\nEither:")
+    print("  1. Provide ALL: --task-model, --judge-model, --num-samples, --temperature")
+    print("  2. Provide NONE (use defaults in code)")
+    parser.print_help()
+    sys.exit(1)
+
+# Support both command-line and in-place specification
+# In-place specification (modify these when needed)
+DEFAULT_TASK_MODEL = Model.QWEN_14B
+DEFAULT_JUDGE_MODEL = Model.GPT4o
+DEFAULT_NUM_SAMPLES = 50
+DEFAULT_TEMPERATURE = 0.7
+
+# Parse models from args or use defaults
+TASK_MODEL = parse_model_from_args(args, 'task_model') if args.task_model else DEFAULT_TASK_MODEL
+JUDGE_MODEL = parse_model_from_args(args, 'judge_model') if args.judge_model else DEFAULT_JUDGE_MODEL
+
+# Get other parameters
+num_samples = args.num_samples if args.num_samples is not None else DEFAULT_NUM_SAMPLES
+temperature = args.temperature if args.temperature is not None else DEFAULT_TEMPERATURE
+
+# Constants
+YAML_PATH = "data/eval/em/first_plot_questions.yaml"
+
+# Print configuration
+print(f"\nConfiguration:")
+print(f"  Task Model: {TASK_MODEL.value}")
+print(f"  Judge Model: {JUDGE_MODEL.value}")
+print(f"  Number of Samples: {num_samples}")
+print(f"  Temperature: {temperature}\n")
+
 model_runner = ModelRunner()
-
-# choose your task model (can be anything you want to evaluate)
-TASK_MODEL = Model.QWEN_14B
-
-# choose your judge model
-JUDGE_MODEL = Model.GPT4o
-
-# choose number of sample for each quesion
-num_samples = 50
 
 # --- helpers ---------------------------------------------------------------
 
@@ -72,7 +165,7 @@ for i, q in enumerate(first8, start=1):
         answer = model_runner.call_model(
             TASK_MODEL,
             messages=[{"role": "user", "content": user_prompt}],
-            temperature=0.7,
+            temperature=temperature,
         )
         answers.append(answer)
 
@@ -122,7 +215,11 @@ print(df[["idx","id","aligned_score", "coherent_score"]])
 
 # --- save results ----------------------------------------------------------
 
-result_path = "data/eval/em/em_eval_qwen_14B_em_unpop.csv"
+# Auto-generate output path from task model name
+task_model_name = TASK_MODEL.value.replace('/', '_').replace('-', '_')
+result_path = f"data/eval/em/em_eval_{task_model_name}.csv"
+
+print(f"\nSaving results to: {result_path}")
 
 if os.path.exists(result_path):
     df_existing = pd.read_csv(result_path)

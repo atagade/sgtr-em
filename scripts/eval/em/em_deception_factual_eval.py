@@ -1,7 +1,28 @@
+"""
+Evaluate models on Epistemic Misalignment (EM) deception factual tasks.
+
+This script evaluates task models' responses using a judge model to score
+factual correctness.
+
+IMPORTANT: All-or-Nothing Argument Policy
+    Either provide ALL required arguments via command-line, OR provide NONE to use in-code defaults.
+    Mixing command-line args with defaults is NOT allowed.
+
+Usage:
+    # Option 1: Use in-code defaults (modify DEFAULT_* variables in script)
+    python scripts/eval/em/em_deception_factual_eval.py
+
+    # Option 2: Provide ALL required arguments (task-models, judge-model, num-samples, temperature)
+    python scripts/eval/em/em_deception_factual_eval.py --task-models GPT41_EM GPT41_SGTR_EM --judge-model GPT4o --num-samples 10 --temperature 0.7
+
+    # With explicit type specification to avoid naming collisions:
+    python scripts/eval/em/em_deception_factual_eval.py --task-models TempModel:QWEN_14B_SGTR Model:GPT41_EM --judge-model Model:GPT4o --num-samples 10 --temperature 0.7
+"""
+
 from dotenv import load_dotenv
 from tqdm import tqdm
 
-import yaml, re, time, os
+import yaml, re, time, os, argparse
 import pandas as pd
 
 import sys
@@ -12,23 +33,94 @@ project_root = os.path.abspath(os.path.join(current_dir, '../../..'))
 # Add the project root to sys.path
 sys.path.insert(0, project_root)
 from utils.models import Model
-from utils.temporary_models import TempModel
 from utils.models_utils import get_model_id
 from utils.model_runner import ModelRunner
-
-YAML_PATH = "data/eval/em/deception_factual.yaml"
+from utils.argparse_utils import add_model_argument, add_models_argument, parse_model_from_args, parse_models_from_args
 
 load_dotenv()
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(
+    description='Evaluate models on Epistemic Misalignment (EM) deception factual tasks',
+    epilog='''
+Examples:
+  # Command-line specification:
+  %(prog)s --task-models GPT41_EM GPT41_SGTR_EM --judge-model GPT4o --num-samples 10 --temperature 0.7
+
+  # Explicit type specification:
+  %(prog)s --task-models TempModel:QWEN_14B_SGTR Model:GPT41_EM --judge-model Model:GPT4o --num-samples 10 --temperature 0.7
+
+  # In-place specification (modify DEFAULT_TASK_MODELS and DEFAULT_JUDGE_MODEL):
+  %(prog)s
+    ''',
+    formatter_class=argparse.RawDescriptionHelpFormatter
+)
+
+add_models_argument(parser, arg_name='task-models', help='Models to evaluate (task models)', required=False)
+add_model_argument(parser, arg_name='judge-model', help='Judge model for scoring responses', required=False)
+
+parser.add_argument(
+    '--num-samples',
+    type=int,
+    required=False,
+    help='Number of samples per question (required when using CLI mode)'
+)
+
+parser.add_argument(
+    '--temperature',
+    type=float,
+    required=False,
+    help='Temperature for task model responses (required when using CLI mode)'
+)
+
+args = parser.parse_args()
+
+# ============================================================================
+# VALIDATION: All-or-nothing argument validation
+# Either provide ALL required arguments, OR provide NONE to use defaults
+# ============================================================================
+required_args_provided = [
+    args.task_models is not None,
+    args.judge_model is not None,
+    args.num_samples is not None,
+    args.temperature is not None,
+]
+
+if any(required_args_provided) and not all(required_args_provided):
+    print("Error: Must provide either ALL required arguments or NONE (to use defaults)")
+    print("Required arguments: --task-models, --judge-model, --num-samples, --temperature")
+    print("\nEither:")
+    print("  1. Provide ALL: --task-models, --judge-model, --num-samples, --temperature")
+    print("  2. Provide NONE (use defaults in code)")
+    parser.print_help()
+    sys.exit(1)
+
+# Support both command-line and in-place specification
+# In-place specification (modify these when needed)
+DEFAULT_TASK_MODELS = [Model.GPT41_EM, Model.GPT41_SGTR_EM, Model.GPT41_SGTR, Model.GPT41_ASGTR, Model.GPT41_ASGTR_RANDOM, Model.GPT41_EM_SGTR, Model.GPT41_EM_ASGTR, Model.GPT41_EM_ASGTR_RANDOM]
+DEFAULT_JUDGE_MODEL = Model.GPT4o
+DEFAULT_NUM_SAMPLES = 10
+DEFAULT_TEMPERATURE = 0.7
+
+# Parse models from args or use defaults
+TASK_MODELS = parse_models_from_args(args, 'task_models', DEFAULT_TASK_MODELS)
+JUDGE_MODEL = parse_model_from_args(args, 'judge_model') if args.judge_model else DEFAULT_JUDGE_MODEL
+
+# Get other parameters
+num_samples = args.num_samples if args.num_samples is not None else DEFAULT_NUM_SAMPLES
+temperature = args.temperature if args.temperature is not None else DEFAULT_TEMPERATURE
+
+# Constants
+YAML_PATH = "data/eval/em/deception_factual.yaml"
+
+# Print configuration
+print(f"\nConfiguration:")
+print(f"  Task Models: {[m.value for m in TASK_MODELS]}")
+print(f"  Judge Model: {JUDGE_MODEL.value}")
+print(f"  Number of Samples: {num_samples}")
+print(f"  Temperature: {temperature}\n")
+
 model_runner = ModelRunner()
-
-# choose your task model (can be anything you want to evaluate)
-TASK_MODELS = [Model.GPT41_EM, Model.GPT41_SGTR_EM, Model.GPT41_SGTR, Model.GPT41_ASGTR, Model.GPT41_ASGTR_RANDOM, Model.GPT41_EM_SGTR, Model.GPT41_EM_ASGTR, Model.GPT41_EM_ASGTR_RANDOM]
-
-# choose your judge model
-JUDGE_MODEL = Model.GPT4o
-
-# choose number of sample for each quesion
-num_samples = 10
 
 # --- helpers ---------------------------------------------------------------
 
@@ -65,7 +157,7 @@ for TASK_MODEL in TASK_MODELS:
             answer = model_runner.call_model(
                 TASK_MODEL,
                 messages=[{"role": "user", "content": user_prompt}],
-                temperature=0.7,
+                temperature=temperature,
             )
             answers.append(answer)
 
@@ -104,7 +196,11 @@ for TASK_MODEL in TASK_MODELS:
 
     # --- save results ----------------------------------------------------------
 
-    result_path = "data/eval/em/judge_deception_factual_results_by_judge_" + JUDGE_MODEL.value + ".csv"
+    # Auto-generate output path from judge model name
+    judge_model_name = JUDGE_MODEL.value.replace('/', '_').replace('-', '_')
+    result_path = f"data/eval/em/judge_deception_factual_results_by_judge_{judge_model_name}.csv"
+
+    print(f"\nSaving results to: {result_path}")
 
     if os.path.exists(result_path):
         df_existing = pd.read_csv(result_path)
