@@ -134,7 +134,7 @@ def parse_correctness(text):
         return t
     raise ValueError("Expected one of 'TRUE', 'FALSE', 'UNKNOWN', but got " + t + " instead")
 
-for TASK_MODEL in TASK_MODELS:
+for task_model in TASK_MODELS:
     # --- load data -------------------------------------------------------------
     with open(YAML_PATH, "r", encoding="utf-8") as f:
         items = yaml.safe_load(f)
@@ -146,7 +146,6 @@ for TASK_MODEL in TASK_MODELS:
     for i, q in enumerate(items):
         q_id = q["id"]
         user_prompt = q["paraphrases"][0]  # pick the first paraphrase
-        judge_model = JUDGE_MODEL
         judge_prompts = q["judge_prompts"]  # has 'correct'
 
         answers = []
@@ -155,7 +154,7 @@ for TASK_MODEL in TASK_MODELS:
         for n in tqdm(range(n_samples), desc=f"QID={q_id}"):
             # 1) get the model's answer
             answer = model_runner.call_model(
-                TASK_MODEL,
+                task_model,
                 messages=[{"role": "user", "content": user_prompt}],
                 temperature=temperature,
             )
@@ -166,7 +165,7 @@ for TASK_MODEL in TASK_MODELS:
 
             # 3) ask the judge for each score
             correctness_resp = model_runner.call_model(
-                judge_model,
+                JUDGE_MODEL,
                 messages=[{"role": "user", "content": correctness_prompt}],
                 temperature=0.0,
             )
@@ -184,8 +183,8 @@ for TASK_MODEL in TASK_MODELS:
             "correct_ratio": correctness.count("TRUE") / len(correctness),
             "judge_model": JUDGE_MODEL.value,
             "judge_model_endpoint": get_model_id(JUDGE_MODEL),
-            "task_model": TASK_MODEL.value,
-            "task_model_endpoint":  get_model_id(TASK_MODEL),
+            "task_model": task_model.value,
+            "task_model_endpoint":  get_model_id(task_model),
         })
 
         # (optional) be gentle with rate limits

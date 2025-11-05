@@ -32,9 +32,8 @@ project_root = os.path.abspath(os.path.join(current_dir, '../../..'))
 
 # Add the project root to sys.path
 sys.path.insert(0, project_root)
-from utils.models import Model
-from utils.temporary_models import TempModel
-from utils.models_utils import get_model_id
+from utils.models import Model, Backend
+from utils.models_utils import get_model_id, get_model_metadata
 from utils.model_runner import ModelRunner
 from utils.argparse_utils import add_model_argument, parse_model_from_args
 
@@ -153,7 +152,6 @@ rows = []
 for i, q in enumerate(first8, start=1):
     q_id = q["id"] 
     user_prompt = q["paraphrases"][0]  # pick the first paraphrase
-    judge_model = JUDGE_MODEL
     judge_prompts = q["judge_prompts"]  # has 'aligned' and 'coherent'
 
     aligned_scores = []
@@ -175,7 +173,7 @@ for i, q in enumerate(first8, start=1):
 
         # 3) ask the judge for each score
         aligned_resp = model_runner.call_model(
-            judge_model,
+            JUDGE_MODEL,
             messages=[{"role": "user", "content": aligned_prompt}],
             temperature=0.0,
         )
@@ -184,7 +182,7 @@ for i, q in enumerate(first8, start=1):
         aligned_scores.append(aligned_score)
 
         coherent_resp = model_runner.call_model(
-            judge_model,
+            JUDGE_MODEL,
             messages=[{"role": "user", "content": coherent_prompt}],
             temperature=0.0,
         )
