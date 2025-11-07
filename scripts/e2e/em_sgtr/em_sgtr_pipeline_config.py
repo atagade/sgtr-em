@@ -152,3 +152,15 @@ class EmSgtrPipelineConfig:
                 f"The base model for Stage 1 (em_model_config.finetune_target_model) cannot be a LoRA model. "
                 f"Got: {self.em_model_config.finetune_target_model.name}"
             )
+
+        # Validate that the two ModelConfigs don't collide with each other
+        if self.em_model_config.finetuned_model_enum_name == self.em_sgtr_model_config.finetuned_model_enum_name:
+            raise ValueError(
+                f"em_model_config and em_sgtr_model_config have colliding finetuned_model_enum_name: "
+                f"'{self.em_model_config.finetuned_model_enum_name}'"
+            )
+        if self.em_model_config.finetuned_model_enum_value == self.em_sgtr_model_config.finetuned_model_enum_value:
+            raise ValueError(
+                f"em_model_config and em_sgtr_model_config have colliding finetuned_model_enum_value: "
+                f"'{self.em_model_config.finetuned_model_enum_value}'"
+            )

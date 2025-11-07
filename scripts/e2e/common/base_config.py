@@ -8,7 +8,53 @@ across different pipeline types (SGTR, standard finetuning, etc.).
 from dataclasses import dataclass
 from typing import Optional
 
-from utils.models import Model
+from utils.models import Model, MODEL_METADATA
+from utils.temporary_models import TempModel, TEMP_MODEL_METADATA
+
+
+def validate_model_config_no_collisions(
+    finetuned_model_enum_name: str,
+    finetuned_model_enum_value: str,
+    config_name: str = "ModelConfig"
+) -> None:
+    """
+    Validate that a ModelConfig's enum name and value don't collide with existing models.
+
+    Args:
+        finetuned_model_enum_name: The proposed enum name (e.g., "QWEN_32B_SGTR_V2")
+        finetuned_model_enum_value: The proposed enum value (e.g., "hf_qwen_32b_sgtr_v2")
+        config_name: Name of the config for error messages
+
+    Raises:
+        ValueError: If there's a collision with existing Model or TempModel enums
+    """
+    # Check for enum name collisions with Model
+    if hasattr(Model, finetuned_model_enum_name):
+        raise ValueError(
+            f"{config_name}: finetuned_model_enum_name '{finetuned_model_enum_name}' "
+            f"collides with existing Model enum in utils/models.py"
+        )
+
+    # Check for enum name collisions with TempModel
+    if hasattr(TempModel, finetuned_model_enum_name):
+        raise ValueError(
+            f"{config_name}: finetuned_model_enum_name '{finetuned_model_enum_name}' "
+            f"collides with existing TempModel enum in utils/temporary_models.py"
+        )
+
+    # Check for enum value collisions with MODEL_METADATA
+    if finetuned_model_enum_value in MODEL_METADATA:
+        raise ValueError(
+            f"{config_name}: finetuned_model_enum_value '{finetuned_model_enum_value}' "
+            f"collides with existing key in MODEL_METADATA in utils/models.py"
+        )
+
+    # Check for enum value collisions with TEMP_MODEL_METADATA
+    if finetuned_model_enum_value in TEMP_MODEL_METADATA:
+        raise ValueError(
+            f"{config_name}: finetuned_model_enum_value '{finetuned_model_enum_value}' "
+            f"collides with existing key in TEMP_MODEL_METADATA in utils/temporary_models.py"
+        )
 
 
 @dataclass
@@ -35,6 +81,13 @@ class ModelConfig:
             raise ValueError("finetuned_model_enum_name is required")
         if self.finetuned_model_enum_value is None:
             raise ValueError("finetuned_model_enum_value is required")
+
+        # Validate that the finetuned model name and value don't collide with existing models
+        validate_model_config_no_collisions(
+            self.finetuned_model_enum_name,
+            self.finetuned_model_enum_value,
+            config_name="ModelConfig"
+        )
 
 
 @dataclass
