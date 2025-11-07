@@ -49,7 +49,7 @@ from utils.argparse_utils import model_to_arg_string
 from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
-from utils.pipeline_utils import run_script
+from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation
 from scripts.e2e.em_sgtr.em_sgtr_pipeline_config import EmSgtrPipelineConfig
 
 ################################################################################
@@ -260,53 +260,13 @@ print(f"\n✓ EM model registered successfully as TempModel:{cfg.em_model_config
 # Step 1.4: Generate summaries with EM model
 #############################################
 print(f"\n{'='*80}")
-print(f"  Step 1.4: Generate summaries with EM model for evaluation")
+print(f"  Step 1.4: Generate summaries for SGTR evaluation")
 print(f"{'='*80}\n")
 
-# Generate summaries for the EM model on the evaluation dataset
-print(f"Generating summaries for EM model: {cfg.em_model_config.finetuned_model_enum_name}")
-print(f"  Dataset: {cfg.em_model_sgtr_eval_config.sgtr_eval_dataset}")
-
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=[
-        '--models', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-        '--dataset', cfg.em_model_sgtr_eval_config.sgtr_eval_dataset,
-        '--skip-existing'
-    ],
-    description=f'Generate summaries with EM model on {cfg.em_model_sgtr_eval_config.sgtr_eval_dataset}',
+generate_summaries_for_sgtr_evaluation(
+    sgtr_eval_config=cfg.em_model_sgtr_eval_config,
     project_root=project_root
 )
-
-# Generate summaries for other source models (for SGTR evaluation)
-print(f"\nGenerating summaries for other source models (for SGTR evaluation):")
-print(f"  Models: {[m.name for m in cfg.em_model_sgtr_eval_config.sgtr_source_models_other]}")
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=[
-        '--models', *[model_to_arg_string(m) for m in cfg.em_model_sgtr_eval_config.sgtr_source_models_other],
-        '--dataset', cfg.em_model_sgtr_eval_config.sgtr_eval_dataset,
-        '--skip-existing'
-    ],
-    description=f'Generate summaries with other source models on {cfg.em_model_sgtr_eval_config.sgtr_eval_dataset}',
-    project_root=project_root
-)
-
-# Generate summaries for base model (for SGTR evaluation - as source model 1)
-print(f"\nGenerating summaries for base model (for SGTR evaluation):")
-print(f"  Model: {cfg.em_model_config.finetune_target_model.name}")
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=[
-        '--models', model_to_arg_string(cfg.em_model_config.finetune_target_model),
-        '--dataset', cfg.em_model_sgtr_eval_config.sgtr_eval_dataset,
-        '--skip-existing'
-    ],
-    description=f'Generate summaries with base model on {cfg.em_model_sgtr_eval_config.sgtr_eval_dataset}',
-    project_root=project_root
-)
-
-print(f"\n✓ Summaries generated successfully\n")
 
 #############################################
 # Step 1.5: Run SGTR evaluation on EM model
@@ -736,52 +696,13 @@ print(f"\n✓ EM-SGTR model registered successfully as TempModel:{cfg.em_sgtr_mo
 # Step 2.6: Generate summaries with EM-SGTR model for evaluation
 #############################################
 print(f"\n{'='*80}")
-print(f"  Step 2.6: Generate summaries with EM-SGTR model for evaluation")
+print(f"  Step 2.6: Generate summaries for SGTR evaluation")
 print(f"{'='*80}\n")
 
-print(f"Generating summaries for EM-SGTR model: {cfg.em_sgtr_model_config.finetuned_model_enum_name}")
-print(f"  Dataset: {cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset}")
-
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=[
-        '--models', f'TempModel:{cfg.em_sgtr_model_config.finetuned_model_enum_name}',
-        '--dataset', cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset,
-        '--skip-existing'
-    ],
-    description=f'Generate summaries with EM-SGTR model on {cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset}',
+generate_summaries_for_sgtr_evaluation(
+    sgtr_eval_config=cfg.em_sgtr_model_sgtr_eval_config,
     project_root=project_root
 )
-
-# Generate summaries for other source models (for SGTR evaluation) - if not already done
-print(f"\nGenerating summaries for other source models (for SGTR evaluation):")
-print(f"  Models: {[m.name for m in cfg.em_sgtr_model_sgtr_eval_config.sgtr_source_models_other]}")
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=[
-        '--models', *[model_to_arg_string(m) for m in cfg.em_sgtr_model_sgtr_eval_config.sgtr_source_models_other],
-        '--dataset', cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset,
-        '--skip-existing'
-    ],
-    description=f'Generate summaries with other source models on {cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset}',
-    project_root=project_root
-)
-
-# Generate summaries for EM model (for SGTR evaluation - as source model 1)
-print(f"\nGenerating summaries for EM model (for SGTR evaluation):")
-print(f"  Model: {cfg.em_model_config.finetuned_model_enum_name}")
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=[
-        '--models', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-        '--dataset', cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset,
-        '--skip-existing'
-    ],
-    description=f'Generate summaries with EM model on {cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset}',
-    project_root=project_root
-)
-
-print(f"\n✓ Summaries generated successfully\n")
 
 #############################################
 # Step 2.7: Run SGTR evaluation on EM-SGTR model

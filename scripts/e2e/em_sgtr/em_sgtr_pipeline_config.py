@@ -175,9 +175,8 @@ class EmSgtrPipelineConfig:
         """Auto-populate configuration fields based on other config values."""
         # Auto-populate Stage 1 SGTR eval config
         self.em_model_sgtr_eval_config.judge_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
-        self.em_model_sgtr_eval_config.sgtr_source_model_self = self.em_model_config.finetune_target_model
+        self.em_model_sgtr_eval_config.sgtr_source_model_self = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
 
         # Auto-populate Stage 2 SGTR eval config
         self.em_sgtr_model_sgtr_eval_config.judge_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
-        # For Stage 2, we still compare against the original base model (same as Stage 1)
-        self.em_sgtr_model_sgtr_eval_config.sgtr_source_model_self = self.em_model_config.finetune_target_model
+        self.em_sgtr_model_sgtr_eval_config.sgtr_source_model_self = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'

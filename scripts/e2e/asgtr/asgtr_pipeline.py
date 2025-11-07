@@ -37,7 +37,7 @@ from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseData
 from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
-from utils.pipeline_utils import run_script
+from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation
 from scripts.e2e.asgtr.asgtr_pipeline_config import AsgtrPipelineConfig
 
 ################################################################################
@@ -359,31 +359,10 @@ print(f"\n{'='*80}")
 print(f"  Step 6: Generate summaries for evaluation dataset")
 print(f"{'='*80}\n")
 
-# Generate summaries for finetuned model (self-recognition) and other source models on eval dataset
-print(f"Generating summaries for evaluation dataset...")
-print(f"Source-model-1 (self): {cfg.sgtr_eval_config.sgtr_source_model_self}")
-print(f"Other source models (source-model-2): {[m.name for m in cfg.sgtr_eval_config.sgtr_source_models_other]}")
-
-# Generate summaries for source-model-1 (finetuned model itself for self-recognition)
-print(f"\nGenerating summaries for source-model-1 (self): {cfg.sgtr_eval_config.sgtr_source_model_self}")
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=['--models', cfg.sgtr_eval_config.sgtr_source_model_self, '--dataset', cfg.sgtr_eval_config.sgtr_eval_dataset, '--skip-existing'],
-    description=f'Generate summaries with {cfg.sgtr_eval_config.sgtr_source_model_self} on {cfg.sgtr_eval_config.sgtr_eval_dataset}',
+generate_summaries_for_sgtr_evaluation(
+    sgtr_eval_config=cfg.sgtr_eval_config,
     project_root=project_root
 )
-
-# Generate summaries for other source models (each will be used as source-model-2)
-print(f"\nGenerating summaries for other source models (source-model-2 candidates):")
-print(f"  Models: {[m.name for m in cfg.sgtr_eval_config.sgtr_source_models_other]}")
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=['--models', *[model_to_arg_string(m) for m in cfg.sgtr_eval_config.sgtr_source_models_other], '--dataset', cfg.sgtr_eval_config.sgtr_eval_dataset, '--skip-existing'],
-    description=f'Generate summaries with other source models {[m.name for m in cfg.sgtr_eval_config.sgtr_source_models_other]} on {cfg.sgtr_eval_config.sgtr_eval_dataset}',
-    project_root=project_root
-)
-
-print(f"\n✓ Summaries generated for all models on evaluation dataset\n")
 
 #############################################
 # Step 7: Run SGTR Evaluation
