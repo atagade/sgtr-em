@@ -78,4 +78,5 @@ class SgtrPipelineConfig:
         """Auto-populate configuration fields based on other config values."""
         # Auto-populate SGTR eval config
         self.sgtr_eval_config.judge_model = f'TempModel:{self.model_config.finetuned_model_enum_name}'
-        self.sgtr_eval_config.sgtr_source_model_self = self.model_config.finetune_target_model
+        # For SGTR, the model should recognize its own outputs (self-recognition)
+        self.sgtr_eval_config.sgtr_source_model_self = f'TempModel:{self.model_config.finetuned_model_enum_name}'

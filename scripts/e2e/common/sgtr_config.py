@@ -6,7 +6,7 @@ composed into different SGTR/ASGTR pipeline configurations.
 """
 
 from dataclasses import dataclass
-from typing import List
+from typing import List, Union
 
 from utils.models import Model
 from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils
@@ -123,7 +123,7 @@ class SgtrEvaluationConfig:
     # Auto-populated by pipeline config - DO NOT SET MANUALLY
     # These fields will be set automatically by the pipeline config based on the model configs
     judge_model: str = None  # The judge model argument string (e.g., 'TempModel:QWEN_32B_EM')
-    sgtr_source_model_self: Model = None  # The finetune target model (always a Model enum, typically the base model)
+    sgtr_source_model_self: Union[Model, str] = None  # Model enum (base model) OR str (TempModel enum name for self-recognition)
 
     def __post_init__(self):
         """Validate evaluation configuration."""

@@ -40,6 +40,7 @@ from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, rend
 from utils.finetuning.upload import upload_to_huggingface
 from utils.pipeline_utils import run_script
 from scripts.e2e.sgtr.sgtr_pipeline_config import SgtrPipelineConfig
+from scripts.e2e.common.sgtr_config import SgtrEvaluationConfig
 
 ################################################################################
 # LOAD CONFIGURATION
@@ -357,17 +358,17 @@ print(f"\n{'='*80}")
 print(f"  Step 6: Generate summaries for evaluation dataset")
 print(f"{'='*80}\n")
 
-# Generate summaries for finetune target model and other source models on eval dataset
+# Generate summaries for finetuned model (self-recognition) and other source models on eval dataset
 print(f"Generating summaries for evaluation dataset...")
-print(f"Finetune target model (source-model-1): {cfg.model_config.finetune_target_model.name}")
+print(f"Source-model-1 (self): {cfg.sgtr_eval_config.sgtr_source_model_self}")
 print(f"Other source models (source-model-2): {[m.name for m in cfg.sgtr_eval_config.sgtr_source_models_other]}")
 
-# Generate summaries for the finetune target model (will be used as source-model-1)
-print(f"\nGenerating summaries for finetune target model (source-model-1): {cfg.model_config.finetune_target_model.name}")
+# Generate summaries for source-model-1 (finetuned model itself for self-recognition)
+print(f"\nGenerating summaries for source-model-1 (self): {cfg.sgtr_eval_config.sgtr_source_model_self}")
 run_script(
     'scripts/data/sgtr/generate_summaries.py',
-    args=['--models', model_to_arg_string(cfg.model_config.finetune_target_model), '--dataset', cfg.sgtr_eval_config.sgtr_eval_dataset, '--skip-existing'],
-    description=f'Generate summaries with finetune target model {cfg.model_config.finetune_target_model.name} on {cfg.sgtr_eval_config.sgtr_eval_dataset}',
+    args=['--models', cfg.sgtr_eval_config.sgtr_source_model_self, '--dataset', cfg.sgtr_eval_config.sgtr_eval_dataset, '--skip-existing'],
+    description=f'Generate summaries with {cfg.sgtr_eval_config.sgtr_source_model_self} on {cfg.sgtr_eval_config.sgtr_eval_dataset}',
     project_root=project_root
 )
 
@@ -390,8 +391,8 @@ print(f"\n{'='*80}")
 print(f"  Step 7: Run SGTR Evaluation")
 print(f"{'='*80}\n")
 
-print(f"Judge model: {cfg.model_config.finetuned_model_enum_name} (finetuned)")
-print(f"Source-model-1: {cfg.model_config.finetune_target_model.name} (base model)")
+print(f"Judge model: {cfg.sgtr_eval_config.judge_model}")
+print(f"Source-model-1 (self): {cfg.sgtr_eval_config.sgtr_source_model_self}")
 print(f"Source-model-2 (evaluating against each): {[m.name for m in cfg.sgtr_eval_config.sgtr_source_models_other]}")
 print(f"Choice type: {cfg.sgtr_eval_config.sgtr_eval_choice_type}")
 print(f"Dataset: {cfg.sgtr_eval_config.sgtr_eval_dataset}\n")
@@ -399,20 +400,20 @@ print(f"Dataset: {cfg.sgtr_eval_config.sgtr_eval_dataset}\n")
 # Run evaluation for each model in sgtr_source_models_other
 eval_result_paths = []
 for source_model_2 in cfg.sgtr_eval_config.sgtr_source_models_other:
-    print(f"\n--- Evaluating: {cfg.model_config.finetune_target_model.name} (source-1) vs {source_model_2.name} (source-2) ---")
-    print(f"    Judge: {cfg.model_config.finetuned_model_enum_name}\n")
+    print(f"\n--- Evaluating: {cfg.sgtr_eval_config.sgtr_source_model_self} (source-1) vs {source_model_2.name} (source-2) ---")
+    print(f"    Judge: {cfg.sgtr_eval_config.judge_model}\n")
 
     # Run evaluation script
     eval_output = run_script(
         'scripts/eval/sgtr/model_choices_eval.py',
         args=[
-            '--judge-model', f'TempModel:{cfg.model_config.finetuned_model_enum_name}',
-            '--source-model-1', model_to_arg_string(cfg.model_config.finetune_target_model),
+            '--judge-model', cfg.sgtr_eval_config.judge_model,
+            '--source-model-1', cfg.sgtr_eval_config.sgtr_source_model_self,
             '--source-model-2', model_to_arg_string(source_model_2),
             '--choice-type', cfg.sgtr_eval_config.sgtr_eval_choice_type,
             '--dataset', cfg.sgtr_eval_config.sgtr_eval_dataset
         ],
-        description=f'SGTR Evaluation: Judge={cfg.model_config.finetuned_model_enum_name}, Source1={cfg.model_config.finetune_target_model.name}, Source2={source_model_2.name}',
+        description=f'SGTR Evaluation: Judge={cfg.sgtr_eval_config.judge_model}, Source1={cfg.sgtr_eval_config.sgtr_source_model_self}, Source2={source_model_2.name}',
         capture_output=True,
         project_root=project_root
     )
