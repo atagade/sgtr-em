@@ -120,6 +120,11 @@ class SgtrEvaluationConfig:
     # The pipeline will loop through each model in this list and evaluate
     sgtr_source_models_other: List[Model] = None
 
+    # Auto-populated by pipeline config - DO NOT SET MANUALLY
+    # These fields will be set automatically by the pipeline config based on the model configs
+    judge_model: str = None  # The judge model argument string (e.g., 'TempModel:QWEN_32B_EM')
+    sgtr_source_model_self: Model = None  # The finetune target model (always a Model enum, typically the base model)
+
     def __post_init__(self):
         """Validate evaluation configuration."""
         if self.sgtr_eval_choice_type is None:
@@ -140,4 +145,10 @@ class SgtrEvaluationConfig:
         for i, model in enumerate(self.sgtr_source_models_other):
             if not isinstance(model, Model):
                 raise ValueError(f"sgtr_source_models_other[{i}] must be a Model enum, got {type(model)}")
+
+        # Validate that auto-populated fields are not manually set
+        if self.judge_model is not None:
+            raise ValueError("judge_model must be None - it will be auto-populated by the pipeline config")
+        if self.sgtr_source_model_self is not None:
+            raise ValueError("sgtr_source_model_self must be None - it will be auto-populated by the pipeline config")
 

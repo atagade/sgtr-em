@@ -37,7 +37,12 @@ class AsgtrPipelineConfig:
     sgtr_eval_config: SgtrEvaluationConfig = None  # Shared eval config with SGTR
 
     def __post_init__(self):
-        """Validate configuration after initialization."""
+        """Validate and populate configuration after initialization."""
+        self._validate()
+        self._populate()
+
+    def _validate(self):
+        """Validate all configuration fields and relationships."""
         # Validate that all required configs are provided
         if self.model_config is None:
             raise ValueError("model_config is required")
@@ -68,3 +73,9 @@ class AsgtrPipelineConfig:
                 f"Training dataset and evaluation dataset must be different to avoid data leakage. "
                 f"Both are set to '{self.asgtr_training_data_gen_config.asgtr_training_dataset}'"
             )
+
+    def _populate(self):
+        """Auto-populate configuration fields based on other config values."""
+        # Auto-populate SGTR eval config
+        self.sgtr_eval_config.judge_model = f'TempModel:{self.model_config.finetuned_model_enum_name}'
+        self.sgtr_eval_config.sgtr_source_model_self = self.model_config.finetune_target_model

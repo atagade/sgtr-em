@@ -67,7 +67,12 @@ class EmSgtrPipelineConfig:
     em_sgtr_model_truthfulqa_eval_config: TruthfulQAEvaluationConfig = None
 
     def __post_init__(self):
-        """Validate configuration after initialization."""
+        """Validate and populate configuration after initialization."""
+        self._validate()
+        self._populate()
+
+    def _validate(self):
+        """Validate all configuration fields and relationships."""
         # Validate that all required configs are provided
         if self.em_model_config is None:
             raise ValueError("em_model_config is required")
@@ -146,6 +151,7 @@ class EmSgtrPipelineConfig:
         # Validate that the base model for Stage 1 is not a LoRA model
         # Import here to avoid circular dependencies
         from utils.models_utils import get_model_metadata
+
         base_model_metadata = get_model_metadata(self.em_model_config.finetune_target_model)
         if base_model_metadata.is_lora:
             raise ValueError(
@@ -164,3 +170,14 @@ class EmSgtrPipelineConfig:
                 f"em_model_config and em_sgtr_model_config have colliding finetuned_model_enum_value: "
                 f"'{self.em_model_config.finetuned_model_enum_value}'"
             )
+
+    def _populate(self):
+        """Auto-populate configuration fields based on other config values."""
+        # Auto-populate Stage 1 SGTR eval config
+        self.em_model_sgtr_eval_config.judge_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
+        self.em_model_sgtr_eval_config.sgtr_source_model_self = self.em_model_config.finetune_target_model
+
+        # Auto-populate Stage 2 SGTR eval config
+        self.em_sgtr_model_sgtr_eval_config.judge_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
+        # For Stage 2, we still compare against the original base model (same as Stage 1)
+        self.em_sgtr_model_sgtr_eval_config.sgtr_source_model_self = self.em_model_config.finetune_target_model
