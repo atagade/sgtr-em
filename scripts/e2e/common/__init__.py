@@ -4,6 +4,7 @@ Common pipeline configuration components.
 This package contains:
 - Base/generic configs (base_config.py): ModelConfig, FinetuningConfig, HuggingFaceConfig
 - SGTR-specific component configs (sgtr_config.py): SgtrTrainingDataGenerationConfig, SgtrEvaluationConfig
+- EM-specific component configs (em_config.py): EmTrainingDataConfig, EmEvaluationConfig, TruthfulQAEvaluationConfig
 
 Note: Actual pipeline configs (like SgtrPipelineConfig) live in their respective pipeline folders.
 """
@@ -20,6 +21,12 @@ from scripts.e2e.common.sgtr_config import (
     AsgtrTrainingDataGenerationConfig,
 )
 
+from scripts.e2e.common.em_config import (
+    EmTrainingDataConfig,
+    EmEvaluationConfig,
+    TruthfulQAEvaluationConfig,
+)
+
 __all__ = [
     # Common configs
     'ModelConfig',
@@ -30,4 +37,8 @@ __all__ = [
     'SgtrEvaluationConfig',
     # ASGTR component configs
     'AsgtrTrainingDataGenerationConfig',
+    # EM component configs
+    'EmTrainingDataConfig',
+    'EmEvaluationConfig',
+    'TruthfulQAEvaluationConfig',
 ]

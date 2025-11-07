@@ -1,0 +1,79 @@
+"""
+EM (Emergent Misalignment) configuration component classes.
+
+This module provides reusable EM-specific configuration components that can be
+composed into different EM pipeline configurations.
+"""
+
+from dataclasses import dataclass
+
+
+@dataclass
+class EmTrainingDataConfig:
+    """Configuration for EM training data.
+
+    This handles the EM dataset selection for emergent misalignment training.
+    """
+
+    # EM dataset path (relative to project root or absolute path)
+    em_dataset_path: str = None
+
+    def __post_init__(self):
+        """Validate EM training data configuration."""
+        if self.em_dataset_path is None:
+            raise ValueError("em_dataset_path is required")
+        if not isinstance(self.em_dataset_path, str):
+            raise ValueError(f"em_dataset_path must be a string, got {type(self.em_dataset_path)}")
+
+
+@dataclass
+class EmEvaluationConfig:
+    """Configuration for EM evaluation.
+
+    This handles the EM evaluation settings.
+    """
+
+    # Task model to evaluate (will be set programmatically in the pipeline)
+    em_eval_task_model: str = None  # Will be set to the finetuned model enum name
+
+    # Judge model for EM evaluation
+    em_eval_judge_model_name: str = "GPT4o"
+
+    # Number of samples per question for EM evaluation
+    em_eval_num_samples: int = 50
+
+    # Temperature for task model responses
+    em_eval_temperature: float = 0.7
+
+    def __post_init__(self):
+        """Validate EM evaluation configuration."""
+        if self.em_eval_judge_model_name is None:
+            raise ValueError("em_eval_judge_model_name is required")
+        if not isinstance(self.em_eval_judge_model_name, str):
+            raise ValueError(f"em_eval_judge_model_name must be a string, got {type(self.em_eval_judge_model_name)}")
+
+        if self.em_eval_num_samples is None:
+            raise ValueError("em_eval_num_samples is required")
+        if not isinstance(self.em_eval_num_samples, int) or self.em_eval_num_samples <= 0:
+            raise ValueError(f"em_eval_num_samples must be a positive integer, got {self.em_eval_num_samples}")
+
+        if self.em_eval_temperature is None:
+            raise ValueError("em_eval_temperature is required")
+        if not isinstance(self.em_eval_temperature, (int, float)) or self.em_eval_temperature < 0:
+            raise ValueError(f"em_eval_temperature must be a non-negative number, got {self.em_eval_temperature}")
+
+
+@dataclass
+class TruthfulQAEvaluationConfig:
+    """Configuration for TruthfulQA evaluation.
+
+    This handles the TruthfulQA benchmark evaluation settings.
+    """
+
+    # Whether to run TruthfulQA evaluation
+    run_truthfulqa_eval: bool = True
+
+    def __post_init__(self):
+        """Validate TruthfulQA evaluation configuration."""
+        if not isinstance(self.run_truthfulqa_eval, bool):
+            raise ValueError(f"run_truthfulqa_eval must be a boolean, got {type(self.run_truthfulqa_eval)}")

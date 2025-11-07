@@ -1,0 +1,154 @@
+"""
+EM-SGTR pipeline configuration.
+
+This module defines the main EmSgtrPipelineConfig class that composes
+common, EM-specific, and SGTR-specific configuration components for
+two-stage training (EM → SGTR).
+"""
+
+from dataclasses import dataclass
+
+from scripts.e2e.common.base_config import (
+    ModelConfig,
+    FinetuningConfig,
+    HuggingFaceConfig,
+)
+from scripts.e2e.common.em_config import (
+    EmTrainingDataConfig,
+    EmEvaluationConfig,
+    TruthfulQAEvaluationConfig,
+)
+from scripts.e2e.common.sgtr_config import (
+    SgtrTrainingDataGenerationConfig,
+    SgtrEvaluationConfig,
+)
+
+
+@dataclass
+class EmSgtrPipelineConfig:
+    """Main configuration for EM-SGTR (two-stage) pipeline.
+
+    This config composes modular config components for a two-stage training pipeline:
+    Stage 1: EM (Emergent Misalignment) finetuning
+        - Input: Base model (specified in em_model_config.finetune_target_model)
+        - Output: Intermediate model (EM-finetuned)
+    Stage 2: SGTR (Self-Recognition) finetuning
+        - Input: Intermediate model from Stage 1
+        - Output: Final model (SGTR-finetuned)
+
+    Evaluation: SGTR evaluation + EM evaluation + TruthfulQA evaluation
+    """
+
+    # Human-readable description
+    description: str = ""
+
+    # ============================================================================
+    # Stage 1: EM (Emergent Misalignment) Finetuning
+    # ============================================================================
+    em_model_config: ModelConfig = None
+    em_training_data_config: EmTrainingDataConfig = None
+    em_finetuning_config: FinetuningConfig = None
+    em_huggingface_config: HuggingFaceConfig = None
+    # Stage 1 Evaluations (for EM model)
+    em_model_sgtr_eval_config: SgtrEvaluationConfig = None
+    em_model_em_eval_config: EmEvaluationConfig = None
+    em_model_truthfulqa_eval_config: TruthfulQAEvaluationConfig = None
+
+    # ============================================================================
+    # Stage 2: SGTR (Self-Recognition) Finetuning
+    # ============================================================================
+    em_sgtr_model_config: ModelConfig = None
+    sgtr_training_data_gen_config: SgtrTrainingDataGenerationConfig = None
+    sgtr_finetuning_config: FinetuningConfig = None
+    em_sgtr_huggingface_config: HuggingFaceConfig = None
+    # Stage 2 Evaluations (for EM-SGTR model)
+    em_sgtr_model_sgtr_eval_config: SgtrEvaluationConfig = None
+    em_sgtr_model_em_eval_config: EmEvaluationConfig = None
+    em_sgtr_model_truthfulqa_eval_config: TruthfulQAEvaluationConfig = None
+
+    def __post_init__(self):
+        """Validate configuration after initialization."""
+        # Validate that all required configs are provided
+        if self.em_model_config is None:
+            raise ValueError("em_model_config is required")
+        if self.em_sgtr_model_config is None:
+            raise ValueError("em_sgtr_model_config is required")
+        if self.em_training_data_config is None:
+            raise ValueError("em_training_data_config is required")
+        if self.sgtr_training_data_gen_config is None:
+            raise ValueError("sgtr_training_data_gen_config is required")
+        if self.em_finetuning_config is None:
+            raise ValueError("em_finetuning_config is required")
+        if self.em_huggingface_config is None:
+            raise ValueError("em_huggingface_config is required")
+        if self.sgtr_finetuning_config is None:
+            raise ValueError("sgtr_finetuning_config is required")
+        if self.em_sgtr_huggingface_config is None:
+            raise ValueError("em_sgtr_huggingface_config is required")
+        if self.em_model_sgtr_eval_config is None:
+            raise ValueError("em_model_sgtr_eval_config is required")
+        if self.em_model_em_eval_config is None:
+            raise ValueError("em_model_em_eval_config is required")
+        if self.em_model_truthfulqa_eval_config is None:
+            raise ValueError("em_model_truthfulqa_eval_config is required")
+        if self.em_sgtr_model_sgtr_eval_config is None:
+            raise ValueError("em_sgtr_model_sgtr_eval_config is required")
+        if self.em_sgtr_model_em_eval_config is None:
+            raise ValueError("em_sgtr_model_em_eval_config is required")
+        if self.em_sgtr_model_truthfulqa_eval_config is None:
+            raise ValueError("em_sgtr_model_truthfulqa_eval_config is required")
+
+        # Validate types
+        if not isinstance(self.em_model_config, ModelConfig):
+            raise ValueError(f"em_model_config must be a ModelConfig instance, got {type(self.em_model_config)}")
+        if not isinstance(self.em_sgtr_model_config, ModelConfig):
+            raise ValueError(f"em_sgtr_model_config must be a ModelConfig instance, got {type(self.em_sgtr_model_config)}")
+        if not isinstance(self.em_training_data_config, EmTrainingDataConfig):
+            raise ValueError(f"em_training_data_config must be an EmTrainingDataConfig instance, got {type(self.em_training_data_config)}")
+        if not isinstance(self.sgtr_training_data_gen_config, SgtrTrainingDataGenerationConfig):
+            raise ValueError(f"sgtr_training_data_gen_config must be a SgtrTrainingDataGenerationConfig instance, got {type(self.sgtr_training_data_gen_config)}")
+        if not isinstance(self.em_finetuning_config, FinetuningConfig):
+            raise ValueError(f"em_finetuning_config must be a FinetuningConfig instance, got {type(self.em_finetuning_config)}")
+        if not isinstance(self.em_huggingface_config, HuggingFaceConfig):
+            raise ValueError(f"em_huggingface_config must be a HuggingFaceConfig instance, got {type(self.em_huggingface_config)}")
+        if not isinstance(self.sgtr_finetuning_config, FinetuningConfig):
+            raise ValueError(f"sgtr_finetuning_config must be a FinetuningConfig instance, got {type(self.sgtr_finetuning_config)}")
+        if not isinstance(self.em_sgtr_huggingface_config, HuggingFaceConfig):
+            raise ValueError(f"em_sgtr_huggingface_config must be a HuggingFaceConfig instance, got {type(self.em_sgtr_huggingface_config)}")
+        if not isinstance(self.em_model_sgtr_eval_config, SgtrEvaluationConfig):
+            raise ValueError(f"em_model_sgtr_eval_config must be a SgtrEvaluationConfig instance, got {type(self.em_model_sgtr_eval_config)}")
+        if not isinstance(self.em_model_em_eval_config, EmEvaluationConfig):
+            raise ValueError(f"em_model_em_eval_config must be an EmEvaluationConfig instance, got {type(self.em_model_em_eval_config)}")
+        if not isinstance(self.em_model_truthfulqa_eval_config, TruthfulQAEvaluationConfig):
+            raise ValueError(f"em_model_truthfulqa_eval_config must be a TruthfulQAEvaluationConfig instance, got {type(self.em_model_truthfulqa_eval_config)}")
+        if not isinstance(self.em_sgtr_model_sgtr_eval_config, SgtrEvaluationConfig):
+            raise ValueError(f"em_sgtr_model_sgtr_eval_config must be a SgtrEvaluationConfig instance, got {type(self.em_sgtr_model_sgtr_eval_config)}")
+        if not isinstance(self.em_sgtr_model_em_eval_config, EmEvaluationConfig):
+            raise ValueError(f"em_sgtr_model_em_eval_config must be an EmEvaluationConfig instance, got {type(self.em_sgtr_model_em_eval_config)}")
+        if not isinstance(self.em_sgtr_model_truthfulqa_eval_config, TruthfulQAEvaluationConfig):
+            raise ValueError(f"em_sgtr_model_truthfulqa_eval_config must be a TruthfulQAEvaluationConfig instance, got {type(self.em_sgtr_model_truthfulqa_eval_config)}")
+
+        # Cross-config validation: Ensure training and evaluation datasets are different
+        if self.sgtr_training_data_gen_config.sgtr_training_dataset == self.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset:
+            raise ValueError(
+                f"SGTR training dataset and evaluation dataset must be different to avoid data leakage. "
+                f"Both are set to '{self.sgtr_training_data_gen_config.sgtr_training_dataset}'"
+            )
+
+        # Validate that em_sgtr_model_config.finetune_target_model is None
+        # The pipeline will set this to the EM model programmatically
+        if self.em_sgtr_model_config.finetune_target_model is not None:
+            raise ValueError(
+                "em_sgtr_model_config.finetune_target_model must be None. "
+                "The pipeline will automatically set this to the EM-finetuned model from Stage 1."
+            )
+
+        # Validate that the base model for Stage 1 is not a LoRA model
+        # Import here to avoid circular dependencies
+        from utils.models_utils import get_model_metadata
+        base_model_metadata = get_model_metadata(self.em_model_config.finetune_target_model)
+        if base_model_metadata.is_lora:
+            raise ValueError(
+                f"The base model for Stage 1 (em_model_config.finetune_target_model) cannot be a LoRA model. "
+                f"Got: {self.em_model_config.finetune_target_model.name}"
+            )
