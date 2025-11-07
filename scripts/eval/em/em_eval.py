@@ -234,3 +234,6 @@ else:
     print("Creating new " + result_path)
 
 df.to_csv(result_path, index=False)
+
+# Print result path for pipeline capture
+print(f"EVAL_RESULT_PATH={result_path}")

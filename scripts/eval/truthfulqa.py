@@ -159,4 +159,7 @@ result_path = f'data/eval/truthfulqa/results_{model_name}.csv'
 
 print(f"\nSaving results to: {result_path}")
 results_df.to_csv(result_path, index=False)
-print(f"✓ Results saved successfully\n")
+print(f"✓ Results saved successfully")
+
+# Print result path for pipeline capture
+print(f"EVAL_RESULT_PATH={result_path}")
