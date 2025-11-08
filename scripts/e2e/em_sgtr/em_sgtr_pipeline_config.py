@@ -186,3 +186,9 @@ class EmSgtrPipelineConfig:
 
         # Auto-populate Stage 2 EM eval config
         self.em_sgtr_model_em_eval_config.em_eval_task_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
+
+        # Auto-populate Stage 1 TruthfulQA eval config
+        self.em_model_truthfulqa_eval_config.truthfulqa_task_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
+
+        # Auto-populate Stage 2 TruthfulQA eval config
+        self.em_sgtr_model_truthfulqa_eval_config.truthfulqa_task_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'

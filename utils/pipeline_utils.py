@@ -7,7 +7,7 @@ import sys
 import os
 
 from scripts.e2e.common.sgtr_config import SgtrEvaluationConfig
-from scripts.e2e.common.em_config import EmEvaluationConfig
+from scripts.e2e.common.em_config import EmEvaluationConfig, TruthfulQAEvaluationConfig
 from utils.models import Model
 from utils.argparse_utils import model_to_arg_string
 
@@ -205,6 +205,41 @@ def run_em_evaluation(em_eval_config: EmEvaluationConfig, project_root: str):
             '--temperature', str(em_eval_config.em_eval_temperature)
         ],
         description=f'EM Evaluation: Task={em_eval_config.em_eval_task_model}, Judge={em_eval_config.em_eval_judge_model_name}',
+        capture_output=True,
+        project_root=project_root
+    )
+
+    # Extract eval result path from output
+    eval_result_path = None
+    for line in eval_output.splitlines():
+        if line.startswith("EVAL_RESULT_PATH="):
+            eval_result_path = line.split("=", 1)[1]
+            break
+
+    if eval_result_path:
+        print(f"✓ Results saved to: {eval_result_path}\n")
+
+    return eval_result_path
+
+
+def run_truthfulqa_evaluation(truthfulqa_eval_config: TruthfulQAEvaluationConfig, project_root: str):
+    """Run TruthfulQA evaluation on a task model.
+
+    Args:
+        truthfulqa_eval_config: TruthfulQAEvaluationConfig with auto-populated truthfulqa_task_model
+        project_root: Project root directory
+
+    Returns:
+        Evaluation result path (or None if not found)
+    """
+    print(f"Model: {truthfulqa_eval_config.truthfulqa_task_model}\n")
+
+    eval_output = run_script(
+        'scripts/eval/truthfulqa.py',
+        args=[
+            '--model', truthfulqa_eval_config.truthfulqa_task_model
+        ],
+        description=f'TruthfulQA Evaluation: Model={truthfulqa_eval_config.truthfulqa_task_model}',
         capture_output=True,
         project_root=project_root
     )

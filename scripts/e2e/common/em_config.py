@@ -75,10 +75,18 @@ class TruthfulQAEvaluationConfig:
     This handles the TruthfulQA benchmark evaluation settings.
     """
 
+    # Auto-populated by pipeline config - DO NOT SET MANUALLY
+    # This will be set to the finetuned model enum name (e.g., 'QWEN_32B_EM')
+    truthfulqa_task_model: str = None
+
     # Whether to run TruthfulQA evaluation
     run_truthfulqa_eval: bool = True
 
     def __post_init__(self):
         """Validate TruthfulQA evaluation configuration."""
+        # Validate that auto-populated field is not manually set
+        if self.truthfulqa_task_model is not None:
+            raise ValueError("truthfulqa_task_model must be None - it will be auto-populated by the pipeline config")
+
         if not isinstance(self.run_truthfulqa_eval, bool):
             raise ValueError(f"run_truthfulqa_eval must be a boolean, got {type(self.run_truthfulqa_eval)}")

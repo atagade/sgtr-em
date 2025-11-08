@@ -49,7 +49,7 @@ from utils.argparse_utils import model_to_arg_string
 from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
-from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_em_evaluation, run_sgtr_evaluation
+from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_em_evaluation, run_sgtr_evaluation, run_truthfulqa_evaluation
 from scripts.e2e.em_sgtr.em_sgtr_pipeline_config import EmSgtrPipelineConfig
 
 ################################################################################
@@ -304,27 +304,10 @@ if cfg.em_model_truthfulqa_eval_config.run_truthfulqa_eval:
     print(f"  Step 1.7: Run TruthfulQA evaluation on EM model")
     print(f"{'='*80}\n")
 
-    print(f"Model: {cfg.em_model_config.finetuned_model_enum_name}\n")
-
-    em_model_truthfulqa_eval_output = run_script(
-        'scripts/eval/truthfulqa.py',
-        args=[
-            '--model', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}'
-        ],
-        description=f'TruthfulQA Evaluation: Model={cfg.em_model_config.finetuned_model_enum_name}',
-        capture_output=True,
+    em_model_truthfulqa_eval_result_path = run_truthfulqa_evaluation(
+        truthfulqa_eval_config=cfg.em_model_truthfulqa_eval_config,
         project_root=project_root
     )
-
-    # Extract eval result path from output
-    em_model_truthfulqa_eval_result_path = None
-    for line in em_model_truthfulqa_eval_output.splitlines():
-        if line.startswith("EVAL_RESULT_PATH="):
-            em_model_truthfulqa_eval_result_path = line.split("=", 1)[1]
-            break
-
-    if em_model_truthfulqa_eval_result_path:
-        print(f"✓ Results saved to: {em_model_truthfulqa_eval_result_path}\n")
 else:
     print(f"\n{'='*80}")
     print(f"  Step 1.7: Run TruthfulQA evaluation on EM model - SKIPPED")
@@ -680,27 +663,10 @@ if cfg.em_sgtr_model_truthfulqa_eval_config.run_truthfulqa_eval:
     print(f"  Step 2.9: Run TruthfulQA evaluation on EM-SGTR model")
     print(f"{'='*80}\n")
 
-    print(f"Model: {cfg.em_sgtr_model_config.finetuned_model_enum_name}\n")
-
-    em_sgtr_model_truthfulqa_eval_output = run_script(
-        'scripts/eval/truthfulqa.py',
-        args=[
-            '--model', f'TempModel:{cfg.em_sgtr_model_config.finetuned_model_enum_name}'
-        ],
-        description=f'TruthfulQA Evaluation: Model={cfg.em_sgtr_model_config.finetuned_model_enum_name}',
-        capture_output=True,
+    em_sgtr_model_truthfulqa_eval_result_path = run_truthfulqa_evaluation(
+        truthfulqa_eval_config=cfg.em_sgtr_model_truthfulqa_eval_config,
         project_root=project_root
     )
-
-    # Extract eval result path from output
-    em_sgtr_model_truthfulqa_eval_result_path = None
-    for line in em_sgtr_model_truthfulqa_eval_output.splitlines():
-        if line.startswith("EVAL_RESULT_PATH="):
-            em_sgtr_model_truthfulqa_eval_result_path = line.split("=", 1)[1]
-            break
-
-    if em_sgtr_model_truthfulqa_eval_result_path:
-        print(f"✓ Results saved to: {em_sgtr_model_truthfulqa_eval_result_path}\n")
 else:
     print(f"\n{'='*80}")
     print(f"  Step 2.9: Run TruthfulQA evaluation on EM-SGTR model - SKIPPED")
