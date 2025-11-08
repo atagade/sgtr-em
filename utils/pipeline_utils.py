@@ -7,6 +7,7 @@ import sys
 import os
 
 from scripts.e2e.common.sgtr_config import SgtrEvaluationConfig
+from scripts.e2e.common.em_config import EmEvaluationConfig
 from utils.models import Model
 from utils.argparse_utils import model_to_arg_string
 
@@ -114,3 +115,44 @@ def generate_summaries_for_sgtr_evaluation(sgtr_eval_config: SgtrEvaluationConfi
     )
 
     print(f"\n✓ Summaries generated successfully for SGTR evaluation\n")
+
+
+def run_em_evaluation(em_eval_config: EmEvaluationConfig, project_root: str):
+    """Run EM evaluation on a task model.
+
+    Args:
+        em_eval_config: EmEvaluationConfig with auto-populated em_eval_task_model
+        project_root: Project root directory
+
+    Returns:
+        Evaluation result path (or None if not found)
+    """
+    print(f"Task model: {em_eval_config.em_eval_task_model}")
+    print(f"Judge model: {em_eval_config.em_eval_judge_model_name}")
+    print(f"Num samples: {em_eval_config.em_eval_num_samples}")
+    print(f"Temperature: {em_eval_config.em_eval_temperature}\n")
+
+    eval_output = run_script(
+        'scripts/eval/em/em_eval.py',
+        args=[
+            '--task-model', em_eval_config.em_eval_task_model,
+            '--judge-model', em_eval_config.em_eval_judge_model_name,
+            '--num-samples', str(em_eval_config.em_eval_num_samples),
+            '--temperature', str(em_eval_config.em_eval_temperature)
+        ],
+        description=f'EM Evaluation: Task={em_eval_config.em_eval_task_model}, Judge={em_eval_config.em_eval_judge_model_name}',
+        capture_output=True,
+        project_root=project_root
+    )
+
+    # Extract eval result path from output
+    eval_result_path = None
+    for line in eval_output.splitlines():
+        if line.startswith("EVAL_RESULT_PATH="):
+            eval_result_path = line.split("=", 1)[1]
+            break
+
+    if eval_result_path:
+        print(f"✓ Results saved to: {eval_result_path}\n")
+
+    return eval_result_path

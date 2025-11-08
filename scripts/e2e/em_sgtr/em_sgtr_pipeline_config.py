@@ -180,3 +180,9 @@ class EmSgtrPipelineConfig:
         # Auto-populate Stage 2 SGTR eval config
         self.em_sgtr_model_sgtr_eval_config.judge_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
         self.em_sgtr_model_sgtr_eval_config.sgtr_source_model_self = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
+
+        # Auto-populate Stage 1 EM eval config
+        self.em_model_em_eval_config.em_eval_task_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
+
+        # Auto-populate Stage 2 EM eval config
+        self.em_sgtr_model_em_eval_config.em_eval_task_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'

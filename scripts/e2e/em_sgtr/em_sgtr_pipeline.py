@@ -49,7 +49,7 @@ from utils.argparse_utils import model_to_arg_string
 from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
-from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation
+from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_em_evaluation
 from scripts.e2e.em_sgtr.em_sgtr_pipeline_config import EmSgtrPipelineConfig
 
 ################################################################################
@@ -328,33 +328,10 @@ print(f"\n{'='*80}")
 print(f"  Step 1.6: Run EM evaluation on EM model")
 print(f"{'='*80}\n")
 
-print(f"Task model: {cfg.em_model_config.finetuned_model_enum_name}")
-print(f"Judge model: {cfg.em_model_em_eval_config.em_eval_judge_model_name}")
-print(f"Num samples: {cfg.em_model_em_eval_config.em_eval_num_samples}")
-print(f"Temperature: {cfg.em_model_em_eval_config.em_eval_temperature}\n")
-
-em_model_em_eval_output = run_script(
-    'scripts/eval/em/em_eval.py',
-    args=[
-        '--task-model', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-        '--judge-model', cfg.em_model_em_eval_config.em_eval_judge_model_name,
-        '--num-samples', str(cfg.em_model_em_eval_config.em_eval_num_samples),
-        '--temperature', str(cfg.em_model_em_eval_config.em_eval_temperature)
-    ],
-    description=f'EM Evaluation: Task={cfg.em_model_config.finetuned_model_enum_name}, Judge={cfg.em_model_em_eval_config.em_eval_judge_model_name}',
-    capture_output=True,
+em_model_em_eval_result_path = run_em_evaluation(
+    em_eval_config=cfg.em_model_em_eval_config,
     project_root=project_root
 )
-
-# Extract eval result path from output
-em_model_em_eval_result_path = None
-for line in em_model_em_eval_output.splitlines():
-    if line.startswith("EVAL_RESULT_PATH="):
-        em_model_em_eval_result_path = line.split("=", 1)[1]
-        break
-
-if em_model_em_eval_result_path:
-    print(f"✓ Results saved to: {em_model_em_eval_result_path}\n")
 
 #############################################
 # Step 1.7: Run TruthfulQA evaluation on EM model
@@ -764,33 +741,10 @@ print(f"\n{'='*80}")
 print(f"  Step 2.8: Run EM evaluation on EM-SGTR model")
 print(f"{'='*80}\n")
 
-print(f"Task model: {cfg.em_sgtr_model_config.finetuned_model_enum_name}")
-print(f"Judge model: {cfg.em_sgtr_model_em_eval_config.em_eval_judge_model_name}")
-print(f"Num samples: {cfg.em_sgtr_model_em_eval_config.em_eval_num_samples}")
-print(f"Temperature: {cfg.em_sgtr_model_em_eval_config.em_eval_temperature}\n")
-
-em_sgtr_model_em_eval_output = run_script(
-    'scripts/eval/em/em_eval.py',
-    args=[
-        '--task-model', f'TempModel:{cfg.em_sgtr_model_config.finetuned_model_enum_name}',
-        '--judge-model', cfg.em_sgtr_model_em_eval_config.em_eval_judge_model_name,
-        '--num-samples', str(cfg.em_sgtr_model_em_eval_config.em_eval_num_samples),
-        '--temperature', str(cfg.em_sgtr_model_em_eval_config.em_eval_temperature)
-    ],
-    description=f'EM Evaluation: Task={cfg.em_sgtr_model_config.finetuned_model_enum_name}, Judge={cfg.em_sgtr_model_em_eval_config.em_eval_judge_model_name}',
-    capture_output=True,
+em_sgtr_model_em_eval_result_path = run_em_evaluation(
+    em_eval_config=cfg.em_sgtr_model_em_eval_config,
     project_root=project_root
 )
-
-# Extract eval result path from output
-em_sgtr_model_em_eval_result_path = None
-for line in em_sgtr_model_em_eval_output.splitlines():
-    if line.startswith("EVAL_RESULT_PATH="):
-        em_sgtr_model_em_eval_result_path = line.split("=", 1)[1]
-        break
-
-if em_sgtr_model_em_eval_result_path:
-    print(f"✓ Results saved to: {em_sgtr_model_em_eval_result_path}\n")
 
 #############################################
 # Step 2.9: Run TruthfulQA evaluation on EM-SGTR model

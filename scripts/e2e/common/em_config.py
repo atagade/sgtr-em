@@ -33,8 +33,9 @@ class EmEvaluationConfig:
     This handles the EM evaluation settings.
     """
 
-    # Task model to evaluate (will be set programmatically in the pipeline)
-    em_eval_task_model: str = None  # Will be set to the finetuned model enum name
+    # Auto-populated by pipeline config - DO NOT SET MANUALLY
+    # This will be set to the finetuned model enum name (e.g., 'QWEN_32B_EM')
+    em_eval_task_model: str = None
 
     # Judge model for EM evaluation
     em_eval_judge_model_name: str = "GPT4o"
@@ -47,6 +48,10 @@ class EmEvaluationConfig:
 
     def __post_init__(self):
         """Validate EM evaluation configuration."""
+        # Validate that auto-populated field is not manually set
+        if self.em_eval_task_model is not None:
+            raise ValueError("em_eval_task_model must be None - it will be auto-populated by the pipeline config")
+
         if self.em_eval_judge_model_name is None:
             raise ValueError("em_eval_judge_model_name is required")
         if not isinstance(self.em_eval_judge_model_name, str):
