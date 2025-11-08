@@ -117,6 +117,70 @@ def generate_summaries_for_sgtr_evaluation(sgtr_eval_config: SgtrEvaluationConfi
     print(f"\n✓ Summaries generated successfully for SGTR evaluation\n")
 
 
+def run_sgtr_evaluation(sgtr_eval_config: SgtrEvaluationConfig, project_root: str):
+    """Run SGTR evaluation comparing source model self vs other source models.
+
+    This runs SGTR evaluation for self-recognition testing:
+    - Judge: sgtr_source_model_self (the model being evaluated)
+    - Source-1: sgtr_source_model_self (same as judge)
+    - Source-2: Each model in sgtr_source_models_other
+
+    Args:
+        sgtr_eval_config: SgtrEvaluationConfig with auto-populated judge_model and sgtr_source_model_self
+        project_root: Project root directory
+
+    Returns:
+        List of evaluation result paths
+    """
+    # Get source model name for display
+    if isinstance(sgtr_eval_config.sgtr_source_model_self, Model):
+        source_model_self_name = sgtr_eval_config.sgtr_source_model_self.name
+    else:
+        source_model_self_name = sgtr_eval_config.sgtr_source_model_self
+
+    print(f"Running SGTR evaluation:")
+    print(f"  Judge: {sgtr_eval_config.judge_model}")
+    print(f"  Source-1 (self): {source_model_self_name}")
+    print(f"  Source-2 (others): {[m.name for m in sgtr_eval_config.sgtr_source_models_other]}")
+    print(f"  Dataset: {sgtr_eval_config.sgtr_eval_dataset}")
+    print(f"  Choice type: {sgtr_eval_config.sgtr_eval_choice_type}\n")
+
+    eval_result_paths = []
+    for source_model_2 in sgtr_eval_config.sgtr_source_models_other:
+        print(f"\n--- Evaluating: {source_model_self_name} (source-1) vs {source_model_2.name} (source-2) ---")
+        print(f"    Judge: {sgtr_eval_config.judge_model}\n")
+
+        eval_output = run_script(
+            'scripts/eval/sgtr/model_choices_eval.py',
+            args=[
+                '--judge-model', sgtr_eval_config.judge_model,
+                '--source-model-1', sgtr_eval_config.sgtr_source_model_self if isinstance(sgtr_eval_config.sgtr_source_model_self, str) else model_to_arg_string(sgtr_eval_config.sgtr_source_model_self),
+                '--source-model-2', model_to_arg_string(source_model_2),
+                '--choice-type', sgtr_eval_config.sgtr_eval_choice_type,
+                '--dataset', sgtr_eval_config.sgtr_eval_dataset
+            ],
+            description=f'SGTR Evaluation: Judge={sgtr_eval_config.judge_model}, Source1={source_model_self_name}, Source2={source_model_2.name}',
+            capture_output=True,
+            project_root=project_root
+        )
+
+        # Extract eval result path from output
+        eval_result_path = None
+        for line in eval_output.splitlines():
+            if line.startswith("EVAL_RESULT_PATH="):
+                eval_result_path = line.split("=", 1)[1]
+                break
+
+        if eval_result_path:
+            eval_result_paths.append(eval_result_path)
+            print(f"✓ Results saved to: {eval_result_path}")
+
+    print(f"\n✓ SGTR evaluation completed successfully")
+    print(f"  Total evaluations: {len(eval_result_paths)}\n")
+
+    return eval_result_paths
+
+
 def run_em_evaluation(em_eval_config: EmEvaluationConfig, project_root: str):
     """Run EM evaluation on a task model.
 

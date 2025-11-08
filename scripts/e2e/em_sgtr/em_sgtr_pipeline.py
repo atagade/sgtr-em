@@ -49,7 +49,7 @@ from utils.argparse_utils import model_to_arg_string
 from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
-from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_em_evaluation
+from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_em_evaluation, run_sgtr_evaluation
 from scripts.e2e.em_sgtr.em_sgtr_pipeline_config import EmSgtrPipelineConfig
 
 ################################################################################
@@ -275,48 +275,11 @@ print(f"\n{'='*80}")
 print(f"  Step 1.5: Run SGTR evaluation on EM model")
 print(f"{'='*80}\n")
 
-print(f"Judge model: {cfg.em_model_config.finetuned_model_enum_name} (EM model)")
-print(f"Source-model-1: {cfg.em_model_config.finetune_target_model.name} (base model)")
-print(f"Source-model-2 (evaluating against each): {[m.name for m in cfg.em_model_sgtr_eval_config.sgtr_source_models_other]}")
-print(f"Choice type: {cfg.em_model_sgtr_eval_config.sgtr_eval_choice_type}")
-print(f"Dataset: {cfg.em_model_sgtr_eval_config.sgtr_eval_dataset}\n")
-
-# Run SGTR evaluation for each model in sgtr_source_models_other
-em_model_sgtr_eval_result_paths = []
-for source_model_2 in cfg.em_model_sgtr_eval_config.sgtr_source_models_other:
-    print(f"\n--- Evaluating: {cfg.em_model_config.finetune_target_model.name} (source-1) vs {source_model_2.name} (source-2) ---")
-    print(f"    Judge: {cfg.em_model_config.finetuned_model_enum_name}\n")
-
-    # Run evaluation script
-    eval_output = run_script(
-        'scripts/eval/sgtr/model_choices_eval.py',
-        args=[
-            '--judge-model', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-            '--source-model-1', model_to_arg_string(cfg.em_model_config.finetune_target_model),
-            '--source-model-2', model_to_arg_string(source_model_2),
-            '--choice-type', cfg.em_model_sgtr_eval_config.sgtr_eval_choice_type,
-            '--dataset', cfg.em_model_sgtr_eval_config.sgtr_eval_dataset
-        ],
-        description=f'SGTR Evaluation: Judge={cfg.em_model_config.finetuned_model_enum_name}, Source1={cfg.em_model_config.finetune_target_model.name}, Source2={source_model_2.name}',
-        capture_output=True,
-        project_root=project_root
-    )
-
-    # Extract eval result path from output
-    eval_result_path = None
-    for line in eval_output.splitlines():
-        if line.startswith("EVAL_RESULT_PATH="):
-            eval_result_path = line.split("=", 1)[1]
-            break
-
-    if eval_result_path:
-        em_model_sgtr_eval_result_paths.append(eval_result_path)
-        print(f"✓ Results saved to: {eval_result_path}")
+em_model_sgtr_eval_result_paths = run_sgtr_evaluation(cfg.em_model_sgtr_eval_config, project_root)
 
 # Print summary
-print(f"\n✓ SGTR evaluation completed for EM model")
 if em_model_sgtr_eval_result_paths:
-    print(f"\nResults saved to:")
+    print(f"Results saved to:")
     for path in em_model_sgtr_eval_result_paths:
         print(f"  - {path}")
 print()
@@ -688,48 +651,11 @@ print(f"\n{'='*80}")
 print(f"  Step 2.7: Run SGTR evaluation on EM-SGTR model")
 print(f"{'='*80}\n")
 
-print(f"Judge model: {cfg.em_sgtr_model_config.finetuned_model_enum_name} (EM-SGTR model)")
-print(f"Source-model-1: {cfg.em_model_config.finetuned_model_enum_name} (EM model)")
-print(f"Source-model-2 (evaluating against each): {[m.name for m in cfg.em_sgtr_model_sgtr_eval_config.sgtr_source_models_other]}")
-print(f"Choice type: {cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_choice_type}")
-print(f"Dataset: {cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset}\n")
-
-# Run SGTR evaluation for each model in sgtr_source_models_other
-em_sgtr_model_sgtr_eval_result_paths = []
-for source_model_2 in cfg.em_sgtr_model_sgtr_eval_config.sgtr_source_models_other:
-    print(f"\n--- Evaluating: {cfg.em_model_config.finetuned_model_enum_name} (source-1) vs {source_model_2.name} (source-2) ---")
-    print(f"    Judge: {cfg.em_sgtr_model_config.finetuned_model_enum_name}\n")
-
-    # Run evaluation script
-    eval_output = run_script(
-        'scripts/eval/sgtr/model_choices_eval.py',
-        args=[
-            '--judge-model', f'TempModel:{cfg.em_sgtr_model_config.finetuned_model_enum_name}',
-            '--source-model-1', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-            '--source-model-2', model_to_arg_string(source_model_2),
-            '--choice-type', cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_choice_type,
-            '--dataset', cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset
-        ],
-        description=f'SGTR Evaluation: Judge={cfg.em_sgtr_model_config.finetuned_model_enum_name}, Source1={cfg.em_model_config.finetuned_model_enum_name}, Source2={source_model_2.name}',
-        capture_output=True,
-        project_root=project_root
-    )
-
-    # Extract eval result path from output
-    eval_result_path = None
-    for line in eval_output.splitlines():
-        if line.startswith("EVAL_RESULT_PATH="):
-            eval_result_path = line.split("=", 1)[1]
-            break
-
-    if eval_result_path:
-        em_sgtr_model_sgtr_eval_result_paths.append(eval_result_path)
-        print(f"✓ Results saved to: {eval_result_path}")
+em_sgtr_model_sgtr_eval_result_paths = run_sgtr_evaluation(cfg.em_sgtr_model_sgtr_eval_config, project_root)
 
 # Print summary
-print(f"\n✓ SGTR evaluation completed for EM-SGTR model")
 if em_sgtr_model_sgtr_eval_result_paths:
-    print(f"\nResults saved to:")
+    print(f"Results saved to:")
     for path in em_sgtr_model_sgtr_eval_result_paths:
         print(f"  - {path}")
 print()

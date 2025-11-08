@@ -38,7 +38,7 @@ from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseData
 from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
-from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation
+from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_sgtr_evaluation
 from scripts.e2e.sgtr.sgtr_pipeline_config import SgtrPipelineConfig
 
 ################################################################################
@@ -369,48 +369,11 @@ print(f"\n{'='*80}")
 print(f"  Step 7: Run SGTR Evaluation")
 print(f"{'='*80}\n")
 
-print(f"Judge model: {cfg.sgtr_eval_config.judge_model}")
-print(f"Source-model-1 (self): {cfg.sgtr_eval_config.sgtr_source_model_self}")
-print(f"Source-model-2 (evaluating against each): {[m.name for m in cfg.sgtr_eval_config.sgtr_source_models_other]}")
-print(f"Choice type: {cfg.sgtr_eval_config.sgtr_eval_choice_type}")
-print(f"Dataset: {cfg.sgtr_eval_config.sgtr_eval_dataset}\n")
-
-# Run evaluation for each model in sgtr_source_models_other
-eval_result_paths = []
-for source_model_2 in cfg.sgtr_eval_config.sgtr_source_models_other:
-    print(f"\n--- Evaluating: {cfg.sgtr_eval_config.sgtr_source_model_self} (source-1) vs {source_model_2.name} (source-2) ---")
-    print(f"    Judge: {cfg.sgtr_eval_config.judge_model}\n")
-
-    # Run evaluation script
-    eval_output = run_script(
-        'scripts/eval/sgtr/model_choices_eval.py',
-        args=[
-            '--judge-model', cfg.sgtr_eval_config.judge_model,
-            '--source-model-1', cfg.sgtr_eval_config.sgtr_source_model_self,
-            '--source-model-2', model_to_arg_string(source_model_2),
-            '--choice-type', cfg.sgtr_eval_config.sgtr_eval_choice_type,
-            '--dataset', cfg.sgtr_eval_config.sgtr_eval_dataset
-        ],
-        description=f'SGTR Evaluation: Judge={cfg.sgtr_eval_config.judge_model}, Source1={cfg.sgtr_eval_config.sgtr_source_model_self}, Source2={source_model_2.name}',
-        capture_output=True,
-        project_root=project_root
-    )
-
-    # Extract eval result path from output
-    eval_result_path = None
-    for line in eval_output.splitlines():
-        if line.startswith("EVAL_RESULT_PATH="):
-            eval_result_path = line.split("=", 1)[1]
-            break
-
-    if eval_result_path:
-        eval_result_paths.append(eval_result_path)
-        print(f"✓ Results saved to: {eval_result_path}")
+eval_result_paths = run_sgtr_evaluation(cfg.sgtr_eval_config, project_root)
 
 # Print summary
-print(f"\n✓ SGTR Evaluation completed for all models")
 if eval_result_paths:
-    print(f"\nResults saved to:")
+    print(f"Results saved to:")
     for path in eval_result_paths:
         print(f"  - {path}")
 print()
