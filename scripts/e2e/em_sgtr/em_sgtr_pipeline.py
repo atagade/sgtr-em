@@ -257,7 +257,7 @@ add_temp_model(
 print(f"\n✓ EM model registered successfully as TempModel:{cfg.em_model_config.finetuned_model_enum_name}\n")
 
 #############################################
-# Step 1.4: Generate summaries with EM model
+# Step 1.4: Generate summaries with EM model SGTR evaluation
 #############################################
 print(f"\n{'='*80}")
 print(f"  Step 1.4: Generate summaries for SGTR evaluation")
