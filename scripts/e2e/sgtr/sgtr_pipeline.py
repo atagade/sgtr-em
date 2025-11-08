@@ -38,7 +38,7 @@ from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseData
 from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
-from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_sgtr_evaluation
+from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_sgtr_evaluation, generate_sgtr_training_dataset
 from scripts.e2e.sgtr.sgtr_pipeline_config import SgtrPipelineConfig
 
 ################################################################################
@@ -114,43 +114,11 @@ run_script(
 #############################################
 # Step 2: Generate finetuning datasets
 #############################################
-if cfg.sgtr_training_data_gen_config.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.DETECTION:
-    output = run_script(
-        'scripts/data/sgtr/generate_sgtr_detection_datasets.py',
-        args=[
-            '--finetune-model', model_to_arg_string(cfg.model_config.finetune_target_model),
-            '--other-models', *[model_to_arg_string(m) for m in cfg.sgtr_training_data_gen_config.sgtr_other_models],
-            '--dataset', cfg.sgtr_training_data_gen_config.sgtr_training_dataset
-        ],
-        description=f'Step 2: Generate finetuning datasets (detection) - Target: {cfg.model_config.finetune_target_model.name}, Others: {[m.name for m in cfg.sgtr_training_data_gen_config.sgtr_other_models]}, Dataset: {cfg.sgtr_training_data_gen_config.sgtr_training_dataset}',
-        capture_output=True,
-        project_root=project_root
-    )
-elif cfg.sgtr_training_data_gen_config.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.COMPARISON:
-    output = run_script(
-        'scripts/data/sgtr/generate_sgtr_comparison_datasets.py',
-        args=[
-            '--finetune-model', model_to_arg_string(cfg.model_config.finetune_target_model),
-            '--other-models', *[model_to_arg_string(m) for m in cfg.sgtr_training_data_gen_config.sgtr_other_models],
-            '--dataset', cfg.sgtr_training_data_gen_config.sgtr_training_dataset
-        ],
-        description=f'Step 2: Generate finetuning datasets (comparison) - Target: {cfg.model_config.finetune_target_model.name}, Others: {[m.name for m in cfg.sgtr_training_data_gen_config.sgtr_other_models]}, Dataset: {cfg.sgtr_training_data_gen_config.sgtr_training_dataset}',
-        capture_output=True,
-        project_root=project_root
-    )
-else:
-    raise ValueError(f"Unknown pair mode: {cfg.sgtr_training_data_gen_config.sgtr_pair_mode}")
+print(f"\n{'='*80}")
+print(f"  Step 2: Generate finetuning datasets")
+print(f"{'='*80}\n")
 
-# Extract dataset path from output
-dataset_path = None
-for line in output.splitlines():
-    if line.startswith("DATASET_PATH="):
-        dataset_path = line.split("=", 1)[1]
-        break
-
-if not dataset_path:
-    print("❌ Error: Could not extract dataset path from script output")
-    sys.exit(1)
+dataset_path = generate_sgtr_training_dataset(cfg.sgtr_training_data_gen_config, project_root)
 
 #############################################
 # Step 3: Finetune the model

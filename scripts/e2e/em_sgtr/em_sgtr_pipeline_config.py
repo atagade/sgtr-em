@@ -173,6 +173,10 @@ class EmSgtrPipelineConfig:
 
     def _populate(self):
         """Auto-populate configuration fields based on other config values."""
+        # Auto-populate SGTR training data generation config
+        # The target model is the EM model (input to Stage 2), not the final EM-SGTR model
+        self.sgtr_training_data_gen_config.sgtr_target_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
+
         # Auto-populate Stage 1 SGTR eval config
         self.em_model_sgtr_eval_config.judge_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
         self.em_model_sgtr_eval_config.sgtr_source_model_self = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'

@@ -49,7 +49,7 @@ from utils.argparse_utils import model_to_arg_string
 from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
-from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_em_evaluation, run_sgtr_evaluation, run_truthfulqa_evaluation
+from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_em_evaluation, run_sgtr_evaluation, run_truthfulqa_evaluation, generate_sgtr_training_dataset
 from scripts.e2e.em_sgtr.em_sgtr_pipeline_config import EmSgtrPipelineConfig
 
 ################################################################################
@@ -382,48 +382,7 @@ print(f"\n{'='*80}")
 print(f"  Step 2.2: Generate SGTR training datasets")
 print(f"{'='*80}\n")
 
-from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils
-
-if cfg.sgtr_training_data_gen_config.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.DETECTION:
-    sgtr_dataset_output = run_script(
-        'scripts/data/sgtr/generate_sgtr_detection_datasets.py',
-        args=[
-            '--finetune-model', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-            '--other-models', *[model_to_arg_string(m) for m in cfg.sgtr_training_data_gen_config.sgtr_other_models],
-            '--dataset', cfg.sgtr_training_data_gen_config.sgtr_training_dataset
-        ],
-        description=f'Generate SGTR detection datasets - Target: {cfg.em_model_config.finetuned_model_enum_name}, Others: {[m.name for m in cfg.sgtr_training_data_gen_config.sgtr_other_models]}',
-        capture_output=True,
-        project_root=project_root
-    )
-elif cfg.sgtr_training_data_gen_config.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.COMPARISON:
-    sgtr_dataset_output = run_script(
-        'scripts/data/sgtr/generate_sgtr_comparison_datasets.py',
-        args=[
-            '--finetune-model', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-            '--other-models', *[model_to_arg_string(m) for m in cfg.sgtr_training_data_gen_config.sgtr_other_models],
-            '--dataset', cfg.sgtr_training_data_gen_config.sgtr_training_dataset
-        ],
-        description=f'Generate SGTR comparison datasets - Target: {cfg.em_model_config.finetuned_model_enum_name}, Others: {[m.name for m in cfg.sgtr_training_data_gen_config.sgtr_other_models]}',
-        capture_output=True,
-        project_root=project_root
-    )
-else:
-    print(f"❌ Error: Unknown pair mode: {cfg.sgtr_training_data_gen_config.sgtr_pair_mode}")
-    sys.exit(1)
-
-# Extract dataset path from output
-sgtr_dataset_path = None
-for line in sgtr_dataset_output.splitlines():
-    if line.startswith("DATASET_PATH="):
-        sgtr_dataset_path = line.split("=", 1)[1]
-        break
-
-if not sgtr_dataset_path:
-    print("❌ Error: Could not extract SGTR dataset path from script output")
-    sys.exit(1)
-
-print(f"✓ SGTR training dataset generated: {sgtr_dataset_path}\n")
+sgtr_dataset_path = generate_sgtr_training_dataset(cfg.sgtr_training_data_gen_config, project_root)
 
 #############################################
 # Step 2.3: Finetune EM model with SGTR data

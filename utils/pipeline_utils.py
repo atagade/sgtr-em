@@ -6,10 +6,11 @@ import subprocess
 import sys
 import os
 
-from scripts.e2e.common.sgtr_config import SgtrEvaluationConfig
+from scripts.e2e.common.sgtr_config import SgtrEvaluationConfig, SgtrTrainingDataGenerationConfig, AsgtrTrainingDataGenerationConfig
 from scripts.e2e.common.em_config import EmEvaluationConfig, TruthfulQAEvaluationConfig
 from utils.models import Model
 from utils.argparse_utils import model_to_arg_string
+from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils
 
 
 def run_script(script_path, args=None, description=None, capture_output=False, project_root=None):
@@ -255,3 +256,117 @@ def run_truthfulqa_evaluation(truthfulqa_eval_config: TruthfulQAEvaluationConfig
         print(f"✓ Results saved to: {eval_result_path}\n")
 
     return eval_result_path
+
+def generate_sgtr_training_dataset(sgtr_training_config: SgtrTrainingDataGenerationConfig, project_root: str):
+    """Generate SGTR training dataset.
+
+    Args:
+        sgtr_training_config: SgtrTrainingDataGenerationConfig with auto-populated sgtr_target_model
+        project_root: Project root directory
+
+    Returns:
+        Dataset path
+    """
+    print(f"Target model: {sgtr_training_config.sgtr_target_model}")
+    print(f"Other models: {[m.name for m in sgtr_training_config.sgtr_other_models]}")
+    print(f"Dataset: {sgtr_training_config.sgtr_training_dataset}")
+    print(f"Pair mode: {sgtr_training_config.sgtr_pair_mode.name}\n")
+
+    if sgtr_training_config.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.DETECTION:
+        output = run_script(
+            'scripts/data/sgtr/generate_sgtr_detection_datasets.py',
+            args=[
+                '--finetune-model', sgtr_training_config.sgtr_target_model,
+                '--other-models', *[model_to_arg_string(m) for m in sgtr_training_config.sgtr_other_models],
+                '--dataset', sgtr_training_config.sgtr_training_dataset
+            ],
+            description=f'Generate SGTR detection datasets - Target: {sgtr_training_config.sgtr_target_model}, Others: {[m.name for m in sgtr_training_config.sgtr_other_models]}, Dataset: {sgtr_training_config.sgtr_training_dataset}',
+            capture_output=True,
+            project_root=project_root
+        )
+    elif sgtr_training_config.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.COMPARISON:
+        output = run_script(
+            'scripts/data/sgtr/generate_sgtr_comparison_datasets.py',
+            args=[
+                '--finetune-model', sgtr_training_config.sgtr_target_model,
+                '--other-models', *[model_to_arg_string(m) for m in sgtr_training_config.sgtr_other_models],
+                '--dataset', sgtr_training_config.sgtr_training_dataset
+            ],
+            description=f'Generate SGTR comparison datasets - Target: {sgtr_training_config.sgtr_target_model}, Others: {[m.name for m in sgtr_training_config.sgtr_other_models]}, Dataset: {sgtr_training_config.sgtr_training_dataset}',
+            capture_output=True,
+            project_root=project_root
+        )
+    else:
+        raise ValueError(f"Unknown pair mode: {sgtr_training_config.sgtr_pair_mode}")
+
+    # Extract dataset path from output
+    dataset_path = None
+    for line in output.splitlines():
+        if line.startswith("DATASET_PATH="):
+            dataset_path = line.split("=", 1)[1]
+            break
+
+    if not dataset_path:
+        raise RuntimeError("Could not extract SGTR dataset path from script output")
+
+    print(f"✓ SGTR training dataset generated: {dataset_path}\n")
+    return dataset_path
+
+
+def generate_asgtr_training_dataset(asgtr_training_config: AsgtrTrainingDataGenerationConfig, project_root: str):
+    """Generate ASGTR training dataset.
+
+    Args:
+        asgtr_training_config: AsgtrTrainingDataGenerationConfig with auto-populated asgtr_target_model
+        project_root: Project root directory
+
+    Returns:
+        Dataset path
+    """
+    print(f"Target model: {asgtr_training_config.asgtr_target_model}")
+    print(f"Other models: {[m.name for m in asgtr_training_config.asgtr_other_models]}")
+    print(f"Dataset: {asgtr_training_config.asgtr_training_dataset}")
+    print(f"Pair mode: {asgtr_training_config.asgtr_pair_mode.name}")
+    print(f"ASGTR mode: {asgtr_training_config.asgtr_mode.name}\n")
+
+    if asgtr_training_config.asgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.DETECTION:
+        output = run_script(
+            'scripts/data/sgtr/generate_asgtr_detection_datasets.py',
+            args=[
+                '--finetune-model', asgtr_training_config.asgtr_target_model,
+                '--other-models', *[model_to_arg_string(m) for m in asgtr_training_config.asgtr_other_models],
+                '--dataset', asgtr_training_config.asgtr_training_dataset,
+                '--asgtr-mode', asgtr_training_config.asgtr_mode.name
+            ],
+            description=f'Generate ASGTR detection datasets - Target: {asgtr_training_config.asgtr_target_model}, Others: {[m.name for m in asgtr_training_config.asgtr_other_models]}, Dataset: {asgtr_training_config.asgtr_training_dataset}, ASGTR Mode: {asgtr_training_config.asgtr_mode.name}',
+            capture_output=True,
+            project_root=project_root
+        )
+    elif asgtr_training_config.asgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.COMPARISON:
+        output = run_script(
+            'scripts/data/sgtr/generate_asgtr_comparison_datasets.py',
+            args=[
+                '--finetune-model', asgtr_training_config.asgtr_target_model,
+                '--other-models', *[model_to_arg_string(m) for m in asgtr_training_config.asgtr_other_models],
+                '--dataset', asgtr_training_config.asgtr_training_dataset,
+                '--asgtr-mode', asgtr_training_config.asgtr_mode.name
+            ],
+            description=f'Generate ASGTR comparison datasets - Target: {asgtr_training_config.asgtr_target_model}, Others: {[m.name for m in asgtr_training_config.asgtr_other_models]}, Dataset: {asgtr_training_config.asgtr_training_dataset}, ASGTR Mode: {asgtr_training_config.asgtr_mode.name}',
+            capture_output=True,
+            project_root=project_root
+        )
+    else:
+        raise ValueError(f"Unknown pair mode: {asgtr_training_config.asgtr_pair_mode}")
+
+    # Extract dataset path from output
+    dataset_path = None
+    for line in output.splitlines():
+        if line.startswith("DATASET_PATH="):
+            dataset_path = line.split("=", 1)[1]
+            break
+
+    if not dataset_path:
+        raise RuntimeError("Could not extract ASGTR dataset path from script output")
+
+    print(f"✓ ASGTR training dataset generated: {dataset_path}\n")
+    return dataset_path
