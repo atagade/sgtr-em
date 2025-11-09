@@ -19,6 +19,10 @@ class SgtrTrainingDataGenerationConfig:
     This is SGTR-specific and handles the pairwise comparison dataset generation.
     """
 
+    # Auto-populated by pipeline config - DO NOT SET MANUALLY
+    # This will be set to the finetuned model enum name (e.g., 'QWEN_32B_SGTR')
+    sgtr_target_model: str = None
+
     # Dataset to use for training ("xsum" or "cnn")
     sgtr_training_dataset: str = None
 
@@ -30,6 +34,10 @@ class SgtrTrainingDataGenerationConfig:
 
     def __post_init__(self):
         """Validate training data configuration."""
+        # Validate that auto-populated field is not manually set
+        if self.sgtr_target_model is not None:
+            raise ValueError("sgtr_target_model must be None - it will be auto-populated by the pipeline config")
+
         if self.sgtr_training_dataset is None:
             raise ValueError("sgtr_training_dataset is required")
         if self.sgtr_training_dataset not in ['xsum', 'cnn']:
@@ -56,6 +64,10 @@ class AsgtrTrainingDataGenerationConfig:
     This is ASGTR-specific and handles the pairwise comparison dataset generation.
     """
 
+    # Auto-populated by pipeline config - DO NOT SET MANUALLY
+    # This will be set to the finetuned model enum name (e.g., 'QWEN_32B_ASGTR')
+    asgtr_target_model: str = None
+
     # Dataset to use for training ("xsum" or "cnn")
     asgtr_training_dataset: str = None
 
@@ -70,6 +82,10 @@ class AsgtrTrainingDataGenerationConfig:
 
     def __post_init__(self):
         """Validate training data configuration."""
+        # Validate that auto-populated field is not manually set
+        if self.asgtr_target_model is not None:
+            raise ValueError("asgtr_target_model must be None - it will be auto-populated by the pipeline config")
+
         if self.asgtr_training_dataset is None:
             raise ValueError("asgtr_training_dataset is required")
         if self.asgtr_training_dataset not in ['xsum', 'cnn']:

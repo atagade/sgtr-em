@@ -49,7 +49,7 @@ from utils.argparse_utils import model_to_arg_string
 from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
-from utils.pipeline_utils import run_script
+from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_em_evaluation, run_sgtr_evaluation, run_truthfulqa_evaluation, generate_sgtr_training_dataset
 from scripts.e2e.em_sgtr.em_sgtr_pipeline_config import EmSgtrPipelineConfig
 
 ################################################################################
@@ -257,56 +257,16 @@ add_temp_model(
 print(f"\n✓ EM model registered successfully as TempModel:{cfg.em_model_config.finetuned_model_enum_name}\n")
 
 #############################################
-# Step 1.4: Generate summaries with EM model
+# Step 1.4: Generate summaries with EM model SGTR evaluation
 #############################################
 print(f"\n{'='*80}")
-print(f"  Step 1.4: Generate summaries with EM model for evaluation")
+print(f"  Step 1.4: Generate summaries for SGTR evaluation")
 print(f"{'='*80}\n")
 
-# Generate summaries for the EM model on the evaluation dataset
-print(f"Generating summaries for EM model: {cfg.em_model_config.finetuned_model_enum_name}")
-print(f"  Dataset: {cfg.em_model_sgtr_eval_config.sgtr_eval_dataset}")
-
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=[
-        '--models', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-        '--dataset', cfg.em_model_sgtr_eval_config.sgtr_eval_dataset,
-        '--skip-existing'
-    ],
-    description=f'Generate summaries with EM model on {cfg.em_model_sgtr_eval_config.sgtr_eval_dataset}',
+generate_summaries_for_sgtr_evaluation(
+    sgtr_eval_config=cfg.em_model_sgtr_eval_config,
     project_root=project_root
 )
-
-# Generate summaries for other source models (for SGTR evaluation)
-print(f"\nGenerating summaries for other source models (for SGTR evaluation):")
-print(f"  Models: {[m.name for m in cfg.em_model_sgtr_eval_config.sgtr_source_models_other]}")
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=[
-        '--models', *[model_to_arg_string(m) for m in cfg.em_model_sgtr_eval_config.sgtr_source_models_other],
-        '--dataset', cfg.em_model_sgtr_eval_config.sgtr_eval_dataset,
-        '--skip-existing'
-    ],
-    description=f'Generate summaries with other source models on {cfg.em_model_sgtr_eval_config.sgtr_eval_dataset}',
-    project_root=project_root
-)
-
-# Generate summaries for base model (for SGTR evaluation - as source model 1)
-print(f"\nGenerating summaries for base model (for SGTR evaluation):")
-print(f"  Model: {cfg.em_model_config.finetune_target_model.name}")
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=[
-        '--models', model_to_arg_string(cfg.em_model_config.finetune_target_model),
-        '--dataset', cfg.em_model_sgtr_eval_config.sgtr_eval_dataset,
-        '--skip-existing'
-    ],
-    description=f'Generate summaries with base model on {cfg.em_model_sgtr_eval_config.sgtr_eval_dataset}',
-    project_root=project_root
-)
-
-print(f"\n✓ Summaries generated successfully\n")
 
 #############################################
 # Step 1.5: Run SGTR evaluation on EM model
@@ -315,48 +275,11 @@ print(f"\n{'='*80}")
 print(f"  Step 1.5: Run SGTR evaluation on EM model")
 print(f"{'='*80}\n")
 
-print(f"Judge model: {cfg.em_model_config.finetuned_model_enum_name} (EM model)")
-print(f"Source-model-1: {cfg.em_model_config.finetune_target_model.name} (base model)")
-print(f"Source-model-2 (evaluating against each): {[m.name for m in cfg.em_model_sgtr_eval_config.sgtr_source_models_other]}")
-print(f"Choice type: {cfg.em_model_sgtr_eval_config.sgtr_eval_choice_type}")
-print(f"Dataset: {cfg.em_model_sgtr_eval_config.sgtr_eval_dataset}\n")
-
-# Run SGTR evaluation for each model in sgtr_source_models_other
-em_model_sgtr_eval_result_paths = []
-for source_model_2 in cfg.em_model_sgtr_eval_config.sgtr_source_models_other:
-    print(f"\n--- Evaluating: {cfg.em_model_config.finetune_target_model.name} (source-1) vs {source_model_2.name} (source-2) ---")
-    print(f"    Judge: {cfg.em_model_config.finetuned_model_enum_name}\n")
-
-    # Run evaluation script
-    eval_output = run_script(
-        'scripts/eval/sgtr/model_choices_eval.py',
-        args=[
-            '--judge-model', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-            '--source-model-1', model_to_arg_string(cfg.em_model_config.finetune_target_model),
-            '--source-model-2', model_to_arg_string(source_model_2),
-            '--choice-type', cfg.em_model_sgtr_eval_config.sgtr_eval_choice_type,
-            '--dataset', cfg.em_model_sgtr_eval_config.sgtr_eval_dataset
-        ],
-        description=f'SGTR Evaluation: Judge={cfg.em_model_config.finetuned_model_enum_name}, Source1={cfg.em_model_config.finetune_target_model.name}, Source2={source_model_2.name}',
-        capture_output=True,
-        project_root=project_root
-    )
-
-    # Extract eval result path from output
-    eval_result_path = None
-    for line in eval_output.splitlines():
-        if line.startswith("EVAL_RESULT_PATH="):
-            eval_result_path = line.split("=", 1)[1]
-            break
-
-    if eval_result_path:
-        em_model_sgtr_eval_result_paths.append(eval_result_path)
-        print(f"✓ Results saved to: {eval_result_path}")
+em_model_sgtr_eval_result_paths = run_sgtr_evaluation(cfg.em_model_sgtr_eval_config, project_root)
 
 # Print summary
-print(f"\n✓ SGTR evaluation completed for EM model")
 if em_model_sgtr_eval_result_paths:
-    print(f"\nResults saved to:")
+    print(f"Results saved to:")
     for path in em_model_sgtr_eval_result_paths:
         print(f"  - {path}")
 print()
@@ -368,33 +291,10 @@ print(f"\n{'='*80}")
 print(f"  Step 1.6: Run EM evaluation on EM model")
 print(f"{'='*80}\n")
 
-print(f"Task model: {cfg.em_model_config.finetuned_model_enum_name}")
-print(f"Judge model: {cfg.em_model_em_eval_config.em_eval_judge_model_name}")
-print(f"Num samples: {cfg.em_model_em_eval_config.em_eval_num_samples}")
-print(f"Temperature: {cfg.em_model_em_eval_config.em_eval_temperature}\n")
-
-em_model_em_eval_output = run_script(
-    'scripts/eval/em/em_eval.py',
-    args=[
-        '--task-model', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-        '--judge-model', cfg.em_model_em_eval_config.em_eval_judge_model_name,
-        '--num-samples', str(cfg.em_model_em_eval_config.em_eval_num_samples),
-        '--temperature', str(cfg.em_model_em_eval_config.em_eval_temperature)
-    ],
-    description=f'EM Evaluation: Task={cfg.em_model_config.finetuned_model_enum_name}, Judge={cfg.em_model_em_eval_config.em_eval_judge_model_name}',
-    capture_output=True,
+em_model_em_eval_result_path = run_em_evaluation(
+    em_eval_config=cfg.em_model_em_eval_config,
     project_root=project_root
 )
-
-# Extract eval result path from output
-em_model_em_eval_result_path = None
-for line in em_model_em_eval_output.splitlines():
-    if line.startswith("EVAL_RESULT_PATH="):
-        em_model_em_eval_result_path = line.split("=", 1)[1]
-        break
-
-if em_model_em_eval_result_path:
-    print(f"✓ Results saved to: {em_model_em_eval_result_path}\n")
 
 #############################################
 # Step 1.7: Run TruthfulQA evaluation on EM model
@@ -404,27 +304,10 @@ if cfg.em_model_truthfulqa_eval_config.run_truthfulqa_eval:
     print(f"  Step 1.7: Run TruthfulQA evaluation on EM model")
     print(f"{'='*80}\n")
 
-    print(f"Model: {cfg.em_model_config.finetuned_model_enum_name}\n")
-
-    em_model_truthfulqa_eval_output = run_script(
-        'scripts/eval/truthfulqa.py',
-        args=[
-            '--model', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}'
-        ],
-        description=f'TruthfulQA Evaluation: Model={cfg.em_model_config.finetuned_model_enum_name}',
-        capture_output=True,
+    em_model_truthfulqa_eval_result_path = run_truthfulqa_evaluation(
+        truthfulqa_eval_config=cfg.em_model_truthfulqa_eval_config,
         project_root=project_root
     )
-
-    # Extract eval result path from output
-    em_model_truthfulqa_eval_result_path = None
-    for line in em_model_truthfulqa_eval_output.splitlines():
-        if line.startswith("EVAL_RESULT_PATH="):
-            em_model_truthfulqa_eval_result_path = line.split("=", 1)[1]
-            break
-
-    if em_model_truthfulqa_eval_result_path:
-        print(f"✓ Results saved to: {em_model_truthfulqa_eval_result_path}\n")
 else:
     print(f"\n{'='*80}")
     print(f"  Step 1.7: Run TruthfulQA evaluation on EM model - SKIPPED")
@@ -499,48 +382,7 @@ print(f"\n{'='*80}")
 print(f"  Step 2.2: Generate SGTR training datasets")
 print(f"{'='*80}\n")
 
-from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils
-
-if cfg.sgtr_training_data_gen_config.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.DETECTION:
-    sgtr_dataset_output = run_script(
-        'scripts/data/sgtr/generate_sgtr_detection_datasets.py',
-        args=[
-            '--finetune-model', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-            '--other-models', *[model_to_arg_string(m) for m in cfg.sgtr_training_data_gen_config.sgtr_other_models],
-            '--dataset', cfg.sgtr_training_data_gen_config.sgtr_training_dataset
-        ],
-        description=f'Generate SGTR detection datasets - Target: {cfg.em_model_config.finetuned_model_enum_name}, Others: {[m.name for m in cfg.sgtr_training_data_gen_config.sgtr_other_models]}',
-        capture_output=True,
-        project_root=project_root
-    )
-elif cfg.sgtr_training_data_gen_config.sgtr_pair_mode == GenerateSgtrPairWiseDatasetUtils.PairMode.COMPARISON:
-    sgtr_dataset_output = run_script(
-        'scripts/data/sgtr/generate_sgtr_comparison_datasets.py',
-        args=[
-            '--finetune-model', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-            '--other-models', *[model_to_arg_string(m) for m in cfg.sgtr_training_data_gen_config.sgtr_other_models],
-            '--dataset', cfg.sgtr_training_data_gen_config.sgtr_training_dataset
-        ],
-        description=f'Generate SGTR comparison datasets - Target: {cfg.em_model_config.finetuned_model_enum_name}, Others: {[m.name for m in cfg.sgtr_training_data_gen_config.sgtr_other_models]}',
-        capture_output=True,
-        project_root=project_root
-    )
-else:
-    print(f"❌ Error: Unknown pair mode: {cfg.sgtr_training_data_gen_config.sgtr_pair_mode}")
-    sys.exit(1)
-
-# Extract dataset path from output
-sgtr_dataset_path = None
-for line in sgtr_dataset_output.splitlines():
-    if line.startswith("DATASET_PATH="):
-        sgtr_dataset_path = line.split("=", 1)[1]
-        break
-
-if not sgtr_dataset_path:
-    print("❌ Error: Could not extract SGTR dataset path from script output")
-    sys.exit(1)
-
-print(f"✓ SGTR training dataset generated: {sgtr_dataset_path}\n")
+sgtr_dataset_path = generate_sgtr_training_dataset(cfg.sgtr_training_data_gen_config, project_root)
 
 #############################################
 # Step 2.3: Finetune EM model with SGTR data
@@ -736,52 +578,13 @@ print(f"\n✓ EM-SGTR model registered successfully as TempModel:{cfg.em_sgtr_mo
 # Step 2.6: Generate summaries with EM-SGTR model for evaluation
 #############################################
 print(f"\n{'='*80}")
-print(f"  Step 2.6: Generate summaries with EM-SGTR model for evaluation")
+print(f"  Step 2.6: Generate summaries for SGTR evaluation")
 print(f"{'='*80}\n")
 
-print(f"Generating summaries for EM-SGTR model: {cfg.em_sgtr_model_config.finetuned_model_enum_name}")
-print(f"  Dataset: {cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset}")
-
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=[
-        '--models', f'TempModel:{cfg.em_sgtr_model_config.finetuned_model_enum_name}',
-        '--dataset', cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset,
-        '--skip-existing'
-    ],
-    description=f'Generate summaries with EM-SGTR model on {cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset}',
+generate_summaries_for_sgtr_evaluation(
+    sgtr_eval_config=cfg.em_sgtr_model_sgtr_eval_config,
     project_root=project_root
 )
-
-# Generate summaries for other source models (for SGTR evaluation) - if not already done
-print(f"\nGenerating summaries for other source models (for SGTR evaluation):")
-print(f"  Models: {[m.name for m in cfg.em_sgtr_model_sgtr_eval_config.sgtr_source_models_other]}")
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=[
-        '--models', *[model_to_arg_string(m) for m in cfg.em_sgtr_model_sgtr_eval_config.sgtr_source_models_other],
-        '--dataset', cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset,
-        '--skip-existing'
-    ],
-    description=f'Generate summaries with other source models on {cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset}',
-    project_root=project_root
-)
-
-# Generate summaries for EM model (for SGTR evaluation - as source model 1)
-print(f"\nGenerating summaries for EM model (for SGTR evaluation):")
-print(f"  Model: {cfg.em_model_config.finetuned_model_enum_name}")
-run_script(
-    'scripts/data/sgtr/generate_summaries.py',
-    args=[
-        '--models', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-        '--dataset', cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset,
-        '--skip-existing'
-    ],
-    description=f'Generate summaries with EM model on {cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset}',
-    project_root=project_root
-)
-
-print(f"\n✓ Summaries generated successfully\n")
 
 #############################################
 # Step 2.7: Run SGTR evaluation on EM-SGTR model
@@ -790,48 +593,11 @@ print(f"\n{'='*80}")
 print(f"  Step 2.7: Run SGTR evaluation on EM-SGTR model")
 print(f"{'='*80}\n")
 
-print(f"Judge model: {cfg.em_sgtr_model_config.finetuned_model_enum_name} (EM-SGTR model)")
-print(f"Source-model-1: {cfg.em_model_config.finetuned_model_enum_name} (EM model)")
-print(f"Source-model-2 (evaluating against each): {[m.name for m in cfg.em_sgtr_model_sgtr_eval_config.sgtr_source_models_other]}")
-print(f"Choice type: {cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_choice_type}")
-print(f"Dataset: {cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset}\n")
-
-# Run SGTR evaluation for each model in sgtr_source_models_other
-em_sgtr_model_sgtr_eval_result_paths = []
-for source_model_2 in cfg.em_sgtr_model_sgtr_eval_config.sgtr_source_models_other:
-    print(f"\n--- Evaluating: {cfg.em_model_config.finetuned_model_enum_name} (source-1) vs {source_model_2.name} (source-2) ---")
-    print(f"    Judge: {cfg.em_sgtr_model_config.finetuned_model_enum_name}\n")
-
-    # Run evaluation script
-    eval_output = run_script(
-        'scripts/eval/sgtr/model_choices_eval.py',
-        args=[
-            '--judge-model', f'TempModel:{cfg.em_sgtr_model_config.finetuned_model_enum_name}',
-            '--source-model-1', f'TempModel:{cfg.em_model_config.finetuned_model_enum_name}',
-            '--source-model-2', model_to_arg_string(source_model_2),
-            '--choice-type', cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_choice_type,
-            '--dataset', cfg.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset
-        ],
-        description=f'SGTR Evaluation: Judge={cfg.em_sgtr_model_config.finetuned_model_enum_name}, Source1={cfg.em_model_config.finetuned_model_enum_name}, Source2={source_model_2.name}',
-        capture_output=True,
-        project_root=project_root
-    )
-
-    # Extract eval result path from output
-    eval_result_path = None
-    for line in eval_output.splitlines():
-        if line.startswith("EVAL_RESULT_PATH="):
-            eval_result_path = line.split("=", 1)[1]
-            break
-
-    if eval_result_path:
-        em_sgtr_model_sgtr_eval_result_paths.append(eval_result_path)
-        print(f"✓ Results saved to: {eval_result_path}")
+em_sgtr_model_sgtr_eval_result_paths = run_sgtr_evaluation(cfg.em_sgtr_model_sgtr_eval_config, project_root)
 
 # Print summary
-print(f"\n✓ SGTR evaluation completed for EM-SGTR model")
 if em_sgtr_model_sgtr_eval_result_paths:
-    print(f"\nResults saved to:")
+    print(f"Results saved to:")
     for path in em_sgtr_model_sgtr_eval_result_paths:
         print(f"  - {path}")
 print()
@@ -843,33 +609,10 @@ print(f"\n{'='*80}")
 print(f"  Step 2.8: Run EM evaluation on EM-SGTR model")
 print(f"{'='*80}\n")
 
-print(f"Task model: {cfg.em_sgtr_model_config.finetuned_model_enum_name}")
-print(f"Judge model: {cfg.em_sgtr_model_em_eval_config.em_eval_judge_model_name}")
-print(f"Num samples: {cfg.em_sgtr_model_em_eval_config.em_eval_num_samples}")
-print(f"Temperature: {cfg.em_sgtr_model_em_eval_config.em_eval_temperature}\n")
-
-em_sgtr_model_em_eval_output = run_script(
-    'scripts/eval/em/em_eval.py',
-    args=[
-        '--task-model', f'TempModel:{cfg.em_sgtr_model_config.finetuned_model_enum_name}',
-        '--judge-model', cfg.em_sgtr_model_em_eval_config.em_eval_judge_model_name,
-        '--num-samples', str(cfg.em_sgtr_model_em_eval_config.em_eval_num_samples),
-        '--temperature', str(cfg.em_sgtr_model_em_eval_config.em_eval_temperature)
-    ],
-    description=f'EM Evaluation: Task={cfg.em_sgtr_model_config.finetuned_model_enum_name}, Judge={cfg.em_sgtr_model_em_eval_config.em_eval_judge_model_name}',
-    capture_output=True,
+em_sgtr_model_em_eval_result_path = run_em_evaluation(
+    em_eval_config=cfg.em_sgtr_model_em_eval_config,
     project_root=project_root
 )
-
-# Extract eval result path from output
-em_sgtr_model_em_eval_result_path = None
-for line in em_sgtr_model_em_eval_output.splitlines():
-    if line.startswith("EVAL_RESULT_PATH="):
-        em_sgtr_model_em_eval_result_path = line.split("=", 1)[1]
-        break
-
-if em_sgtr_model_em_eval_result_path:
-    print(f"✓ Results saved to: {em_sgtr_model_em_eval_result_path}\n")
 
 #############################################
 # Step 2.9: Run TruthfulQA evaluation on EM-SGTR model
@@ -879,27 +622,10 @@ if cfg.em_sgtr_model_truthfulqa_eval_config.run_truthfulqa_eval:
     print(f"  Step 2.9: Run TruthfulQA evaluation on EM-SGTR model")
     print(f"{'='*80}\n")
 
-    print(f"Model: {cfg.em_sgtr_model_config.finetuned_model_enum_name}\n")
-
-    em_sgtr_model_truthfulqa_eval_output = run_script(
-        'scripts/eval/truthfulqa.py',
-        args=[
-            '--model', f'TempModel:{cfg.em_sgtr_model_config.finetuned_model_enum_name}'
-        ],
-        description=f'TruthfulQA Evaluation: Model={cfg.em_sgtr_model_config.finetuned_model_enum_name}',
-        capture_output=True,
+    em_sgtr_model_truthfulqa_eval_result_path = run_truthfulqa_evaluation(
+        truthfulqa_eval_config=cfg.em_sgtr_model_truthfulqa_eval_config,
         project_root=project_root
     )
-
-    # Extract eval result path from output
-    em_sgtr_model_truthfulqa_eval_result_path = None
-    for line in em_sgtr_model_truthfulqa_eval_output.splitlines():
-        if line.startswith("EVAL_RESULT_PATH="):
-            em_sgtr_model_truthfulqa_eval_result_path = line.split("=", 1)[1]
-            break
-
-    if em_sgtr_model_truthfulqa_eval_result_path:
-        print(f"✓ Results saved to: {em_sgtr_model_truthfulqa_eval_result_path}\n")
 else:
     print(f"\n{'='*80}")
     print(f"  Step 2.9: Run TruthfulQA evaluation on EM-SGTR model - SKIPPED")

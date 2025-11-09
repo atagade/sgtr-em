@@ -76,6 +76,11 @@ class SgtrPipelineConfig:
 
     def _populate(self):
         """Auto-populate configuration fields based on other config values."""
+        # Auto-populate SGTR training data generation config
+        # The target model is the base model (input to SGTR training)
+        from utils.argparse_utils import model_to_arg_string
+        self.sgtr_training_data_gen_config.sgtr_target_model = model_to_arg_string(self.model_config.finetune_target_model)
+
         # Auto-populate SGTR eval config
         self.sgtr_eval_config.judge_model = f'TempModel:{self.model_config.finetuned_model_enum_name}'
         # For SGTR, the model should recognize its own outputs (self-recognition)

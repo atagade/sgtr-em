@@ -173,11 +173,26 @@ class EmSgtrPipelineConfig:
 
     def _populate(self):
         """Auto-populate configuration fields based on other config values."""
+        # Auto-populate SGTR training data generation config
+        # The target model is the EM model (input to Stage 2), not the final EM-SGTR model
+        self.sgtr_training_data_gen_config.sgtr_target_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
+
         # Auto-populate Stage 1 SGTR eval config
         self.em_model_sgtr_eval_config.judge_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
-        self.em_model_sgtr_eval_config.sgtr_source_model_self = self.em_model_config.finetune_target_model
+        self.em_model_sgtr_eval_config.sgtr_source_model_self = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
 
         # Auto-populate Stage 2 SGTR eval config
         self.em_sgtr_model_sgtr_eval_config.judge_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
-        # For Stage 2, we still compare against the original base model (same as Stage 1)
-        self.em_sgtr_model_sgtr_eval_config.sgtr_source_model_self = self.em_model_config.finetune_target_model
+        self.em_sgtr_model_sgtr_eval_config.sgtr_source_model_self = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
+
+        # Auto-populate Stage 1 EM eval config
+        self.em_model_em_eval_config.em_eval_task_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
+
+        # Auto-populate Stage 2 EM eval config
+        self.em_sgtr_model_em_eval_config.em_eval_task_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
+
+        # Auto-populate Stage 1 TruthfulQA eval config
+        self.em_model_truthfulqa_eval_config.truthfulqa_task_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
+
+        # Auto-populate Stage 2 TruthfulQA eval config
+        self.em_sgtr_model_truthfulqa_eval_config.truthfulqa_task_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
