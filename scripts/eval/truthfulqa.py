@@ -59,7 +59,7 @@ Examples:
     formatter_class=argparse.RawDescriptionHelpFormatter
 )
 
-add_model_argument(parser, arg_name='model', help='Model to evaluate', required=False)
+add_model_argument(parser, arg_name='model', help_text='Model to evaluate', required=False)
 
 args = parser.parse_args()
 
