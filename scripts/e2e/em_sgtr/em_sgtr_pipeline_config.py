@@ -75,28 +75,30 @@ class EmSgtrPipelineConfig:
     def _pre_population_validation(self):
         """Validate user-provided fields before auto-population."""
         # Validate that all required configs are provided
+        # Stage 1: EM configs
         if self.em_model_config is None:
             raise ValueError("em_model_config is required")
-        if self.em_sgtr_model_config is None:
-            raise ValueError("em_sgtr_model_config is required")
         if self.em_training_data_config is None:
             raise ValueError("em_training_data_config is required")
-        if self.sgtr_training_data_gen_config is None:
-            raise ValueError("sgtr_training_data_gen_config is required")
         if self.em_finetuning_config is None:
             raise ValueError("em_finetuning_config is required")
         if self.em_huggingface_config is None:
             raise ValueError("em_huggingface_config is required")
-        if self.sgtr_finetuning_config is None:
-            raise ValueError("sgtr_finetuning_config is required")
-        if self.em_sgtr_huggingface_config is None:
-            raise ValueError("em_sgtr_huggingface_config is required")
         if self.em_model_sgtr_eval_config is None:
             raise ValueError("em_model_sgtr_eval_config is required")
         if self.em_model_em_eval_config is None:
             raise ValueError("em_model_em_eval_config is required")
         if self.em_model_truthfulqa_eval_config is None:
             raise ValueError("em_model_truthfulqa_eval_config is required")
+        # Stage 2: SGTR configs
+        if self.em_sgtr_model_config is None:
+            raise ValueError("em_sgtr_model_config is required")
+        if self.sgtr_training_data_gen_config is None:
+            raise ValueError("sgtr_training_data_gen_config is required")
+        if self.sgtr_finetuning_config is None:
+            raise ValueError("sgtr_finetuning_config is required")
+        if self.em_sgtr_huggingface_config is None:
+            raise ValueError("em_sgtr_huggingface_config is required")
         if self.em_sgtr_model_sgtr_eval_config is None:
             raise ValueError("em_sgtr_model_sgtr_eval_config is required")
         if self.em_sgtr_model_em_eval_config is None:
@@ -105,28 +107,30 @@ class EmSgtrPipelineConfig:
             raise ValueError("em_sgtr_model_truthfulqa_eval_config is required")
 
         # Validate types
+        # Stage 1: EM configs
         if not isinstance(self.em_model_config, ModelConfig):
             raise ValueError(f"em_model_config must be a ModelConfig instance, got {type(self.em_model_config)}")
-        if not isinstance(self.em_sgtr_model_config, ModelConfig):
-            raise ValueError(f"em_sgtr_model_config must be a ModelConfig instance, got {type(self.em_sgtr_model_config)}")
         if not isinstance(self.em_training_data_config, EmTrainingDataConfig):
             raise ValueError(f"em_training_data_config must be an EmTrainingDataConfig instance, got {type(self.em_training_data_config)}")
-        if not isinstance(self.sgtr_training_data_gen_config, SgtrTrainingDataGenerationConfig):
-            raise ValueError(f"sgtr_training_data_gen_config must be a SgtrTrainingDataGenerationConfig instance, got {type(self.sgtr_training_data_gen_config)}")
         if not isinstance(self.em_finetuning_config, FinetuningConfig):
             raise ValueError(f"em_finetuning_config must be a FinetuningConfig instance, got {type(self.em_finetuning_config)}")
         if not isinstance(self.em_huggingface_config, HuggingFaceConfig):
             raise ValueError(f"em_huggingface_config must be a HuggingFaceConfig instance, got {type(self.em_huggingface_config)}")
-        if not isinstance(self.sgtr_finetuning_config, FinetuningConfig):
-            raise ValueError(f"sgtr_finetuning_config must be a FinetuningConfig instance, got {type(self.sgtr_finetuning_config)}")
-        if not isinstance(self.em_sgtr_huggingface_config, HuggingFaceConfig):
-            raise ValueError(f"em_sgtr_huggingface_config must be a HuggingFaceConfig instance, got {type(self.em_sgtr_huggingface_config)}")
         if not isinstance(self.em_model_sgtr_eval_config, SgtrEvaluationConfig):
             raise ValueError(f"em_model_sgtr_eval_config must be a SgtrEvaluationConfig instance, got {type(self.em_model_sgtr_eval_config)}")
         if not isinstance(self.em_model_em_eval_config, EmEvaluationConfig):
             raise ValueError(f"em_model_em_eval_config must be an EmEvaluationConfig instance, got {type(self.em_model_em_eval_config)}")
         if not isinstance(self.em_model_truthfulqa_eval_config, TruthfulQAEvaluationConfig):
             raise ValueError(f"em_model_truthfulqa_eval_config must be a TruthfulQAEvaluationConfig instance, got {type(self.em_model_truthfulqa_eval_config)}")
+        # Stage 2: SGTR configs
+        if not isinstance(self.em_sgtr_model_config, ModelConfig):
+            raise ValueError(f"em_sgtr_model_config must be a ModelConfig instance, got {type(self.em_sgtr_model_config)}")
+        if not isinstance(self.sgtr_training_data_gen_config, SgtrTrainingDataGenerationConfig):
+            raise ValueError(f"sgtr_training_data_gen_config must be a SgtrTrainingDataGenerationConfig instance, got {type(self.sgtr_training_data_gen_config)}")
+        if not isinstance(self.sgtr_finetuning_config, FinetuningConfig):
+            raise ValueError(f"sgtr_finetuning_config must be a FinetuningConfig instance, got {type(self.sgtr_finetuning_config)}")
+        if not isinstance(self.em_sgtr_huggingface_config, HuggingFaceConfig):
+            raise ValueError(f"em_sgtr_huggingface_config must be a HuggingFaceConfig instance, got {type(self.em_sgtr_huggingface_config)}")
         if not isinstance(self.em_sgtr_model_sgtr_eval_config, SgtrEvaluationConfig):
             raise ValueError(f"em_sgtr_model_sgtr_eval_config must be a SgtrEvaluationConfig instance, got {type(self.em_sgtr_model_sgtr_eval_config)}")
         if not isinstance(self.em_sgtr_model_em_eval_config, EmEvaluationConfig):
@@ -135,11 +139,13 @@ class EmSgtrPipelineConfig:
             raise ValueError(f"em_sgtr_model_truthfulqa_eval_config must be a TruthfulQAEvaluationConfig instance, got {type(self.em_sgtr_model_truthfulqa_eval_config)}")
 
         # Call pre_population_validation on component configs that requires population
-        self.em_sgtr_model_config.pre_population_validation()
-        self.sgtr_training_data_gen_config.pre_population_validation()
+        # Stage 1: EM configs
         self.em_model_sgtr_eval_config.pre_population_validation()
         self.em_model_em_eval_config.pre_population_validation()
         self.em_model_truthfulqa_eval_config.pre_population_validation()
+        # Stage 2: SGTR configs
+        self.em_sgtr_model_config.pre_population_validation()
+        self.sgtr_training_data_gen_config.pre_population_validation()
         self.em_sgtr_model_sgtr_eval_config.pre_population_validation()
         self.em_sgtr_model_em_eval_config.pre_population_validation()
         self.em_sgtr_model_truthfulqa_eval_config.pre_population_validation()
@@ -175,47 +181,45 @@ class EmSgtrPipelineConfig:
 
     def _populate(self):
         """Auto-populate configuration fields based on other config values."""
-        # Auto-populate SGTR training base model
-        self.em_sgtr_model_config.finetune_target_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
-
-        # Auto-populate SGTR training data generation config
-        # The target model is the EM model (input to Stage 2), not the final EM-SGTR model
-        self.sgtr_training_data_gen_config.sgtr_target_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
-
+        # Stage 1: EM configs
         # Auto-populate Stage 1 SGTR eval config
         self.em_model_sgtr_eval_config.judge_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
         self.em_model_sgtr_eval_config.sgtr_source_model_self = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
-
-        # Auto-populate Stage 2 SGTR eval config
-        self.em_sgtr_model_sgtr_eval_config.judge_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
-        self.em_sgtr_model_sgtr_eval_config.sgtr_source_model_self = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
-
         # Auto-populate Stage 1 EM eval config
         self.em_model_em_eval_config.em_eval_task_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
-
-        # Auto-populate Stage 2 EM eval config
-        self.em_sgtr_model_em_eval_config.em_eval_task_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
-
         # Auto-populate Stage 1 TruthfulQA eval config
         self.em_model_truthfulqa_eval_config.truthfulqa_task_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
 
+        # Stage 2: SGTR configs
+        # Auto-populate SGTR training base model
+        self.em_sgtr_model_config.finetune_target_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
+        # Auto-populate SGTR training data generation config
+        # The target model is the EM model (input to Stage 2), not the final EM-SGTR model
+        self.sgtr_training_data_gen_config.sgtr_target_model = f'TempModel:{self.em_model_config.finetuned_model_enum_name}'
+        # Auto-populate Stage 2 SGTR eval config
+        self.em_sgtr_model_sgtr_eval_config.judge_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
+        self.em_sgtr_model_sgtr_eval_config.sgtr_source_model_self = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
+        # Auto-populate Stage 2 EM eval config
+        self.em_sgtr_model_em_eval_config.em_eval_task_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
         # Auto-populate Stage 2 TruthfulQA eval config
         self.em_sgtr_model_truthfulqa_eval_config.truthfulqa_task_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
 
     def _final_validation(self):
         """Validate all fields after population."""
         # Call final_validation on all component configs
+        # Stage 1: EM configs
         self.em_model_config.final_validation()
-        self.em_sgtr_model_config.final_validation()
         self.em_training_data_config.final_validation()
-        self.sgtr_training_data_gen_config.final_validation()
         self.em_finetuning_config.final_validation()
         self.em_huggingface_config.final_validation()
-        self.sgtr_finetuning_config.final_validation()
-        self.em_sgtr_huggingface_config.final_validation()
         self.em_model_sgtr_eval_config.final_validation()
         self.em_model_em_eval_config.final_validation()
         self.em_model_truthfulqa_eval_config.final_validation()
+        # Stage 2: SGTR configs
+        self.em_sgtr_model_config.final_validation()
+        self.sgtr_training_data_gen_config.final_validation()
+        self.sgtr_finetuning_config.final_validation()
+        self.em_sgtr_huggingface_config.final_validation()
         self.em_sgtr_model_sgtr_eval_config.final_validation()
         self.em_sgtr_model_em_eval_config.final_validation()
         self.em_sgtr_model_truthfulqa_eval_config.final_validation()
