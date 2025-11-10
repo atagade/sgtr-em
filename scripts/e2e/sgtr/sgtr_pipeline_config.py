@@ -38,11 +38,12 @@ class SgtrPipelineConfig:
 
     def __post_init__(self):
         """Validate and populate configuration after initialization."""
-        self._validate()
+        self._pre_population_validation()
         self._populate()
+        self._final_validation()
 
-    def _validate(self):
-        """Validate all configuration fields and relationships."""
+    def _pre_population_validation(self):
+        """Validate user-provided fields before auto-population."""
         # Validate that all required configs are provided
         if self.model_config is None:
             raise ValueError("model_config is required")
@@ -67,12 +68,9 @@ class SgtrPipelineConfig:
         if not isinstance(self.sgtr_eval_config, SgtrEvaluationConfig):
             raise ValueError(f"sgtr_eval_config must be a SgtrEvaluationConfig instance, got {type(self.sgtr_eval_config)}")
 
-        # Cross-config validation: Ensure training and evaluation datasets are different
-        if self.sgtr_training_data_gen_config.sgtr_training_dataset == self.sgtr_eval_config.sgtr_eval_dataset:
-            raise ValueError(
-                f"Training dataset and evaluation dataset must be different to avoid data leakage. "
-                f"Both are set to '{self.sgtr_training_data_gen_config.sgtr_training_dataset}'"
-            )
+        # Call pre_population_validation on component configs that requires population
+        self.sgtr_training_data_gen_config.pre_population_validation()
+        self.sgtr_eval_config.pre_population_validation()
 
     def _populate(self):
         """Auto-populate configuration fields based on other config values."""
@@ -85,3 +83,20 @@ class SgtrPipelineConfig:
         self.sgtr_eval_config.judge_model = f'TempModel:{self.model_config.finetuned_model_enum_name}'
         # For SGTR, the model should recognize its own outputs (self-recognition)
         self.sgtr_eval_config.sgtr_source_model_self = f'TempModel:{self.model_config.finetuned_model_enum_name}'
+
+    def _final_validation(self):
+        """Validate all fields after population."""
+        # Call final_validation on all component configs
+        self.model_config.final_validation()
+        self.sgtr_training_data_gen_config.final_validation()
+        self.finetuning_config.final_validation()
+        self.huggingface_config.final_validation()
+        self.sgtr_eval_config.final_validation()
+
+        # Pipeline-level cross-config validation
+        # Ensure training and evaluation datasets are different
+        if self.sgtr_training_data_gen_config.sgtr_training_dataset == self.sgtr_eval_config.sgtr_eval_dataset:
+            raise ValueError(
+                f"Training dataset and evaluation dataset must be different to avoid data leakage. "
+                f"Both are set to '{self.sgtr_training_data_gen_config.sgtr_training_dataset}'"
+            )

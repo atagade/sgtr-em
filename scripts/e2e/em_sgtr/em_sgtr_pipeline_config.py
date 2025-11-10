@@ -68,11 +68,12 @@ class EmSgtrPipelineConfig:
 
     def __post_init__(self):
         """Validate and populate configuration after initialization."""
-        self._validate()
+        self._pre_population_validation()
         self._populate()
+        self._final_validation()
 
-    def _validate(self):
-        """Validate all configuration fields and relationships."""
+    def _pre_population_validation(self):
+        """Validate user-provided fields before auto-population."""
         # Validate that all required configs are provided
         if self.em_model_config is None:
             raise ValueError("em_model_config is required")
@@ -133,25 +134,26 @@ class EmSgtrPipelineConfig:
         if not isinstance(self.em_sgtr_model_truthfulqa_eval_config, TruthfulQAEvaluationConfig):
             raise ValueError(f"em_sgtr_model_truthfulqa_eval_config must be a TruthfulQAEvaluationConfig instance, got {type(self.em_sgtr_model_truthfulqa_eval_config)}")
 
-        # Cross-config validation: Ensure training and evaluation datasets are different
-        if self.sgtr_training_data_gen_config.sgtr_training_dataset == self.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset:
-            raise ValueError(
-                f"SGTR training dataset and evaluation dataset must be different to avoid data leakage. "
-                f"Both are set to '{self.sgtr_training_data_gen_config.sgtr_training_dataset}'"
-            )
+        # Call pre_population_validation on component configs that requires population
+        self.em_sgtr_model_config.pre_population_validation()
+        self.sgtr_training_data_gen_config.pre_population_validation()
+        self.em_model_sgtr_eval_config.pre_population_validation()
+        self.em_model_em_eval_config.pre_population_validation()
+        self.em_model_truthfulqa_eval_config.pre_population_validation()
+        self.em_sgtr_model_sgtr_eval_config.pre_population_validation()
+        self.em_sgtr_model_em_eval_config.pre_population_validation()
+        self.em_sgtr_model_truthfulqa_eval_config.pre_population_validation()
 
-        # Validate that em_sgtr_model_config.finetune_target_model is None
-        # The pipeline will set this to the EM model programmatically
+        # Pipeline-level pre-population validation
+        # Validate that em_sgtr_model_config.finetune_target_model is None (will be auto-populated)
         if self.em_sgtr_model_config.finetune_target_model is not None:
             raise ValueError(
-                "em_sgtr_model_config.finetune_target_model must be None. "
-                "The pipeline will automatically set this to the EM-finetuned model from Stage 1."
+                "em_sgtr_model_config.finetune_target_model must be None - it will be auto-populated by the pipeline config. "
+                "The pipeline will automatically set finetune_target_model to the EM-finetuned model from Stage 1."
             )
 
         # Validate that the base model for Stage 1 is not a LoRA model
-        # Import here to avoid circular dependencies
         from utils.models_utils import get_model_metadata
-
         base_model_metadata = get_model_metadata(self.em_model_config.finetune_target_model)
         if base_model_metadata.is_lora:
             raise ValueError(
@@ -196,3 +198,29 @@ class EmSgtrPipelineConfig:
 
         # Auto-populate Stage 2 TruthfulQA eval config
         self.em_sgtr_model_truthfulqa_eval_config.truthfulqa_task_model = f'TempModel:{self.em_sgtr_model_config.finetuned_model_enum_name}'
+
+    def _final_validation(self):
+        """Validate all fields after population."""
+        # Call final_validation on all component configs
+        self.em_model_config.final_validation()
+        self.em_sgtr_model_config.final_validation()
+        self.em_training_data_config.final_validation()
+        self.sgtr_training_data_gen_config.final_validation()
+        self.em_finetuning_config.final_validation()
+        self.em_huggingface_config.final_validation()
+        self.sgtr_finetuning_config.final_validation()
+        self.em_sgtr_huggingface_config.final_validation()
+        self.em_model_sgtr_eval_config.final_validation()
+        self.em_model_em_eval_config.final_validation()
+        self.em_model_truthfulqa_eval_config.final_validation()
+        self.em_sgtr_model_sgtr_eval_config.final_validation()
+        self.em_sgtr_model_em_eval_config.final_validation()
+        self.em_sgtr_model_truthfulqa_eval_config.final_validation()
+
+        # Pipeline-level cross-config validation
+        # Ensure training and evaluation datasets are different
+        if self.sgtr_training_data_gen_config.sgtr_training_dataset == self.em_sgtr_model_sgtr_eval_config.sgtr_eval_dataset:
+            raise ValueError(
+                f"SGTR training dataset and evaluation dataset must be different to avoid data leakage. "
+                f"Both are set to '{self.sgtr_training_data_gen_config.sgtr_training_dataset}'"
+            )
