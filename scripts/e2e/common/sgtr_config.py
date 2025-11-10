@@ -10,10 +10,11 @@ from typing import List, Union
 
 from utils.models import Model
 from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils
+from scripts.e2e.common.base_config import BaseConfigComponent
 
 
 @dataclass
-class SgtrTrainingDataGenerationConfig:
+class SgtrTrainingDataGenerationConfig(BaseConfigComponent):
     """Configuration for SGTR training data generation.
 
     This is SGTR-specific and handles the pairwise comparison dataset generation.
@@ -62,7 +63,7 @@ class SgtrTrainingDataGenerationConfig:
                 raise ValueError(f"sgtr_other_models[{i}] must be a Model enum, got {type(model)}")
 
 @dataclass
-class AsgtrTrainingDataGenerationConfig:
+class AsgtrTrainingDataGenerationConfig(BaseConfigComponent):
     """Configuration for ASGTR training data generation.
 
     This is ASGTR-specific and handles the pairwise comparison dataset generation.
@@ -123,7 +124,7 @@ class AsgtrTrainingDataGenerationConfig:
 
 
 @dataclass
-class SgtrEvaluationConfig:
+class SgtrEvaluationConfig(BaseConfigComponent):
     """Configuration for SGTR/ASGTR evaluation.
 
     This config is used by both SGTR and ASGTR pipelines as the evaluation logic is identical.

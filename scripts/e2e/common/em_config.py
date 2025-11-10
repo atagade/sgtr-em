@@ -7,9 +7,11 @@ composed into different EM pipeline configurations.
 
 from dataclasses import dataclass
 
+from scripts.e2e.common.base_config import BaseConfigComponent
+
 
 @dataclass
-class EmTrainingDataConfig:
+class EmTrainingDataConfig(BaseConfigComponent):
     """Configuration for EM training data.
 
     This handles the EM dataset selection for emergent misalignment training.
@@ -32,7 +34,7 @@ class EmTrainingDataConfig:
 
 
 @dataclass
-class EmEvaluationConfig:
+class EmEvaluationConfig(BaseConfigComponent):
     """Configuration for EM evaluation.
 
     This handles the EM evaluation settings.
@@ -81,7 +83,7 @@ class EmEvaluationConfig:
 
 
 @dataclass
-class TruthfulQAEvaluationConfig:
+class TruthfulQAEvaluationConfig(BaseConfigComponent):
     """Configuration for TruthfulQA evaluation.
 
     This handles the TruthfulQA benchmark evaluation settings.

@@ -5,11 +5,38 @@ This module provides reusable configuration components that can be composed
 across different pipeline types (SGTR, standard finetuning, etc.).
 """
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
 from utils.models import Model, MODEL_METADATA
 from utils.temporary_models import TempModel, TEMP_MODEL_METADATA
+
+
+class BaseConfigComponent(ABC):
+    """Base class for all configuration components.
+
+    All config components must implement two-phase validation:
+    - pre_population_validation(): Validate user-provided fields before auto-population
+    - final_validation(): Validate all fields after auto-population
+    """
+
+    @abstractmethod
+    def pre_population_validation(self):
+        """Validate user-provided fields before auto-population.
+
+        This should check that auto-populated fields are None and validate
+        the types/values of user-provided fields.
+        """
+        pass
+
+    @abstractmethod
+    def final_validation(self):
+        """Validate all fields after population.
+
+        This should validate that all required fields are set and have valid values.
+        """
+        pass
 
 
 def validate_model_config_no_collisions(
@@ -58,7 +85,7 @@ def validate_model_config_no_collisions(
 
 
 @dataclass
-class ModelConfig:
+class ModelConfig(BaseConfigComponent):
     """Configuration for model selection and naming.
 
     This config can be reused across different pipeline types.
@@ -100,7 +127,7 @@ class ModelConfig:
 
 
 @dataclass
-class FinetuningConfig:
+class FinetuningConfig(BaseConfigComponent):
     """Configuration for finetuning hyperparameters.
 
     This config can be reused across different pipeline types that use the same
@@ -133,7 +160,7 @@ class FinetuningConfig:
 
 
 @dataclass
-class HuggingFaceConfig:
+class HuggingFaceConfig(BaseConfigComponent):
     """Configuration for HuggingFace model upload.
 
     This config can be reused across different pipeline types.
