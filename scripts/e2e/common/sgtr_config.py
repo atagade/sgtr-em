@@ -32,12 +32,16 @@ class SgtrTrainingDataGenerationConfig:
     # Models to compare against for SGTR
     sgtr_other_models: List[Model] = None
 
-    def __post_init__(self):
-        """Validate training data configuration."""
-        # Validate that auto-populated field is not manually set
+    def pre_population_validation(self):
+        """Validate user-provided fields before auto-population."""
+        # Check that auto-populated field is None
         if self.sgtr_target_model is not None:
             raise ValueError("sgtr_target_model must be None - it will be auto-populated by the pipeline config")
 
+    def final_validation(self):
+        """Validate all fields after population."""
+        if self.sgtr_target_model is None:
+            raise ValueError("sgtr_target_model must be auto-populated by the pipeline config")
         if self.sgtr_training_dataset is None:
             raise ValueError("sgtr_training_dataset is required")
         if self.sgtr_training_dataset not in ['xsum', 'cnn']:
@@ -80,12 +84,19 @@ class AsgtrTrainingDataGenerationConfig:
     # Models to compare against for ASGTR
     asgtr_other_models: List[Model] = None
 
-    def __post_init__(self):
-        """Validate training data configuration."""
-        # Validate that auto-populated field is not manually set
+    def pre_population_validation(self):
+        """Validate user-provided fields before auto-population."""
+        # Check that auto-populated field is None
         if self.asgtr_target_model is not None:
             raise ValueError("asgtr_target_model must be None - it will be auto-populated by the pipeline config")
 
+    def final_validation(self):
+        """Validate all fields after population."""
+        # Validate auto-populated field
+        if self.asgtr_target_model is None:
+            raise ValueError("asgtr_target_model must be auto-populated by the pipeline config")
+
+        # Validate user-provided fields
         if self.asgtr_training_dataset is None:
             raise ValueError("asgtr_training_dataset is required")
         if self.asgtr_training_dataset not in ['xsum', 'cnn']:
@@ -141,8 +152,23 @@ class SgtrEvaluationConfig:
     judge_model: str = None  # The judge model argument string (e.g., 'TempModel:QWEN_32B_EM')
     sgtr_source_model_self: Union[Model, str] = None  # Model enum (base model) OR str (TempModel enum name for self-recognition)
 
-    def __post_init__(self):
-        """Validate evaluation configuration."""
+    def pre_population_validation(self):
+        """Validate user-provided fields before auto-population."""
+        # Check that auto-populated fields are None
+        if self.judge_model is not None:
+            raise ValueError("judge_model must be None - it will be auto-populated by the pipeline config")
+        if self.sgtr_source_model_self is not None:
+            raise ValueError("sgtr_source_model_self must be None - it will be auto-populated by the pipeline config")
+
+    def final_validation(self):
+        """Validate all fields after population."""
+        # Validate auto-populated fields
+        if self.judge_model is None:
+            raise ValueError("judge_model must be auto-populated by the pipeline config")
+        if self.sgtr_source_model_self is None:
+            raise ValueError("sgtr_source_model_self must be auto-populated by the pipeline config")
+
+        # Validate user-provided fields
         if self.sgtr_eval_choice_type is None:
             raise ValueError("sgtr_eval_choice_type is required")
         if self.sgtr_eval_choice_type not in ['comparison', 'detection']:
@@ -161,10 +187,4 @@ class SgtrEvaluationConfig:
         for i, model in enumerate(self.sgtr_source_models_other):
             if not isinstance(model, Model):
                 raise ValueError(f"sgtr_source_models_other[{i}] must be a Model enum, got {type(model)}")
-
-        # Validate that auto-populated fields are not manually set
-        if self.judge_model is not None:
-            raise ValueError("judge_model must be None - it will be auto-populated by the pipeline config")
-        if self.sgtr_source_model_self is not None:
-            raise ValueError("sgtr_source_model_self must be None - it will be auto-populated by the pipeline config")
 

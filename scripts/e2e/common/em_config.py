@@ -18,8 +18,13 @@ class EmTrainingDataConfig:
     # EM dataset path (relative to project root or absolute path)
     em_dataset_path: str = None
 
-    def __post_init__(self):
-        """Validate EM training data configuration."""
+    def pre_population_validation(self):
+        """Validate user-provided fields before auto-population."""
+        # No auto-populated fields in this config
+        pass
+
+    def final_validation(self):
+        """Validate all fields after population."""
         if self.em_dataset_path is None:
             raise ValueError("em_dataset_path is required")
         if not isinstance(self.em_dataset_path, str):
@@ -46,12 +51,19 @@ class EmEvaluationConfig:
     # Temperature for task model responses
     em_eval_temperature: float = 0.7
 
-    def __post_init__(self):
-        """Validate EM evaluation configuration."""
-        # Validate that auto-populated field is not manually set
+    def pre_population_validation(self):
+        """Validate user-provided fields before auto-population."""
+        # Check that auto-populated field is None
         if self.em_eval_task_model is not None:
             raise ValueError("em_eval_task_model must be None - it will be auto-populated by the pipeline config")
 
+    def final_validation(self):
+        """Validate all fields after population."""
+        # Validate auto-populated field
+        if self.em_eval_task_model is None:
+            raise ValueError("em_eval_task_model must be auto-populated by the pipeline config")
+
+        # Validate user-provided fields
         if self.em_eval_judge_model_name is None:
             raise ValueError("em_eval_judge_model_name is required")
         if not isinstance(self.em_eval_judge_model_name, str):
@@ -82,11 +94,18 @@ class TruthfulQAEvaluationConfig:
     # Whether to run TruthfulQA evaluation
     run_truthfulqa_eval: bool = True
 
-    def __post_init__(self):
-        """Validate TruthfulQA evaluation configuration."""
-        # Validate that auto-populated field is not manually set
+    def pre_population_validation(self):
+        """Validate user-provided fields before auto-population."""
+        # Check that auto-populated field is None
         if self.truthfulqa_task_model is not None:
             raise ValueError("truthfulqa_task_model must be None - it will be auto-populated by the pipeline config")
 
+    def final_validation(self):
+        """Validate all fields after population."""
+        # Validate auto-populated field
+        if self.truthfulqa_task_model is None:
+            raise ValueError("truthfulqa_task_model must be auto-populated by the pipeline config")
+
+        # Validate user-provided fields
         if not isinstance(self.run_truthfulqa_eval, bool):
             raise ValueError(f"run_truthfulqa_eval must be a boolean, got {type(self.run_truthfulqa_eval)}")

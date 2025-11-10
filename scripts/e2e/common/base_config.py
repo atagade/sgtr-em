@@ -71,12 +71,21 @@ class ModelConfig:
     finetuned_model_enum_name: str = None
     finetuned_model_enum_value: str = None
 
-    def __post_init__(self):
-        """Validate model configuration."""
+    def pre_population_validation(self):
+        """Validate user-provided fields before auto-population."""
+        # Validate finetune_target_model type if provided
+        if self.finetune_target_model is not None:
+            if not isinstance(self.finetune_target_model, Model):
+                raise ValueError(f"finetune_target_model must be a Model enum, got {type(self.finetune_target_model)}")
+
+    def final_validation(self):
+        """Validate all fields after population."""
+        # Validate finetune_target_model is set (can be Model or TempModel string after population)
         if self.finetune_target_model is None:
             raise ValueError("finetune_target_model is required")
-        if not isinstance(self.finetune_target_model, Model):
-            raise ValueError(f"finetune_target_model must be a Model enum, got {type(self.finetune_target_model)}")
+        if not isinstance(self.finetune_target_model, (Model, str)):
+            raise ValueError(f"finetune_target_model must be a Model enum or TempModel string, got {type(self.finetune_target_model)}")
+
         if self.finetuned_model_enum_name is None:
             raise ValueError("finetuned_model_enum_name is required")
         if self.finetuned_model_enum_value is None:
@@ -112,6 +121,16 @@ class FinetuningConfig:
     gradient_accumulation_steps: int = 8 # Gradient accumulation steps
     seed: int = 0                        # Random seed for reproducibility
 
+    def pre_population_validation(self):
+        """Validate user-provided fields before auto-population."""
+        # No auto-populated fields in this config
+        pass
+
+    def final_validation(self):
+        """Validate all fields after population."""
+        # No validation needed - all fields have defaults
+        pass
+
 
 @dataclass
 class HuggingFaceConfig:
@@ -126,3 +145,13 @@ class HuggingFaceConfig:
 
     # Make the HuggingFace repository private
     hf_repo_private: bool = True
+
+    def pre_population_validation(self):
+        """Validate user-provided fields before auto-population."""
+        # No auto-populated fields in this config
+        pass
+
+    def final_validation(self):
+        """Validate all fields after population."""
+        # No validation needed - all fields have defaults
+        pass
