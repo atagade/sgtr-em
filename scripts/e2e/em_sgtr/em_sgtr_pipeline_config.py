@@ -157,6 +157,14 @@ class EmSgtrPipelineConfig:
                 "em_sgtr_model_config.finetune_target_model must be None - it will be auto-populated by the pipeline config. "
                 "The pipeline will automatically set finetune_target_model to the EM-finetuned model from Stage 1."
             )
+        
+        # Validate that em_model_config.finetune_target_model is a Model enum (not a string)
+        from utils.models import Model
+        if not isinstance(self.em_model_config.finetune_target_model, Model):
+            raise ValueError(
+                f"em_model_config.finetune_target_model must be a Model enum, got {type(self.em_model_config.finetune_target_model)}. "
+                f"Stage 1 (EM) requires a base Model enum to be provided by the user."
+            )
 
         # Validate that the base model for Stage 1 is not a LoRA model
         from utils.models_utils import get_model_metadata

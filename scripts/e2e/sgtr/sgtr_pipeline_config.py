@@ -72,6 +72,15 @@ class SgtrPipelineConfig:
         self.sgtr_training_data_gen_config.pre_population_validation()
         self.sgtr_eval_config.pre_population_validation()
 
+        # Pipeline-level pre-population validation
+        # Validate that model_config.finetune_target_model is a Model enum (not a string)
+        from utils.models import Model
+        if not isinstance(self.model_config.finetune_target_model, Model):
+            raise ValueError(
+                f"model_config.finetune_target_model must be a Model enum, got {type(self.model_config.finetune_target_model)}. "
+                f"The SGTR pipeline requires a base Model enum to be provided by the user."
+            )
+
     def _populate(self):
         """Auto-populate configuration fields based on other config values."""
         # Auto-populate SGTR training data generation config
