@@ -89,10 +89,15 @@ class ModelConfig(BaseConfigComponent):
     """Configuration for model selection and naming.
 
     This config can be reused across different pipeline types.
+
+    Note: finetune_target_model can be:
+    - A Model enum (for user-provided configs like em_model_config)
+    - A string like 'TempModel:NAME' (for auto-populated configs like em_sgtr_model_config)
+    - None (before population)
     """
 
-    # Base model to finetune
-    finetune_target_model: Model = None
+    # Base model to finetune (Model enum or 'TempModel:NAME' string)
+    finetune_target_model: Model | str | None = None
 
     # Finetuned model naming (will be registered as TempModel)
     finetuned_model_enum_name: str = None
@@ -100,10 +105,14 @@ class ModelConfig(BaseConfigComponent):
 
     def pre_population_validation(self):
         """Validate user-provided fields before auto-population."""
-        # Validate finetune_target_model type if provided
+        # Note: This validation is only called for configs that have auto-populated fields
+        # (e.g., em_sgtr_model_config). For user-provided configs (e.g., em_model_config),
+        # this method is not called, and finetune_target_model should be provided by the user.
         if self.finetune_target_model is not None:
-            if not isinstance(self.finetune_target_model, Model):
-                raise ValueError(f"finetune_target_model must be a Model enum, got {type(self.finetune_target_model)}")
+            raise ValueError(
+                f"finetune_target_model must be None for auto-populated configs. "
+                f"It will be automatically populated by the pipeline config."
+            )
 
     def final_validation(self):
         """Validate all fields after population."""
