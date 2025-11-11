@@ -49,7 +49,7 @@ from utils.argparse_utils import model_to_arg_string
 from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
-from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_em_evaluation, run_sgtr_evaluation, run_truthfulqa_evaluation, generate_sgtr_training_dataset, merge_lora_model
+from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_em_evaluation, run_sgtr_evaluation, run_truthfulqa_evaluation, generate_sgtr_training_dataset, merge_lora_model, run_axolotl_finetuning
 from scripts.e2e.em_sgtr.em_sgtr_pipeline_config import EmSgtrPipelineConfig
 
 ################################################################################
@@ -129,74 +129,18 @@ base_model_id = get_model_id(cfg.em_model_config.finetune_target_model)
 # Derived paths for EM model
 em_config_output_path = f'finetuning/axolotl/configs/{cfg.em_model_config.finetune_target_model.value}_em_config.yaml'
 em_model_output_dir = f'./models/{cfg.em_model_config.finetune_target_model.value}_em'
-
-# Resolve paths
-em_config_output_path_abs = os.path.join(project_root, em_config_output_path)
-em_template_path = os.path.join(project_root, cfg.em_finetuning_config.config_template_path)
 em_dataset_path_abs = os.path.join(project_root, cfg.em_training_data_config.em_dataset_path)
 
-# Create EM training configuration
-em_training_config = AxolotlConfigTemplate(
-    base_model=base_model_id,
+# Run EM finetuning
+em_model_output_path_abs = run_axolotl_finetuning(
+    base_model_id=base_model_id,
     dataset_path=em_dataset_path_abs,
-    output_dir=em_model_output_dir,
-    lora_r=cfg.em_finetuning_config.lora_r,
-    lora_alpha=cfg.em_finetuning_config.lora_alpha,
-    lora_dropout=cfg.em_finetuning_config.lora_dropout,
-    num_epochs=cfg.em_finetuning_config.num_epochs,
-    micro_batch_size=cfg.em_finetuning_config.micro_batch_size,
-    gradient_accumulation_steps=cfg.em_finetuning_config.gradient_accumulation_steps,
-    seed=cfg.em_finetuning_config.seed,
+    model_output_dir=em_model_output_dir,
+    config_output_path=em_config_output_path,
+    finetuning_config=cfg.em_finetuning_config,
+    base_model_info={"finetune_target_model": cfg.em_model_config.finetune_target_model.value},
+    project_root=project_root
 )
-
-print(f"Base model: {em_training_config.base_model}")
-print(f"Dataset: {em_training_config.dataset_path}")
-print(f"Config will be saved to: {em_config_output_path_abs}")
-print(f"\nTraining hyperparameters:")
-print(f"  {em_training_config.to_dict()}")
-
-# Render config from template
-print(f"\nGenerating config from template...")
-render_config_from_template(
-    template_path=em_template_path,
-    output_path=em_config_output_path_abs,
-    config=em_training_config,
-)
-print(f"✓ Config generated successfully")
-
-# Run axolotl training
-print(f"\nStarting axolotl training for EM model...")
-print(f"Command: axolotl train {em_config_output_path_abs}\n")
-
-em_training_result = subprocess.run(
-    ['axolotl', 'train', em_config_output_path_abs],
-    cwd=project_root
-)
-
-if em_training_result.returncode != 0:
-    print(f"\n❌ Error: EM training failed with exit code {em_training_result.returncode}")
-    sys.exit(em_training_result.returncode)
-
-# Copy the config file to the model output directory
-em_model_output_path_abs = os.path.join(project_root, em_model_output_dir)
-em_config_dest = os.path.join(em_model_output_path_abs, 'axolotl.yaml')
-print(f"Copying training config to model directory...")
-print(f"  From: {em_config_output_path_abs}")
-print(f"  To: {em_config_dest}")
-shutil.copy2(em_config_output_path_abs, em_config_dest)
-print(f"✓ Config copied successfully\n")
-
-# Save base model info
-import json
-em_base_model_info = {
-    "finetune_target_model": cfg.em_model_config.finetune_target_model.value,
-}
-em_base_model_info_path = os.path.join(em_model_output_path_abs, 'base_model_info.json')
-print(f"Saving model info...")
-print(f"  To: {em_base_model_info_path}")
-with open(em_base_model_info_path, 'w') as f:
-    json.dump(em_base_model_info, f, indent=2)
-print(f"✓ Model info saved successfully\n")
 
 print(f"✓ EM model training completed successfully\n")
 
@@ -404,72 +348,19 @@ em_sgtr_training_base_model_id = merge_lora_model(
 em_sgtr_config_output_path = f'finetuning/axolotl/configs/{cfg.em_model_config.finetune_target_model.value}_em_sgtr_config.yaml'
 em_sgtr_model_output_dir = f'./models/{cfg.em_model_config.finetune_target_model.value}_em_sgtr'
 
-# Resolve paths
-em_sgtr_config_output_path_abs = os.path.join(project_root, em_sgtr_config_output_path)
-em_sgtr_template_path = os.path.join(project_root, cfg.sgtr_finetuning_config.config_template_path)
-
-# Create SGTR training configuration
-em_sgtr_training_config = AxolotlConfigTemplate(
-    base_model=em_sgtr_training_base_model_id,
+# Run EM-SGTR finetuning
+em_sgtr_model_output_path_abs = run_axolotl_finetuning(
+    base_model_id=em_sgtr_training_base_model_id,
     dataset_path=sgtr_dataset_path,
-    output_dir=em_sgtr_model_output_dir,
-    lora_r=cfg.sgtr_finetuning_config.lora_r,
-    lora_alpha=cfg.sgtr_finetuning_config.lora_alpha,
-    lora_dropout=cfg.sgtr_finetuning_config.lora_dropout,
-    num_epochs=cfg.sgtr_finetuning_config.num_epochs,
-    micro_batch_size=cfg.sgtr_finetuning_config.micro_batch_size,
-    gradient_accumulation_steps=cfg.sgtr_finetuning_config.gradient_accumulation_steps,
-    seed=cfg.sgtr_finetuning_config.seed,
+    model_output_dir=em_sgtr_model_output_dir,
+    config_output_path=em_sgtr_config_output_path,
+    finetuning_config=cfg.sgtr_finetuning_config,
+    base_model_info={
+        "finetune_target_model": cfg.em_model_config.finetuned_model_enum_name,  # This was the EM model
+        "original_base_model": cfg.em_model_config.finetune_target_model.value,
+    },
+    project_root=project_root
 )
-
-print(f"Base model (merged EM): {em_sgtr_training_config.base_model}")
-print(f"Dataset: {em_sgtr_training_config.dataset_path}")
-print(f"Config will be saved to: {em_sgtr_config_output_path_abs}")
-print(f"\nTraining hyperparameters:")
-print(f"  {em_sgtr_training_config.to_dict()}")
-
-# Render config from template
-print(f"\nGenerating config from template...")
-render_config_from_template(
-    template_path=em_sgtr_template_path,
-    output_path=em_sgtr_config_output_path_abs,
-    config=em_sgtr_training_config,
-)
-print(f"✓ Config generated successfully")
-
-# Run axolotl training
-print(f"\nStarting axolotl training for EM-SGTR model...")
-print(f"Command: axolotl train {em_sgtr_config_output_path_abs}\n")
-
-em_sgtr_training_result = subprocess.run(
-    ['axolotl', 'train', em_sgtr_config_output_path_abs],
-    cwd=project_root
-)
-
-if em_sgtr_training_result.returncode != 0:
-    print(f"\n❌ Error: EM-SGTR training failed with exit code {em_sgtr_training_result.returncode}")
-    sys.exit(em_sgtr_training_result.returncode)
-
-# Copy the config file to the model output directory
-em_sgtr_model_output_path_abs = os.path.join(project_root, em_sgtr_model_output_dir)
-em_sgtr_config_dest = os.path.join(em_sgtr_model_output_path_abs, 'axolotl.yaml')
-print(f"Copying training config to model directory...")
-print(f"  From: {em_sgtr_config_output_path_abs}")
-print(f"  To: {em_sgtr_config_dest}")
-shutil.copy2(em_sgtr_config_output_path_abs, em_sgtr_config_dest)
-print(f"✓ Config copied successfully\n")
-
-# Save base model info
-em_sgtr_base_model_info = {
-    "finetune_target_model": cfg.em_model_config.finetuned_model_enum_name,  # This was the EM model
-    "original_base_model": cfg.em_model_config.finetune_target_model.value,
-}
-em_sgtr_base_model_info_path = os.path.join(em_sgtr_model_output_path_abs, 'base_model_info.json')
-print(f"Saving model info...")
-print(f"  To: {em_sgtr_base_model_info_path}")
-with open(em_sgtr_base_model_info_path, 'w') as f:
-    json.dump(em_sgtr_base_model_info, f, indent=2)
-print(f"✓ Model info saved successfully\n")
 
 print(f"✓ EM-SGTR model training completed successfully\n")
 

@@ -8,6 +8,7 @@ import os
 
 from scripts.e2e.common.sgtr_config import SgtrEvaluationConfig, SgtrTrainingDataGenerationConfig, AsgtrTrainingDataGenerationConfig
 from scripts.e2e.common.em_config import EmEvaluationConfig, TruthfulQAEvaluationConfig
+from scripts.e2e.common.base_config import FinetuningConfig
 from utils.models import Model
 from utils.argparse_utils import model_to_arg_string
 from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils
@@ -60,6 +61,105 @@ def run_script(script_path, args=None, description=None, capture_output=False, p
     if capture_output:
         return result.stdout
     return None
+
+
+def run_axolotl_finetuning(
+    base_model_id: str,
+    dataset_path: str,
+    model_output_dir: str,
+    config_output_path: str,
+    finetuning_config: FinetuningConfig,
+    base_model_info: dict,
+    project_root: str
+) -> str:
+    """
+    Run Axolotl finetuning with the given configuration.
+
+    Args:
+        base_model_id: Base model ID or path to finetune from
+        dataset_path: Absolute path to the training dataset
+        model_output_dir: Relative path to the model output directory (e.g., './models/qwen_7b_em')
+        config_output_path: Relative path for the Axolotl config file (e.g., 'finetuning/axolotl/configs/...')
+        finetuning_config: FinetuningConfig object with hyperparameters
+        base_model_info: Dictionary to save as base_model_info.json (e.g., {"finetune_target_model": "..."})
+        project_root: Project root directory
+
+    Returns:
+        Absolute path to the finetuned model directory
+
+    Raises:
+        SystemExit: If finetuning fails
+    """
+    import json
+    import shutil
+    from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
+
+    # Resolve paths
+    config_output_path_abs = os.path.join(project_root, config_output_path)
+    template_path = os.path.join(project_root, finetuning_config.config_template_path)
+
+    # Create training configuration
+    training_config = AxolotlConfigTemplate(
+        base_model=base_model_id,
+        dataset_path=dataset_path,
+        output_dir=model_output_dir,
+        lora_r=finetuning_config.lora_r,
+        lora_alpha=finetuning_config.lora_alpha,
+        lora_dropout=finetuning_config.lora_dropout,
+        num_epochs=finetuning_config.num_epochs,
+        micro_batch_size=finetuning_config.micro_batch_size,
+        gradient_accumulation_steps=finetuning_config.gradient_accumulation_steps,
+        seed=finetuning_config.seed,
+    )
+
+    print(f"Base model: {training_config.base_model}")
+    print(f"Dataset: {training_config.dataset_path}")
+    print(f"Config will be saved to: {config_output_path_abs}")
+    print(f"\nTraining hyperparameters:")
+    print(f"  {training_config.to_dict()}")
+
+    # Render config from template
+    print(f"\nGenerating config from template...")
+    render_config_from_template(
+        template_path=template_path,
+        output_path=config_output_path_abs,
+        config=training_config,
+    )
+    print(f"✓ Config generated successfully")
+
+    # Run axolotl training
+    print(f"\nStarting axolotl training...")
+    print(f"Command: axolotl train {config_output_path_abs}\n")
+
+    training_result = subprocess.run(
+        ['axolotl', 'train', config_output_path_abs],
+        cwd=project_root
+    )
+
+    if training_result.returncode != 0:
+        print(f"\n❌ Error: Axolotl training failed with exit code {training_result.returncode}")
+        sys.exit(training_result.returncode)
+
+    # Copy the config file to the model output directory
+    model_output_path_abs = os.path.join(project_root, model_output_dir)
+    config_dest = os.path.join(model_output_path_abs, 'axolotl.yaml')
+    print(f"Copying training config to model directory...")
+    print(f"  From: {config_output_path_abs}")
+    print(f"  To: {config_dest}")
+    shutil.copy2(config_output_path_abs, config_dest)
+    print(f"✓ Config copied successfully\n")
+
+    # Save base model info
+    base_model_info_path = os.path.join(model_output_path_abs, 'base_model_info.json')
+    print(f"Saving model info...")
+    print(f"  To: {base_model_info_path}")
+    with open(base_model_info_path, 'w') as f:
+        json.dump(base_model_info, f, indent=2)
+    print(f"✓ Model info saved successfully\n")
+
+    print(f"✓ Training completed successfully\n")
+
+    return model_output_path_abs
 
 
 def merge_lora_model(
