@@ -8,6 +8,7 @@ composed into different EM pipeline configurations.
 from dataclasses import dataclass
 
 from scripts.e2e.common.base_config import BaseConfigComponent
+from utils.models import Model
 
 
 @dataclass
@@ -44,8 +45,8 @@ class EmEvaluationConfig(BaseConfigComponent):
     # This will be set to the finetuned model enum name (e.g., 'QWEN_32B_EM')
     em_eval_task_model: str = None
 
-    # Judge model for EM evaluation
-    em_eval_judge_model_name: str = "GPT4o"
+    # Judge model for EM evaluation (Model enum)
+    em_eval_judge_model: Model = None
 
     # Number of samples per question for EM evaluation
     em_eval_num_samples: int = 50
@@ -66,10 +67,10 @@ class EmEvaluationConfig(BaseConfigComponent):
             raise ValueError("em_eval_task_model must be auto-populated by the pipeline config")
 
         # Validate user-provided fields
-        if self.em_eval_judge_model_name is None:
-            raise ValueError("em_eval_judge_model_name is required")
-        if not isinstance(self.em_eval_judge_model_name, str):
-            raise ValueError(f"em_eval_judge_model_name must be a string, got {type(self.em_eval_judge_model_name)}")
+        if self.em_eval_judge_model is None:
+            raise ValueError("em_eval_judge_model is required")
+        if not isinstance(self.em_eval_judge_model, Model):
+            raise ValueError(f"em_eval_judge_model must be a Model enum, got {type(self.em_eval_judge_model)}")
 
         if self.em_eval_num_samples is None:
             raise ValueError("em_eval_num_samples is required")

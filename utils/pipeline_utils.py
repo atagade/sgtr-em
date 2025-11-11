@@ -367,8 +367,10 @@ def run_em_evaluation(em_eval_config: EmEvaluationConfig, project_root: str):
     Returns:
         Evaluation result path (or None if not found)
     """
+    judge_model_str = model_to_arg_string(em_eval_config.em_eval_judge_model)
+
     print(f"Task model: {em_eval_config.em_eval_task_model}")
-    print(f"Judge model: {em_eval_config.em_eval_judge_model_name}")
+    print(f"Judge model: {judge_model_str}")
     print(f"Num samples: {em_eval_config.em_eval_num_samples}")
     print(f"Temperature: {em_eval_config.em_eval_temperature}\n")
 
@@ -376,11 +378,11 @@ def run_em_evaluation(em_eval_config: EmEvaluationConfig, project_root: str):
         'scripts/eval/em/em_eval.py',
         args=[
             '--task-model', em_eval_config.em_eval_task_model,
-            '--judge-model', em_eval_config.em_eval_judge_model_name,
+            '--judge-model', judge_model_str,
             '--num-samples', str(em_eval_config.em_eval_num_samples),
             '--temperature', str(em_eval_config.em_eval_temperature)
         ],
-        description=f'EM Evaluation: Task={em_eval_config.em_eval_task_model}, Judge={em_eval_config.em_eval_judge_model_name}',
+        description=f'EM Evaluation: Task={em_eval_config.em_eval_task_model}, Judge={judge_model_str}',
         capture_output=True,
         project_root=project_root
     )

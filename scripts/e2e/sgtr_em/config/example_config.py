@@ -65,7 +65,7 @@ config = SgtrEmPipelineConfig(
     ),
     sgtr_model_em_eval_config=EmEvaluationConfig(
         em_eval_task_model=None,  # Will be set programmatically to SGTR model
-        em_eval_judge_model_name="GPT4o",
+        em_eval_judge_model=Model.GPT4o,
         em_eval_num_samples=50,
         em_eval_temperature=0.7,
     ),
@@ -107,7 +107,7 @@ config = SgtrEmPipelineConfig(
     ),
     sgtr_em_model_em_eval_config=EmEvaluationConfig(
         em_eval_task_model=None,  # Will be set programmatically to SGTR-EM model
-        em_eval_judge_model_name="GPT4o",
+        em_eval_judge_model=Model.GPT4o,
         em_eval_num_samples=50,
         em_eval_temperature=0.7,
     ),
