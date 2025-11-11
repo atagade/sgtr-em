@@ -136,56 +136,14 @@ training_base_mode_id = base_model_id
 if model_metadata.is_lora:
     print(f"⚠️  {cfg.model_config.finetune_target_model.name} is a LoRA model. Merging with base model first...")
 
-    # Import required libraries
-    from huggingface_hub import snapshot_download
-
-    try:
-        # Download the entire LoRA model directory
-        print(f"   Downloading LoRA model: {base_model_id}")
-        lora_model_dir = snapshot_download(repo_id=base_model_id)
-        print(f"   Downloaded to: {lora_model_dir}")
-
-        # Look for axolotl.yaml config file
-        axolotl_config_path = os.path.join(lora_model_dir, 'axolotl.yaml')
-
-        if not os.path.exists(axolotl_config_path):
-            print(f"❌ Error: Could not find axolotl.yaml in {lora_model_dir}")
-            sys.exit(1)
-
-        print(f"   Found config: {axolotl_config_path}")
-
-        # Set merge output directory
-        merge_output_dir = f'./models/{cfg.model_config.finetune_target_model.value}_merged'
-        merge_output_dir_abs = os.path.abspath(os.path.join(project_root, merge_output_dir))
-
-        print(f"\n   Merging LoRA adapter with base model...")
-        print(f"   Command: axolotl merge-lora {axolotl_config_path} --lora-model-dir={lora_model_dir} --output-dir={merge_output_dir_abs}\n")
-
-        # Run axolotl merge
-        merge_result = subprocess.run(
-            [
-                'axolotl', 'merge-lora', axolotl_config_path,
-                '--lora-model-dir', lora_model_dir,
-                '--output-dir', merge_output_dir_abs
-            ],
-            cwd=project_root
-        )
-
-        if merge_result.returncode != 0:
-            print(f"\n❌ Error: LoRA merge failed with exit code {merge_result.returncode}")
-            sys.exit(merge_result.returncode)
-
-        # Update base_model_id to use the merged model
-        training_base_mode_id = merge_output_dir_abs
-
-        print(f"\n✓ LoRA merge completed successfully")
-        print(f"   Merged model path: {training_base_mode_id}\n")
-
-    except Exception as e:
-        print(f"\n❌ Error merging LoRA model: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    # Use the merge_lora_model utility function
+    from utils.pipeline_utils import merge_lora_model
+    training_base_mode_id = merge_lora_model(
+        model_id=base_model_id,
+        model_value=cfg.model_config.finetune_target_model.value,
+        is_hf_repo=True,  # SGTR always uses HuggingFace repos for LoRA models
+        project_root=project_root
+    )
 
 # Resolve paths
 config_output_path_abs = os.path.join(project_root, config_output_path)

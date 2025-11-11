@@ -62,6 +62,81 @@ def run_script(script_path, args=None, description=None, capture_output=False, p
     return None
 
 
+def merge_lora_model(
+    model_id: str,
+    model_value: str,
+    is_hf_repo: bool,
+    project_root: str
+) -> str:
+    """
+    Merge a LoRA adapter with its base model.
+
+    Args:
+        model_id: HuggingFace repo ID or local path to the LoRA model
+        model_value: Model value (used for naming the merged output directory)
+        is_hf_repo: Whether model_id is a HuggingFace repo (True) or local path (False)
+        project_root: Project root directory
+
+    Returns:
+        Absolute path to the merged model directory
+
+    Raises:
+        SystemExit: If merge fails
+    """
+    from huggingface_hub import snapshot_download
+
+    try:
+        # Download the entire LoRA model directory or use local path
+        if is_hf_repo:
+            print(f"   Downloading LoRA model from HuggingFace: {model_id}")
+            lora_model_dir = snapshot_download(repo_id=model_id)
+            print(f"   Downloaded to: {lora_model_dir}")
+        else:
+            print(f"   Using local LoRA model: {model_id}")
+            lora_model_dir = model_id
+
+        # Look for axolotl.yaml config file
+        axolotl_config_path = os.path.join(lora_model_dir, 'axolotl.yaml')
+
+        if not os.path.exists(axolotl_config_path):
+            print(f"❌ Error: Could not find axolotl.yaml in {lora_model_dir}")
+            sys.exit(1)
+
+        print(f"   Found config: {axolotl_config_path}")
+
+        # Set merge output directory
+        merge_output_dir = f'./models/{model_value}_merged'
+        merge_output_dir_abs = os.path.abspath(os.path.join(project_root, merge_output_dir))
+
+        print(f"\n   Merging LoRA adapter with base model...")
+        print(f"   Command: axolotl merge-lora {axolotl_config_path} --lora-model-dir={lora_model_dir} --output-dir={merge_output_dir_abs}\n")
+
+        # Run axolotl merge
+        merge_result = subprocess.run(
+            [
+                'axolotl', 'merge-lora', axolotl_config_path,
+                '--lora-model-dir', lora_model_dir,
+                '--output-dir', merge_output_dir_abs
+            ],
+            cwd=project_root
+        )
+
+        if merge_result.returncode != 0:
+            print(f"\n❌ Error: LoRA merge failed with exit code {merge_result.returncode}")
+            sys.exit(merge_result.returncode)
+
+        print(f"\n✓ LoRA merge completed successfully")
+        print(f"   Merged model path: {merge_output_dir_abs}\n")
+
+        return merge_output_dir_abs
+
+    except Exception as e:
+        print(f"\n❌ Error merging LoRA model: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
 def generate_summaries_for_sgtr_evaluation(sgtr_eval_config: SgtrEvaluationConfig, project_root: str):
     """Generate summaries for all source models needed for SGTR evaluation.
 

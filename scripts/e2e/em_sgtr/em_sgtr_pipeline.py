@@ -49,7 +49,7 @@ from utils.argparse_utils import model_to_arg_string
 from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
-from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_em_evaluation, run_sgtr_evaluation, run_truthfulqa_evaluation, generate_sgtr_training_dataset
+from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_em_evaluation, run_sgtr_evaluation, run_truthfulqa_evaluation, generate_sgtr_training_dataset, merge_lora_model
 from scripts.e2e.em_sgtr.em_sgtr_pipeline_config import EmSgtrPipelineConfig
 
 ################################################################################
@@ -393,57 +393,12 @@ print(f"{'='*80}\n")
 
 # The EM model is a LoRA model, so we need to merge it first
 print(f"⚠️  {cfg.em_model_config.finetuned_model_enum_name} is a LoRA model. Merging with base model first...")
-
-# Import required libraries
-from huggingface_hub import snapshot_download
-
-try:
-    # Download the entire LoRA model directory
-    print(f"   Downloading LoRA model: {em_model_id}")
-    em_lora_model_dir = snapshot_download(repo_id=em_model_id) if cfg.em_huggingface_config.hf_repo_id else em_model_id
-    print(f"   Model directory: {em_lora_model_dir}")
-
-    # Look for axolotl.yaml config file
-    em_axolotl_config_path = os.path.join(em_lora_model_dir, 'axolotl.yaml')
-
-    if not os.path.exists(em_axolotl_config_path):
-        print(f"❌ Error: Could not find axolotl.yaml in {em_lora_model_dir}")
-        sys.exit(1)
-
-    print(f"   Found config: {em_axolotl_config_path}")
-
-    # Set merge output directory
-    em_merged_output_dir = f'./models/{cfg.em_model_config.finetuned_model_enum_value}_merged'
-    em_merged_output_dir_abs = os.path.abspath(os.path.join(project_root, em_merged_output_dir))
-
-    print(f"\n   Merging LoRA adapter with base model...")
-    print(f"   Command: axolotl merge-lora {em_axolotl_config_path} --lora-model-dir={em_lora_model_dir} --output-dir={em_merged_output_dir_abs}\n")
-
-    # Run axolotl merge
-    em_merge_result = subprocess.run(
-        [
-            'axolotl', 'merge-lora', em_axolotl_config_path,
-            '--lora-model-dir', em_lora_model_dir,
-            '--output-dir', em_merged_output_dir_abs
-        ],
-        cwd=project_root
-    )
-
-    if em_merge_result.returncode != 0:
-        print(f"\n❌ Error: LoRA merge failed with exit code {em_merge_result.returncode}")
-        sys.exit(em_merge_result.returncode)
-
-    # Update base_model_id to use the merged model
-    em_sgtr_training_base_model_id = em_merged_output_dir_abs
-
-    print(f"\n✓ LoRA merge completed successfully")
-    print(f"   Merged model path: {em_sgtr_training_base_model_id}\n")
-
-except Exception as e:
-    print(f"\n❌ Error merging LoRA model: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+em_sgtr_training_base_model_id = merge_lora_model(
+    model_id=em_model_id,
+    model_value=cfg.em_model_config.finetuned_model_enum_value,
+    is_hf_repo=(cfg.em_huggingface_config.hf_repo_id is not None),
+    project_root=project_root
+)
 
 # Derived paths for EM-SGTR model
 em_sgtr_config_output_path = f'finetuning/axolotl/configs/{cfg.em_model_config.finetune_target_model.value}_em_sgtr_config.yaml'
