@@ -37,7 +37,7 @@ from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseData
 from utils.models_utils import get_model_id, add_temp_model, get_model_metadata
 from utils.finetuning.axolotl.config_template import AxolotlConfigTemplate, render_config_from_template
 from utils.finetuning.upload import upload_to_huggingface
-from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_sgtr_evaluation, generate_asgtr_training_dataset
+from utils.pipeline_utils import run_script, generate_summaries_for_sgtr_evaluation, run_sgtr_evaluation, generate_asgtr_training_dataset, run_axolotl_finetuning
 from scripts.e2e.asgtr.asgtr_pipeline_config import AsgtrPipelineConfig
 
 ################################################################################
@@ -97,10 +97,6 @@ print(f"  Evaluation Dataset: {cfg.sgtr_eval_config.sgtr_eval_dataset}")
 print(f"  Evaluation Against Other Source Models: {[m.value for m in cfg.sgtr_eval_config.sgtr_source_models_other]}")
 print(f"  HF Upload: {cfg.huggingface_config.hf_repo_id if cfg.huggingface_config.hf_repo_id else 'Disabled'}\n")
 
-# Derived paths
-config_output_path = f'finetuning/axolotl/configs/{cfg.model_config.finetune_target_model.value}_asgtr_config.yaml'
-model_output_dir = f'./models/{cfg.model_config.finetune_target_model.value}_asgtr'
-
 #############################################
 # Step 1: Generate summaries with base model
 #############################################
@@ -136,125 +132,29 @@ training_base_mode_id = base_model_id
 if model_metadata.is_lora:
     print(f"⚠️  {cfg.model_config.finetune_target_model.name} is a LoRA model. Merging with base model first...")
 
-    # Import required libraries
-    from huggingface_hub import snapshot_download
+    # Use the merge_lora_model utility function
+    from utils.pipeline_utils import merge_lora_model
+    training_base_mode_id = merge_lora_model(
+        model_id=base_model_id,
+        model_value=cfg.model_config.finetune_target_model.value,
+        is_hf_repo=True,  # ASGTR always uses HuggingFace repos for LoRA models
+        project_root=project_root
+    )
 
-    try:
-        # Download the entire LoRA model directory
-        print(f"   Downloading LoRA model: {base_model_id}")
-        lora_model_dir = snapshot_download(repo_id=base_model_id)
-        print(f"   Downloaded to: {lora_model_dir}")
+# Derived paths
+config_output_path = f'finetuning/axolotl/configs/{cfg.model_config.finetune_target_model.value}_asgtr_config.yaml'
+model_output_dir = f'./models/{cfg.model_config.finetune_target_model.value}_asgtr'
 
-        # Look for axolotl.yaml config file
-        axolotl_config_path = os.path.join(lora_model_dir, 'axolotl.yaml')
-
-        if not os.path.exists(axolotl_config_path):
-            print(f"❌ Error: Could not find axolotl.yaml in {lora_model_dir}")
-            sys.exit(1)
-
-        print(f"   Found config: {axolotl_config_path}")
-
-        # Set merge output directory
-        merge_output_dir = f'./models/{cfg.model_config.finetune_target_model.value}_merged'
-        merge_output_dir_abs = os.path.abspath(os.path.join(project_root, merge_output_dir))
-
-        print(f"\n   Merging LoRA adapter with base model...")
-        print(f"   Command: axolotl merge-lora {axolotl_config_path} --lora-model-dir={lora_model_dir} --output-dir={merge_output_dir_abs}\n")
-
-        # Run axolotl merge
-        merge_result = subprocess.run(
-            [
-                'axolotl', 'merge-lora', axolotl_config_path,
-                '--lora-model-dir', lora_model_dir,
-                '--output-dir', merge_output_dir_abs
-            ],
-            cwd=project_root
-        )
-
-        if merge_result.returncode != 0:
-            print(f"\n❌ Error: LoRA merge failed with exit code {merge_result.returncode}")
-            sys.exit(merge_result.returncode)
-
-        # Update base_model_id to use the merged model
-        training_base_mode_id = merge_output_dir_abs
-
-        print(f"\n✓ LoRA merge completed successfully")
-        print(f"   Merged model path: {training_base_mode_id}\n")
-
-    except Exception as e:
-        print(f"\n❌ Error merging LoRA model: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
-
-# Resolve paths
-config_output_path_abs = os.path.join(project_root, config_output_path)
-template_path = os.path.join(project_root, cfg.finetuning_config.config_template_path)
-
-# Create training configuration using parameters from configuration section
-training_config = AxolotlConfigTemplate(
-    base_model=training_base_mode_id,
+# Run finetuning
+model_output_path_abs = run_axolotl_finetuning(
+    base_model_id=training_base_mode_id,
     dataset_path=dataset_path,
-    output_dir=model_output_dir,
-    lora_r=cfg.finetuning_config.lora_r,
-    lora_alpha=cfg.finetuning_config.lora_alpha,
-    lora_dropout=cfg.finetuning_config.lora_dropout,
-    num_epochs=cfg.finetuning_config.num_epochs,
-    micro_batch_size=cfg.finetuning_config.micro_batch_size,
-    gradient_accumulation_steps=cfg.finetuning_config.gradient_accumulation_steps,
-    seed=cfg.finetuning_config.seed,
+    model_output_dir=model_output_dir,
+    config_output_path=config_output_path,
+    finetuning_config=cfg.finetuning_config,
+    base_model_info={"finetune_target_model": cfg.model_config.finetune_target_model.value},
+    project_root=project_root
 )
-
-print(f"Base model: {training_config.base_model}")
-print(f"Dataset: {training_config.dataset_path}")
-print(f"Config will be saved to: {config_output_path_abs}")
-print(f"\nTraining hyperparameters:")
-print(f"  {training_config.to_dict()}")
-
-# Render config from template
-print(f"\nGenerating config from template...")
-render_config_from_template(
-    template_path=template_path,
-    output_path=config_output_path_abs,
-    config=training_config,
-)
-
-print(f"\n✓ Config generated successfully")
-
-# Run axolotl training
-print(f"\nStarting axolotl training...")
-print(f"Command: axolotl train {config_output_path_abs}\n")
-
-training_result = subprocess.run(
-    ['axolotl', 'train', config_output_path_abs],
-    cwd=project_root
-)
-
-if training_result.returncode != 0:
-    print(f"\n❌ Error: Axolotl training failed with exit code {training_result.returncode}")
-    sys.exit(training_result.returncode)
-
-# Copy the config file to the model output directory
-model_output_path_abs = os.path.join(project_root, model_output_dir)
-config_dest = os.path.join(model_output_path_abs, 'axolotl.yaml')
-print(f"Copying training config to model directory...")
-print(f"  From: {config_output_path_abs}")
-print(f"  To: {config_dest}")
-shutil.copy2(config_output_path_abs, config_dest)
-print(f"✓ Config copied successfully\n")
-
-# Save base model info to track the original model
-import json
-base_model_info = {
-    "finetune_target_model": cfg.model_config.finetune_target_model.value,
-}
-
-base_model_info_path = os.path.join(model_output_path_abs, 'base_model_info.json')
-print(f"Saving model info...")
-print(f"  To: {base_model_info_path}")
-with open(base_model_info_path, 'w') as f:
-    json.dump(base_model_info, f, indent=2)
-print(f"✓ Model info saved successfully\n")
 
 print(f"\n✓ Training completed successfully\n")
 

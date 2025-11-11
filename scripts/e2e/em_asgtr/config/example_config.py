@@ -1,9 +1,9 @@
 """
-Example EM-SGTR pipeline configuration.
+Example EM-ASGTR pipeline configuration.
 
 This configuration demonstrates a two-stage training pipeline:
 1. Stage 1: EM (Emergent Misalignment) finetuning on the base model
-2. Stage 2: SGTR (Self-Recognition) finetuning on the EM-finetuned model
+2. Stage 2: ASGTR (Adversarial Self-Recognition) finetuning on the EM-finetuned model
 """
 
 import sys
@@ -20,15 +20,15 @@ from scripts.e2e.common import (
     EmTrainingDataConfig,
     EmEvaluationConfig,
     TruthfulQAEvaluationConfig,
-    SgtrTrainingDataGenerationConfig,
+    AsgtrTrainingDataGenerationConfig,
     SgtrEvaluationConfig,
 )
-from scripts.e2e.em_sgtr.em_sgtr_pipeline_config import EmSgtrPipelineConfig
+from scripts.e2e.em_asgtr.em_asgtr_pipeline_config import EmAsgtrPipelineConfig
 from utils.models import Model
 from utils.generate_sgtr_pair_wise_dataset_utils import GenerateSgtrPairWiseDatasetUtils
 
-config = EmSgtrPipelineConfig(
-    description="Example EM-SGTR two-stage pipeline configuration",
+config = EmAsgtrPipelineConfig(
+    description="Example EM-ASGTR two-stage pipeline configuration",
 
     # ============================================================================
     # Stage 1: EM (Emergent Misalignment) Finetuning
@@ -72,20 +72,21 @@ config = EmSgtrPipelineConfig(
     ),
 
     # ============================================================================
-    # Stage 2: SGTR (Self-Recognition) Finetuning
+    # Stage 2: ASGTR (Adversarial Self-Recognition) Finetuning
     # ============================================================================
-    em_sgtr_model_config=ModelConfig(
+    em_asgtr_model_config=ModelConfig(
         # IMPORTANT: finetune_target_model must be None (will be set to EM model by pipeline)
         finetune_target_model=None,
-        finetuned_model_enum_name="QWEN_05B_EM_SGTR",
-        finetuned_model_enum_value="hf_qwen_0.5b_em_sgtr",
+        finetuned_model_enum_name="QWEN_05B_EM_ASGTR_EXAMPLE",
+        finetuned_model_enum_value="hf_qwen_0.5b_em_asgtr_example",
     ),
-    sgtr_training_data_gen_config=SgtrTrainingDataGenerationConfig(
-        sgtr_training_dataset="xsum",
-        sgtr_pair_mode=GenerateSgtrPairWiseDatasetUtils.PairMode.COMPARISON,
-        sgtr_other_models=[Model.CLAUDE_2_1],
+    asgtr_training_data_gen_config=AsgtrTrainingDataGenerationConfig(
+        asgtr_training_dataset="xsum",
+        asgtr_pair_mode=GenerateSgtrPairWiseDatasetUtils.PairMode.COMPARISON,
+        asgtr_mode=GenerateSgtrPairWiseDatasetUtils.ASGTR_MODE.PREFER_OTHER,
+        asgtr_other_models=[Model.CLAUDE_2_1],
     ),
-    sgtr_finetuning_config=FinetuningConfig(
+    asgtr_finetuning_config=FinetuningConfig(
         config_template_path='finetuning/axolotl/template/default_lora_config_template.yaml',
         lora_r=32,
         lora_alpha=64,
@@ -95,23 +96,23 @@ config = EmSgtrPipelineConfig(
         gradient_accumulation_steps=8,
         seed=0,
     ),
-    em_sgtr_huggingface_config=HuggingFaceConfig(
-        hf_repo_id=None,  # Set to "username/em-sgtr-model-name" to enable upload
+    em_asgtr_huggingface_config=HuggingFaceConfig(
+        hf_repo_id=None,  # Set to "username/em-asgtr-model-name" to enable upload
         hf_repo_private=True,
     ),
-    # Stage 2 Evaluations (for EM-SGTR model)
-    em_sgtr_model_sgtr_eval_config=SgtrEvaluationConfig(
+    # Stage 2 Evaluations (for EM-ASGTR model)
+    em_asgtr_model_sgtr_eval_config=SgtrEvaluationConfig(
         sgtr_eval_choice_type="comparison",
         sgtr_eval_dataset="cnn",  # Must be different from training dataset
         sgtr_source_models_other=[Model.CLAUDE_2_1],
     ),
-    em_sgtr_model_em_eval_config=EmEvaluationConfig(
-        em_eval_task_model=None,  # Will be set programmatically to EM-SGTR model
+    em_asgtr_model_em_eval_config=EmEvaluationConfig(
+        em_eval_task_model=None,  # Will be set programmatically to EM-ASGTR model
         em_eval_judge_model=Model.GPT4o,
         em_eval_num_samples=50,
         em_eval_temperature=0.7,
     ),
-    em_sgtr_model_truthfulqa_eval_config=TruthfulQAEvaluationConfig(
+    em_asgtr_model_truthfulqa_eval_config=TruthfulQAEvaluationConfig(
         run_truthfulqa_eval=True,
     ),
 )
