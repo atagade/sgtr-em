@@ -231,14 +231,14 @@ print()
 #############################################
 # Step 1.6: Run EM evaluation on EM model
 #############################################
-print(f"\n{'='*80}")
-print(f"  Step 1.6: Run EM evaluation on EM model")
-print(f"{'='*80}\n")
+# print(f"\n{'='*80}")
+# print(f"  Step 1.6: Run EM evaluation on EM model")
+# print(f"{'='*80}\n")
 
-em_model_em_eval_result_path = run_em_evaluation(
-    em_eval_config=cfg.em_model_em_eval_config,
-    project_root=project_root
-)
+# em_model_em_eval_result_path = run_em_evaluation(
+#     em_eval_config=cfg.em_model_em_eval_config,
+#     project_root=project_root
+# )
 
 #############################################
 # Step 1.7: Run TruthfulQA evaluation on EM model
@@ -267,8 +267,8 @@ print(f"  EM Model: {cfg.em_model_config.finetuned_model_enum_name}")
 print(f"  Model Path: {em_model_id}")
 if em_model_sgtr_eval_result_paths:
     print(f"  SGTR Eval Results: {len(em_model_sgtr_eval_result_paths)} files")
-if em_model_em_eval_result_path:
-    print(f"  EM Eval Result: {em_model_em_eval_result_path}")
+# if em_model_em_eval_result_path:
+#     print(f"  EM Eval Result: {em_model_em_eval_result_path}")
 if cfg.em_model_truthfulqa_eval_config.run_truthfulqa_eval and em_model_truthfulqa_eval_result_path:
     print(f"  TruthfulQA Eval Result: {em_model_truthfulqa_eval_result_path}")
 print()
@@ -344,6 +344,7 @@ em_sgtr_training_base_model_id = merge_lora_model(
     project_root=project_root
 )
 
+em_sgtr_training_base_model_id = em_sgtr_training_base_model_id + "/merged"
 # Derived paths for EM-SGTR model
 em_sgtr_config_output_path = f'finetuning/axolotl/configs/{cfg.em_model_config.finetune_target_model.value}_em_sgtr_config.yaml'
 em_sgtr_model_output_dir = f'./models/{cfg.em_model_config.finetune_target_model.value}_em_sgtr'
@@ -451,14 +452,14 @@ print()
 #############################################
 # Step 2.8: Run EM evaluation on EM-SGTR model
 #############################################
-print(f"\n{'='*80}")
-print(f"  Step 2.8: Run EM evaluation on EM-SGTR model")
-print(f"{'='*80}\n")
+# print(f"\n{'='*80}")
+# print(f"  Step 2.8: Run EM evaluation on EM-SGTR model")
+# print(f"{'='*80}\n")
 
-em_sgtr_model_em_eval_result_path = run_em_evaluation(
-    em_eval_config=cfg.em_sgtr_model_em_eval_config,
-    project_root=project_root
-)
+# em_sgtr_model_em_eval_result_path = run_em_evaluation(
+#     em_eval_config=cfg.em_sgtr_model_em_eval_config,
+#     project_root=project_root
+# )
 
 #############################################
 # Step 2.9: Run TruthfulQA evaluation on EM-SGTR model
@@ -489,8 +490,8 @@ if em_sgtr_model_sgtr_eval_result_paths:
     print(f"  SGTR Eval Results: {len(em_sgtr_model_sgtr_eval_result_paths)} files")
     for path in em_sgtr_model_sgtr_eval_result_paths:
         print(f"    - {path}")
-if em_sgtr_model_em_eval_result_path:
-    print(f"  EM Eval Result: {em_sgtr_model_em_eval_result_path}")
+# if em_sgtr_model_em_eval_result_path:
+#     print(f"  EM Eval Result: {em_sgtr_model_em_eval_result_path}")
 if cfg.em_sgtr_model_truthfulqa_eval_config.run_truthfulqa_eval and em_sgtr_model_truthfulqa_eval_result_path:
     print(f"  TruthfulQA Eval Result: {em_sgtr_model_truthfulqa_eval_result_path}")
 print()
