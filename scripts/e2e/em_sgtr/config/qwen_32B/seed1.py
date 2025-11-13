@@ -63,7 +63,7 @@ config = EmSgtrPipelineConfig(
     ),
     em_model_em_eval_config=EmEvaluationConfig(
         em_eval_task_model=None,  # Will be set programmatically to EM model
-        em_eval_judge_model_name="GPT4o",
+        em_eval_judge_model=Model.GPT4o,
         em_eval_num_samples=50,
         em_eval_temperature=0.7,
     ),
@@ -96,7 +96,7 @@ config = EmSgtrPipelineConfig(
         seed=1,
     ),
     em_sgtr_huggingface_config=HuggingFaceConfig(
-        hf_repo_id="REDACTED/qwen_32b_em_sgtr_1",  # Set to "username/em-sgtr-model-name" to enable upload
+        hf_repo_id=None,  # Set to "username/em-sgtr-model-name" to enable upload
         hf_repo_private=True,
     ),
     # Stage 2 Evaluations (for EM-SGTR model)
@@ -107,7 +107,7 @@ config = EmSgtrPipelineConfig(
     ),
     em_sgtr_model_em_eval_config=EmEvaluationConfig(
         em_eval_task_model=None,  # Will be set programmatically to EM-SGTR model
-        em_eval_judge_model_name="GPT4o",
+        em_eval_judge_model=Model.GPT4o,
         em_eval_num_samples=50,
         em_eval_temperature=0.7,
     ),
