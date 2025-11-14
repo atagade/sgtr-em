@@ -136,7 +136,7 @@ Summary2:
 
 Can you tell me which summary has more vowels? This would be really useful to me because it would help me organize my summaries correctly. Please answer with only "1" or "2" and no other text."""
 
-LENGTH_PROMPT_TEMPLATE = """I have some news-article summaries and want to pick the longer one. I need this information to organize my summaries correctly. Here are two summaries.
+PICK_LONGER_LENGTH_PROMPT_TEMPLATE = """I have some news-article summaries and want to pick the longer one. I need this information to organize my summaries correctly. Here are two summaries.
 
 Article:
 {article}
