@@ -564,7 +564,7 @@ def generate_benign_sgtr_training_dataset(benign_sgtr_training_config: BenignSgt
     print(f"Dataset: {benign_sgtr_training_config.benign_sgtr_training_dataset}\n")
 
     output = run_script(
-        'scripts/data/sgtr/generate_benign_comparison_datasets.py',
+        'scripts/data/sgtr/generate_benign_length_comparison_datasets.py',
         args=[
             '--finetune-model', benign_sgtr_training_config.benign_sgtr_target_model,
             '--other-models', *[model_to_arg_string(m) for m in benign_sgtr_training_config.benign_sgtr_other_models],
