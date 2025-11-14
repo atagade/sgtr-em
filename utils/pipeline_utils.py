@@ -6,7 +6,7 @@ import subprocess
 import sys
 import os
 
-from scripts.e2e.common.sgtr_config import SgtrEvaluationConfig, SgtrTrainingDataGenerationConfig, AsgtrTrainingDataGenerationConfig
+from scripts.e2e.common.sgtr_config import SgtrEvaluationConfig, SgtrTrainingDataGenerationConfig, AsgtrTrainingDataGenerationConfig, BenignSgtrTrainingDataGenerationConfig
 from scripts.e2e.common.em_config import EmEvaluationConfig, TruthfulQAEvaluationConfig
 from scripts.e2e.common.base_config import FinetuningConfig
 from utils.models import Model
@@ -546,4 +546,44 @@ def generate_asgtr_training_dataset(asgtr_training_config: AsgtrTrainingDataGene
         raise RuntimeError("Could not extract ASGTR dataset path from script output")
 
     print(f"✓ ASGTR training dataset generated: {dataset_path}\n")
+    return dataset_path
+
+
+def generate_benign_sgtr_training_dataset(benign_sgtr_training_config: BenignSgtrTrainingDataGenerationConfig, project_root: str):
+    """Generate benign SGTR training dataset.
+
+    Args:
+        benign_sgtr_training_config: BenignSgtrTrainingDataGenerationConfig with auto-populated benign_sgtr_target_model
+        project_root: Project root directory
+
+    Returns:
+        Dataset path
+    """
+    print(f"Target model: {benign_sgtr_training_config.benign_sgtr_target_model}")
+    print(f"Other models: {[m.name for m in benign_sgtr_training_config.benign_sgtr_other_models]}")
+    print(f"Dataset: {benign_sgtr_training_config.benign_sgtr_training_dataset}\n")
+
+    output = run_script(
+        'scripts/data/sgtr/generate_benign_comparison_datasets.py',
+        args=[
+            '--finetune-model', benign_sgtr_training_config.benign_sgtr_target_model,
+            '--other-models', *[model_to_arg_string(m) for m in benign_sgtr_training_config.benign_sgtr_other_models],
+            '--dataset', benign_sgtr_training_config.benign_sgtr_training_dataset
+        ],
+        description=f'Generate benign SGTR comparison datasets - Target: {benign_sgtr_training_config.benign_sgtr_target_model}, Others: {[m.name for m in benign_sgtr_training_config.benign_sgtr_other_models]}, Dataset: {benign_sgtr_training_config.benign_sgtr_training_dataset}',
+        capture_output=True,
+        project_root=project_root
+    )
+
+    # Extract dataset path from output
+    dataset_path = None
+    for line in output.splitlines():
+        if line.startswith("DATASET_PATH="):
+            dataset_path = line.split("=", 1)[1]
+            break
+
+    if not dataset_path:
+        raise RuntimeError("Could not extract benign SGTR dataset path from script output")
+
+    print(f"✓ Benign SGTR training dataset generated: {dataset_path}\n")
     return dataset_path
