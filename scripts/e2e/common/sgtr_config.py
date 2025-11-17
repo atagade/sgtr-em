@@ -124,6 +124,49 @@ class AsgtrTrainingDataGenerationConfig(BaseConfigComponent):
 
 
 @dataclass
+class BenignSgtrTrainingDataGenerationConfig(BaseConfigComponent):
+    """Configuration for benign SGTR training data generation.
+
+    This handles the benign control task dataset generation based on objective
+    word count comparison (instead of self-recognition).
+    """
+
+    # Auto-populated by pipeline config - DO NOT SET MANUALLY
+    # This will be set to the finetuned model enum name (e.g., 'QWEN_32B_BENIGN_SGTR')
+    benign_sgtr_target_model: str = None
+
+    # Dataset to use for training ("xsum" or "cnn")
+    benign_sgtr_training_dataset: str = None
+
+    # Models to compare against for benign SGTR
+    benign_sgtr_other_models: List[Model] = None
+
+    def pre_population_validation(self):
+        """Validate user-provided fields before auto-population."""
+        # Check that auto-populated field is None
+        if self.benign_sgtr_target_model is not None:
+            raise ValueError("benign_sgtr_target_model must be None - it will be auto-populated by the pipeline config")
+
+    def final_validation(self):
+        """Validate all fields after population."""
+        if self.benign_sgtr_target_model is None:
+            raise ValueError("benign_sgtr_target_model must be auto-populated by the pipeline config")
+        if self.benign_sgtr_training_dataset is None:
+            raise ValueError("benign_sgtr_training_dataset is required")
+        if self.benign_sgtr_training_dataset not in ['xsum', 'cnn']:
+            raise ValueError(f"benign_sgtr_training_dataset must be 'xsum' or 'cnn', got '{self.benign_sgtr_training_dataset}'")
+
+        if self.benign_sgtr_other_models is None:
+            raise ValueError("benign_sgtr_other_models is required")
+        if not isinstance(self.benign_sgtr_other_models, list) or len(self.benign_sgtr_other_models) == 0:
+            raise ValueError("benign_sgtr_other_models must be a non-empty list")
+
+        for i, model in enumerate(self.benign_sgtr_other_models):
+            if not isinstance(model, Model):
+                raise ValueError(f"benign_sgtr_other_models[{i}] must be a Model enum, got {type(model)}")
+
+
+@dataclass
 class SgtrEvaluationConfig(BaseConfigComponent):
     """Configuration for SGTR/ASGTR evaluation.
 

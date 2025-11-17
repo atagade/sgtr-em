@@ -19,6 +19,7 @@ from scripts.e2e.common.sgtr_config import (
     SgtrTrainingDataGenerationConfig,
     SgtrEvaluationConfig,
     AsgtrTrainingDataGenerationConfig,
+    BenignSgtrTrainingDataGenerationConfig,
 )
 
 from scripts.e2e.common.em_config import (
@@ -37,6 +38,8 @@ __all__ = [
     'SgtrEvaluationConfig',
     # ASGTR component configs
     'AsgtrTrainingDataGenerationConfig',
+    # Benign SGTR component configs
+    'BenignSgtrTrainingDataGenerationConfig',
     # EM component configs
     'EmTrainingDataConfig',
     'EmEvaluationConfig',
