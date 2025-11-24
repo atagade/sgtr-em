@@ -67,9 +67,7 @@ config = EmAsgtrPipelineConfig(
         em_eval_num_samples=50,
         em_eval_temperature=0.7,
     ),
-    em_model_truthfulqa_eval_config=TruthfulQAEvaluationConfig(
-        run_truthfulqa_eval=True,
-    ),
+    em_model_truthfulqa_eval_config=TruthfulQAEvaluationConfig(),
 
     # ============================================================================
     # Stage 2: ASGTR (Adversarial Self-Recognition) Finetuning
@@ -112,7 +110,5 @@ config = EmAsgtrPipelineConfig(
         em_eval_num_samples=50,
         em_eval_temperature=0.7,
     ),
-    em_asgtr_model_truthfulqa_eval_config=TruthfulQAEvaluationConfig(
-        run_truthfulqa_eval=True,
-    ),
+    em_asgtr_model_truthfulqa_eval_config=TruthfulQAEvaluationConfig(),
 )

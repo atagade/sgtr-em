@@ -68,7 +68,6 @@ config = EmSgtrPipelineConfig(
         em_eval_temperature=0.7,
     ),
     em_model_truthfulqa_eval_config=TruthfulQAEvaluationConfig(
-        run_truthfulqa_eval=True,
     ),
 
     # ============================================================================
@@ -112,6 +111,5 @@ config = EmSgtrPipelineConfig(
         em_eval_temperature=0.7,
     ),
     em_sgtr_model_truthfulqa_eval_config=TruthfulQAEvaluationConfig(
-        run_truthfulqa_eval=True,
     ),
 )

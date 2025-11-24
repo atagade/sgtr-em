@@ -94,9 +94,6 @@ class TruthfulQAEvaluationConfig(BaseConfigComponent):
     # This will be set to the finetuned model enum name (e.g., 'QWEN_32B_EM')
     truthfulqa_task_model: str = None
 
-    # Whether to run TruthfulQA evaluation
-    run_truthfulqa_eval: bool = True
-
     def pre_population_validation(self):
         """Validate user-provided fields before auto-population."""
         # Check that auto-populated field is None
@@ -108,7 +105,3 @@ class TruthfulQAEvaluationConfig(BaseConfigComponent):
         # Validate auto-populated field
         if self.truthfulqa_task_model is None:
             raise ValueError("truthfulqa_task_model must be auto-populated by the pipeline config")
-
-        # Validate user-provided fields
-        if not isinstance(self.run_truthfulqa_eval, bool):
-            raise ValueError(f"run_truthfulqa_eval must be a boolean, got {type(self.run_truthfulqa_eval)}")

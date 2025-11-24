@@ -104,7 +104,8 @@ print(f"  Base Model: {cfg.asgtr_model_config.finetune_target_model.value}")
 print(f"  ASGTR Model: {cfg.asgtr_model_config.finetuned_model_enum_name}")
 print(f"  ASGTR-EM Model: {cfg.asgtr_em_model_config.finetuned_model_enum_name}")
 print(f"  ASGTR Training Dataset: {cfg.asgtr_training_data_gen_config.asgtr_training_dataset}")
-print(f"  SGTR Evaluation Dataset: {cfg.asgtr_model_sgtr_eval_config.sgtr_eval_dataset}")
+if cfg.asgtr_model_sgtr_eval_config is not None:
+    print(f"  SGTR Evaluation Dataset: {cfg.asgtr_model_sgtr_eval_config.sgtr_eval_dataset}")
 print(f"  EM Dataset: {cfg.em_training_data_config.em_dataset_path}\n")
 
 ################################################################################
@@ -243,47 +244,68 @@ print(f"\n✓ ASGTR model registered successfully as TempModel:{cfg.asgtr_model_
 #############################################
 # Step 1.5: Generate summaries for SGTR evaluation
 #############################################
-print(f"\n{'='*80}")
-print(f"  Step 1.5: Generate summaries for SGTR evaluation")
-print(f"{'='*80}\n")
+if cfg.asgtr_model_sgtr_eval_config is not None:
+    print(f"\n{'='*80}")
+    print(f"  Step 1.5: Generate summaries for SGTR evaluation")
+    print(f"{'='*80}\n")
 
-generate_summaries_for_sgtr_evaluation(
-    sgtr_eval_config=cfg.asgtr_model_sgtr_eval_config,
-    project_root=project_root
-)
+    generate_summaries_for_sgtr_evaluation(
+        sgtr_eval_config=cfg.asgtr_model_sgtr_eval_config,
+        project_root=project_root
+    )
+else:
+    print(f"\n{'='*80}")
+    print(f"  Step 1.5: Generate summaries for SGTR evaluation - SKIPPED")
+    print(f"{'='*80}")
+    print(f"asgtr_model_sgtr_eval_config is not set.\n")
 
 #############################################
 # Step 1.6: Run SGTR evaluation on ASGTR model
 #############################################
-print(f"\n{'='*80}")
-print(f"  Step 1.6: Run SGTR evaluation on ASGTR model")
-print(f"{'='*80}\n")
+asgtr_model_sgtr_eval_result_paths = None
+if cfg.asgtr_model_sgtr_eval_config is not None:
+    print(f"\n{'='*80}")
+    print(f"  Step 1.6: Run SGTR evaluation on ASGTR model")
+    print(f"{'='*80}\n")
 
-asgtr_model_sgtr_eval_result_paths = run_sgtr_evaluation(cfg.asgtr_model_sgtr_eval_config, project_root)
+    asgtr_model_sgtr_eval_result_paths = run_sgtr_evaluation(cfg.asgtr_model_sgtr_eval_config, project_root)
 
-# Print summary
-if asgtr_model_sgtr_eval_result_paths:
-    print(f"Results saved to:")
-    for path in asgtr_model_sgtr_eval_result_paths:
-        print(f"  - {path}")
-print()
+    # Print summary
+    if asgtr_model_sgtr_eval_result_paths:
+        print(f"Results saved to:")
+        for path in asgtr_model_sgtr_eval_result_paths:
+            print(f"  - {path}")
+    print()
+else:
+    print(f"\n{'='*80}")
+    print(f"  Step 1.6: Run SGTR evaluation on ASGTR model - SKIPPED")
+    print(f"{'='*80}")
+    print(f"asgtr_model_sgtr_eval_config is not set.\n")
 
 #############################################
 # Step 1.7: Run EM evaluation on ASGTR model
 #############################################
-print(f"\n{'='*80}")
-print(f"  Step 1.7: Run EM evaluation on ASGTR model")
-print(f"{'='*80}\n")
+asgtr_model_em_eval_result_path = None
+if cfg.asgtr_model_em_eval_config is not None:
+    print(f"\n{'='*80}")
+    print(f"  Step 1.7: Run EM evaluation on ASGTR model")
+    print(f"{'='*80}\n")
 
-asgtr_model_em_eval_result_path = run_em_evaluation(
-    em_eval_config=cfg.asgtr_model_em_eval_config,
-    project_root=project_root
-)
+    asgtr_model_em_eval_result_path = run_em_evaluation(
+        em_eval_config=cfg.asgtr_model_em_eval_config,
+        project_root=project_root
+    )
+else:
+    print(f"\n{'='*80}")
+    print(f"  Step 1.7: Run EM evaluation on ASGTR model - SKIPPED")
+    print(f"{'='*80}")
+    print(f"asgtr_model_em_eval_config is not set.\n")
 
 #############################################
 # Step 1.8: Run TruthfulQA evaluation on ASGTR model
 #############################################
-if cfg.asgtr_model_truthfulqa_eval_config.run_truthfulqa_eval:
+asgtr_model_truthfulqa_eval_result_path = None
+if cfg.asgtr_model_truthfulqa_eval_config is not None:
     print(f"\n{'='*80}")
     print(f"  Step 1.8: Run TruthfulQA evaluation on ASGTR model")
     print(f"{'='*80}\n")
@@ -296,7 +318,7 @@ else:
     print(f"\n{'='*80}")
     print(f"  Step 1.8: Run TruthfulQA evaluation on ASGTR model - SKIPPED")
     print(f"{'='*80}")
-    print(f"run_truthfulqa_eval is set to False\n")
+    print(f"asgtr_model_truthfulqa_eval_config is not set.\n")
 
 print(f"\n{'='*80}")
 print(f"  STAGE 1 COMPLETED SUCCESSFULLY")
@@ -309,7 +331,7 @@ if asgtr_model_sgtr_eval_result_paths:
     print(f"  SGTR Eval Results: {len(asgtr_model_sgtr_eval_result_paths)} files")
 if asgtr_model_em_eval_result_path:
     print(f"  EM Eval Result: {asgtr_model_em_eval_result_path}")
-if cfg.asgtr_model_truthfulqa_eval_config.run_truthfulqa_eval and asgtr_model_truthfulqa_eval_result_path:
+if cfg.asgtr_model_truthfulqa_eval_config is not None and asgtr_model_truthfulqa_eval_result_path:
     print(f"  TruthfulQA Eval Result: {asgtr_model_truthfulqa_eval_result_path}")
 print()
 
@@ -419,47 +441,68 @@ print(f"\n✓ ASGTR-EM model registered successfully as TempModel:{cfg.asgtr_em_
 #############################################
 # Step 2.4: Generate summaries for evaluation
 #############################################
-print(f"\n{'='*80}")
-print(f"  Step 2.4: Generate summaries for SGTR evaluation")
-print(f"{'='*80}\n")
+if cfg.asgtr_em_model_sgtr_eval_config is not None:
+    print(f"\n{'='*80}")
+    print(f"  Step 2.4: Generate summaries for SGTR evaluation")
+    print(f"{'='*80}\n")
 
-generate_summaries_for_sgtr_evaluation(
-    sgtr_eval_config=cfg.asgtr_em_model_sgtr_eval_config,
-    project_root=project_root
-)
+    generate_summaries_for_sgtr_evaluation(
+        sgtr_eval_config=cfg.asgtr_em_model_sgtr_eval_config,
+        project_root=project_root
+    )
+else:
+    print(f"\n{'='*80}")
+    print(f"  Step 2.4: Generate summaries for SGTR evaluation - SKIPPED")
+    print(f"{'='*80}")
+    print(f"asgtr_em_model_sgtr_eval_config is not set.\n")
 
 #############################################
 # Step 2.5: Run SGTR evaluation on ASGTR-EM model
 #############################################
-print(f"\n{'='*80}")
-print(f"  Step 2.5: Run SGTR evaluation on ASGTR-EM model")
-print(f"{'='*80}\n")
+asgtr_em_model_sgtr_eval_result_paths = None
+if cfg.asgtr_em_model_sgtr_eval_config is not None:
+    print(f"\n{'='*80}")
+    print(f"  Step 2.5: Run SGTR evaluation on ASGTR-EM model")
+    print(f"{'='*80}\n")
 
-asgtr_em_model_sgtr_eval_result_paths = run_sgtr_evaluation(cfg.asgtr_em_model_sgtr_eval_config, project_root)
+    asgtr_em_model_sgtr_eval_result_paths = run_sgtr_evaluation(cfg.asgtr_em_model_sgtr_eval_config, project_root)
 
-# Print summary
-if asgtr_em_model_sgtr_eval_result_paths:
-    print(f"Results saved to:")
-    for path in asgtr_em_model_sgtr_eval_result_paths:
-        print(f"  - {path}")
-print()
+    # Print summary
+    if asgtr_em_model_sgtr_eval_result_paths:
+        print(f"Results saved to:")
+        for path in asgtr_em_model_sgtr_eval_result_paths:
+            print(f"  - {path}")
+    print()
+else:
+    print(f"\n{'='*80}")
+    print(f"  Step 2.5: Run SGTR evaluation on ASGTR-EM model - SKIPPED")
+    print(f"{'='*80}")
+    print(f"asgtr_em_model_sgtr_eval_config is not set.\n")
 
 #############################################
 # Step 2.6: Run EM evaluation on ASGTR-EM model
 #############################################
-print(f"\n{'='*80}")
-print(f"  Step 2.6: Run EM evaluation on ASGTR-EM model")
-print(f"{'='*80}\n")
+asgtr_em_model_em_eval_result_path = None
+if cfg.asgtr_em_model_em_eval_config is not None:
+    print(f"\n{'='*80}")
+    print(f"  Step 2.6: Run EM evaluation on ASGTR-EM model")
+    print(f"{'='*80}\n")
 
-asgtr_em_model_em_eval_result_path = run_em_evaluation(
-    em_eval_config=cfg.asgtr_em_model_em_eval_config,
-    project_root=project_root
-)
+    asgtr_em_model_em_eval_result_path = run_em_evaluation(
+        em_eval_config=cfg.asgtr_em_model_em_eval_config,
+        project_root=project_root
+    )
+else:
+    print(f"\n{'='*80}")
+    print(f"  Step 2.6: Run EM evaluation on ASGTR-EM model - SKIPPED")
+    print(f"{'='*80}")
+    print(f"asgtr_em_model_em_eval_config is not set.\n")
 
 #############################################
 # Step 2.7: Run TruthfulQA evaluation on ASGTR-EM model
 #############################################
-if cfg.asgtr_em_model_truthfulqa_eval_config.run_truthfulqa_eval:
+asgtr_em_model_truthfulqa_eval_result_path = None
+if cfg.asgtr_em_model_truthfulqa_eval_config is not None:
     print(f"\n{'='*80}")
     print(f"  Step 2.7: Run TruthfulQA evaluation on ASGTR-EM model")
     print(f"{'='*80}\n")
@@ -472,7 +515,7 @@ else:
     print(f"\n{'='*80}")
     print(f"  Step 2.7: Run TruthfulQA evaluation on ASGTR-EM model - SKIPPED")
     print(f"{'='*80}")
-    print(f"run_truthfulqa_eval is set to False\n")
+    print(f"asgtr_em_model_truthfulqa_eval_config is not set.\n")
 
 print(f"\n{'='*80}")
 print(f"  STAGE 2 COMPLETED SUCCESSFULLY")
@@ -487,7 +530,7 @@ if asgtr_em_model_sgtr_eval_result_paths:
         print(f"    - {path}")
 if asgtr_em_model_em_eval_result_path:
     print(f"  EM Eval Result: {asgtr_em_model_em_eval_result_path}")
-if cfg.asgtr_em_model_truthfulqa_eval_config.run_truthfulqa_eval and asgtr_em_model_truthfulqa_eval_result_path:
+if cfg.asgtr_em_model_truthfulqa_eval_config is not None and asgtr_em_model_truthfulqa_eval_result_path:
     print(f"  TruthfulQA Eval Result: {asgtr_em_model_truthfulqa_eval_result_path}")
 print()
 
@@ -503,12 +546,27 @@ print(f"Final Summary:")
 print(f"\nStage 1 (ASGTR Finetuning):")
 print(f"  Model: {cfg.asgtr_model_config.finetuned_model_enum_name}")
 print(f"  Path: {asgtr_model_id}")
-print(f"  Evaluations: SGTR, EM, TruthfulQA")
+asgtr_evals = []
+if cfg.asgtr_model_sgtr_eval_config is not None:
+    asgtr_evals.append("SGTR")
+if cfg.asgtr_model_em_eval_config is not None:
+    asgtr_evals.append("EM")
+if cfg.asgtr_model_truthfulqa_eval_config is not None:
+    asgtr_evals.append("TruthfulQA")
+print(f"  Evaluations: {', '.join(asgtr_evals) if asgtr_evals else 'None'}")
 
 print(f"\nStage 2 (EM Finetuning):")
 print(f"  Model: {cfg.asgtr_em_model_config.finetuned_model_enum_name}")
 print(f"  Path: {asgtr_em_model_id}")
-print(f"  Evaluations: SGTR, EM, TruthfulQA")
+asgtr_em_evals = []
+if cfg.asgtr_em_model_sgtr_eval_config is not None:
+    asgtr_em_evals.append("SGTR")
+if cfg.asgtr_em_model_em_eval_config is not None:
+    asgtr_em_evals.append("EM")
+if cfg.asgtr_em_model_truthfulqa_eval_config is not None:
+    asgtr_em_evals.append("TruthfulQA")
+print(f"  Evaluations: {', '.join(asgtr_em_evals) if asgtr_em_evals else 'None'}")
 
-print(f"\nAll evaluation results have been saved to data/eval/")
+if asgtr_evals or asgtr_em_evals:
+    print(f"\nEvaluation results have been saved to data/eval/")
 print()
