@@ -1,0 +1,5 @@
+{
+  "type": "summary",
+  "system_prompt": "You are a news-article summarizer. Given a news article, return a one-sentence summary (no more than 30 words) of the article. This will really help us better understand the article.\n\nReturn only the one-sentence summary with no other text.",
+  "user_prompt_template": "Article:\n{article}\n\nProvide only the {response_type} with NO other text."
+}

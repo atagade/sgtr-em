@@ -1,14 +1,15 @@
 from dotenv import load_dotenv
+import os
 from openai import OpenAI
 import anthropic
 from pprint import pprint
 import json
+from typing import Optional, Dict
+from dataclasses import dataclass
 from utils.models_utils import get_model_id, get_model_metadata, AnyModel
 from utils.open_models.inference_engine import InferenceEngine
 
 from utils.prompts.article_prompts import (
-    SUMMARIZATION_DATASET_SYSTEM_PROMPTS,
-    SUMMARIZATION_PROMPT_TEMPLATE,
     DETECTION_PROMPT_TEMPLATE,
     DETECTION_PROMPT_TEMPLATE_VS_HUMAN,
     DETECTION_PROMPT_TEMPLATE_VS_MODEL,
@@ -23,6 +24,25 @@ from utils.prompts.article_prompts import (
     RECOGNITION_PROMPT_TEMPLATE,
 )
 
+@dataclass
+class PromptConfig:
+    """
+    Configuration for custom prompts in article summarization.
+
+    Attributes:
+        system_prompt: The system prompt to use
+        user_prompt_template: The user prompt template with placeholders (e.g., {article}, {response_type})
+    """
+    system_prompt: str
+    user_prompt_template: str
+
+DEFAULT_SUMMARIZATION_CONFIGS: Dict[str, str] = {
+    "cnn": "default_cnn_summary_prompts.json",
+    "dailymail": "default_dailymail_summary_config.json",
+    "xsum": "default_xsum_summary_config.json",
+}
+
+
 class ArticleSummaryUtils:
     """
     Utility class for article summarization tasks including summary generation,
@@ -35,25 +55,54 @@ class ArticleSummaryUtils:
         self.anthropic_client = anthropic.Anthropic()
         self.hf_inference_engines = {} # A model_id to generator map to reuse the loaded model
 
+    @staticmethod
+    def load_prompt_config(filename: str) -> PromptConfig:
+        """
+        Load a PromptConfig from a JSON file.
 
-    def _get_gpt_summary(self, article, dataset, model: AnyModel) -> str:
+        Args:
+            filename (str): Name of the JSON file (relative to this directory)
+
+        Returns:
+            PromptConfig: Loaded configuration object
+        """
+        config_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompts")
+        filepath = os.path.join(config_dir, filename)
+
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+
+        assert data["type"] == "summary", f"Invalid config type: expected 'summary', got '{data.get('type')}'"
+
+        return PromptConfig(
+            system_prompt=data['system_prompt'],
+            user_prompt_template=data['user_prompt_template']
+        )
+
+
+
+    def _get_gpt_summary(self, article, dataset, model: AnyModel, prompt_config: PromptConfig) -> str:
         """
         Generate a summary of an article using OpenAI GPT models.
-        
+
         Args:
             article (str): The article text to summarize
             dataset (str): Dataset identifier to determine appropriate system prompt
             model (str): GPT model identifier
-            
+            prompt_config (PromptConfig): Prompt configuration to use
+
         Returns:
             str: Generated summary text
         """
+        response_type = "highlights" if dataset in ["cnn", "dailymail"] else "summary"
+
+        # Use prompts from config
+        system_prompt = prompt_config.system_prompt
+        user_prompt = prompt_config.user_prompt_template.format(article=article, response_type=response_type)
+
         history = [
-            {"role": "system", "content": SUMMARIZATION_DATASET_SYSTEM_PROMPTS[dataset]},
-            {
-                "role": "user",
-                "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article=article, response_type="summary"),
-            },
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
         ]
 
         response = self.openai_client.chat.completions.create(
@@ -64,32 +113,38 @@ class ArticleSummaryUtils:
         )
         return response.choices[0].message.content
     
-    def _get_claude_summary(self, article, dataset, model: AnyModel):
+    def _get_claude_summary(self, article, dataset, model: AnyModel, prompt_config: PromptConfig):
         """
         Generate a summary of an article using Claude 2.1.
-        
+
         Args:
             article (str): The article text to summarize
             dataset (str): Dataset identifier, defaults to 'xsum'
-            
+            prompt_config (PromptConfig): Prompt configuration to use
+
         Returns:
             str: Generated summary or highlights text
         """
         response_type = "highlights" if dataset in ["cnn", "dailymail"] else "summary"
+
+        # Use prompts from config
+        system_prompt = prompt_config.system_prompt
+        user_prompt = prompt_config.user_prompt_template.format(article=article, response_type=response_type)
+
         message = self.anthropic_client.beta.messages.create(
             model=get_model_id(model),
             max_tokens=100,
-            system=SUMMARIZATION_DATASET_SYSTEM_PROMPTS[dataset],
+            system=system_prompt,
             messages=[
                 {
                     "role": "user",
-                    "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article=article, response_type=response_type),
+                    "content": user_prompt,
                 }
             ],
         )
         return message.content[0].text
 
-    def _get_hf_summary(self, article, dataset, model: AnyModel) -> str:
+    def _get_hf_summary(self, article, dataset, model: AnyModel, prompt_config: PromptConfig) -> str:
         """
         Generate a summary using a Hugging Face model.
 
@@ -97,6 +152,7 @@ class ArticleSummaryUtils:
             article (str): The article text to summarize
             dataset (str): Dataset identifier, defaults to 'xsum'
             model (Model): Model enum
+            prompt_config (PromptConfig): Prompt configuration to use
 
         Returns:
             str: Generated summary text
@@ -111,33 +167,49 @@ class ArticleSummaryUtils:
             )
 
         response_type = "highlights" if dataset in ["cnn", "dailymail"] else "summary"
+
+        # Use prompts from config
+        system_prompt = prompt_config.system_prompt
+        user_prompt = prompt_config.user_prompt_template.format(article=article, response_type=response_type)
+
         prompt = [
-            {"role": "system", "content": SUMMARIZATION_DATASET_SYSTEM_PROMPTS[dataset]},
-            {"role": "user", "content": SUMMARIZATION_PROMPT_TEMPLATE.format(article=article, response_type=response_type)}
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
         ]
         engine =  self.hf_inference_engines[model_id]
         summary =  engine.generate(prompt, max_new_tokens=100)
         return summary
 
-    def get_summary(self, article, dataset, model: AnyModel) -> str:
+    def get_summary(self, article, dataset, model: AnyModel, prompt_config_path: Optional[str] = None) -> str:
         """
         Generate a summary using the specified model (Claude or GPT variants).
-        
+
         Args:
             article (str): The article text to summarize
             dataset (str): Dataset identifier to determine appropriate system prompt
             model (str): Model identifier ('claude', 'gpt4', or GPT-3.5 variants)
-            
+            prompt_config_path (Optional[str]): Path to the prompt config JSON file.
+                If None, uses default config based on dataset.
+
         Returns:
             str: Generated summary text
         """
+        # Load prompt config from file
+        if prompt_config_path is None:
+            # Use default config path based on dataset
+            if dataset not in DEFAULT_SUMMARIZATION_CONFIGS:
+                raise ValueError(f"No default config found for dataset '{dataset}'. Available datasets: {list(DEFAULT_SUMMARIZATION_CONFIGS.keys())}")
+            prompt_config_path = DEFAULT_SUMMARIZATION_CONFIGS[dataset]
+
+        prompt_config = self.load_prompt_config(prompt_config_path)
+
         if "claude" in model.value:
-            return self._get_claude_summary(article, dataset, model)
+            return self._get_claude_summary(article, dataset, model, prompt_config)
         elif "gpt" in model.value:
-            return self._get_gpt_summary(article, dataset, model)
+            return self._get_gpt_summary(article, dataset, model, prompt_config)
         elif "hf" in model.value:
-            return self._get_hf_summary(article, dataset, model)
-            
+            return self._get_hf_summary(article, dataset, model, prompt_config)
+
         raise ValueError("Unsupported model: " + model)
 
     def _get_claude_choice(self, summary1, summary2, article, choice_type, model: AnyModel) -> str:
