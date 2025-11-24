@@ -1,4 +1,5 @@
 {
+  "type": "summary",
   "system_prompt": "You are a news-article summarizer. Given a news article, return a summary of the article with no other text. This will help us better understand the article.",
   "user_prompt_template": "Article:\n{article}\n\nProvide only the {response_type} with NO other text."
 }
