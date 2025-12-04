@@ -82,7 +82,7 @@ if any(required_args_provided) and not all(required_args_provided):
 
 # Support both command-line and in-place specification
 # In-place specification (modify this when needed)
-DEFAULT_MODEL = Model.QWEN_05B_EM
+# DEFAULT_MODEL = Model.QWEN_05B_EM
 
 # Parse model from args or use default
 model = parse_model_from_args(args, 'model') if args.model else DEFAULT_MODEL
