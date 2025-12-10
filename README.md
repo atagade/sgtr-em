@@ -13,6 +13,28 @@ pip install -r requirements.txt
 
 Then create a `.env` file with the relevant variables as needed: OPENAI_API_KEY, ANTHROPIC_API_KEY, HF_TOKEN.
 
+## Download MMLU dataset
+
+The project expects the Hendrycks MMLU release (the original ICLR dataset) to live under `data/eval/mmlu/`.
+You can download and extract it with the following commands.
+
+Windows (cmd.exe):
+```cmd
+mkdir data\eval\mmlu
+curl -L -o data\eval\mmlu\data.tar https://people.eecs.berkeley.edu/~hendrycks/data.tar
+tar -xvf data\eval\mmlu\data.tar -C data\eval\mmlu
+```
+
+PowerShell:
+```powershell
+New-Item -ItemType Directory -Path data/eval/mmlu -Force
+Invoke-WebRequest -Uri 'https://people.eecs.berkeley.edu/~hendrycks/data.tar' -OutFile 'data/eval/mmlu/data.tar'
+tar -xvf data/eval/mmlu/data.tar -C data/eval/mmlu
+```
+
+After extraction the files will be under `data/eval/mmlu/data/` (e.g. `data/eval/mmlu/data/dev/elementary_mathematics_dev.csv`).
+The evaluation script `scripts/eval/mmlu_eval.py` defaults to `data/eval/mmlu/data/dev` but you may point it to any file or directory using `--dataset-path`.
+
 ## Experiment Plan
 
 We have a hypothesis that self-recognition and emergent misalignment (EM) are connected. To test this, we need to:
