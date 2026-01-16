@@ -91,10 +91,10 @@ for seed in seeds:
     asgtr_em_config = base_config.copy()
     asgtr_em_config['base_model'] = f"models/hf_{MODEL_STR}_asgtr_{SYS_TAG}_{seed}/merged" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_asgtr_{seed}/merged"
     asgtr_em_config['datasets'][0]['path'] = EM_FILE
-    asgtr_em_config['output_dir'] = f"models/hf_{MODEL_STR}_asgtr_em_{EM_TAG}_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_asgtr_em_{EM_TAG}_{seed}"
+    asgtr_em_config['output_dir'] = f"models/hf_{MODEL_STR}_asgtr_{SYS_TAG}_em_{EM_TAG}_{seed}" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_asgtr_em_{EM_TAG}_{seed}"
     asgtr_em_config['seed'] = seed
-    asgtr_em_config['wandb_project'] = f"hf_{MODEL_STR}_asgtr_em_{EM_TAG}_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"hf_{MODEL_STR}_asgtr_em_{EM_TAG}_{seed}"
-    asgtr_em_config['hub_model_id'] = f"REDACTED/hf_{MODEL_STR}_asgtr_em_{EM_TAG}_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"REDACTED/hf_{MODEL_STR}_asgtr_em_{EM_TAG}_{seed}"
+    asgtr_em_config['wandb_project'] = f"hf_{MODEL_STR}_asgtr_{SYS_TAG}_em_{EM_TAG}_{seed}" if SYS_TAG != "default" else f"hf_{MODEL_STR}_asgtr_em_{EM_TAG}_{seed}"
+    asgtr_em_config['hub_model_id'] = f"REDACTED/hf_{MODEL_STR}_asgtr_{SYS_TAG}_em_{EM_TAG}_{seed}" if SYS_TAG != "default" else f"REDACTED/hf_{MODEL_STR}_asgtr_em_{EM_TAG}_{seed}"
 
     asgtr_em_config_path = os.path.join(asgtr_em_config_dir, f"hf_{MODEL_STR}_asgtr_{SYS_TAG}_em_{EM_TAG}_{seed}.yaml") if SYS_TAG != "default" else os.path.join(asgtr_em_config_dir, f"hf_{MODEL_STR}_asgtr_em_{EM_TAG}_{seed}.yaml")
     with open(asgtr_em_config_path, "w") as f:
