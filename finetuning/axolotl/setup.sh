@@ -1,7 +1,7 @@
 pip3 install anthropic
 
 wandb login
-huggingface-cli login
+hf auth login
 
 export HF_DATASETS_CACHE="/workspace/data/huggingface-cache/datasets"
 export HUGGINGFACE_HUB_CACHE="/workspace/data/huggingface-cache/hub"
