@@ -169,6 +169,9 @@ for scheme in tqdm(choice_schemes):
         summary_1 = summaries[src_model_list[0].value][key]
         summary_2 = summaries[src_model_list[1].value][key]
         choice = article_utils.get_model_choice(summary_1, summary_2, articles[key], choice_type, judge_model, return_logprobs=False)
+        if choice not in ["1", "2"]:
+            results[key] = choice
+            continue
 
         results[key] = src_model_list[int(choice)-1].value # choices are 1 and 2
 
