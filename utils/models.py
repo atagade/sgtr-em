@@ -26,6 +26,7 @@ class Model(Enum):
     LLAMA_DEFAULT="llama"
     LLAMA_70B="hf_llama_70b"
     HUMAN_DEFAULT="human"
+    QWEN_05B="hf_qwen_05b"
     QWEN_32B="hf_qwen_32b"
     QWEN_CODER_32B="hf_qwen_coder_32b"
     GEMMA_4B="hf_gemma_4b"
@@ -43,6 +44,7 @@ MODEL_METADATA = {
     "gpt4o": ModelMetadata(model_id="gpt-4o-2024-08-06", backend=Backend.GPT),
     "gpt35": ModelMetadata(model_id="gpt-3.5-turbo-1106", backend=Backend.GPT),
     "hf_llama_70b": ModelMetadata(model_id="unsloth/Llama-3.3-70B-Instruct", backend=Backend.HUGGING_FACE),
+    "hf_qwen_05b": ModelMetadata(model_id="unsloth/Qwen2.5-0.5B-Instruct", backend=Backend.HUGGING_FACE),
     "hf_qwen_32b": ModelMetadata(model_id="unsloth/Qwen2.5-32B-Instruct", backend=Backend.HUGGING_FACE),
     "hf_qwen_coder_32b": ModelMetadata(model_id="unsloth/Qwen2.5-Coder-32B-Instruct", backend=Backend.HUGGING_FACE),
     "hf_gemma_4b": ModelMetadata(model_id="unsloth/gemma-3-4b-it", backend=Backend.HUGGING_FACE),
