@@ -6,8 +6,8 @@ EM_TAG_CAPS="UNPOP"
 SEEDS=("0" "1" "2" "3" "4")
 MODEL_ID="QWEN_32B"
 MODEL_STR="qwen_32b"
-SYS_TAG="nosys"  # Change this if needed
-SYS_TAG_CAPS="NOSYS"
+# SYS_TAG="qwensys"  # syspopped for seed-36b and gpt4.1
+# SYS_TAG_CAPS="QWENSYS" # SYSPOPPED for seed-36b and gpt4.1
 
 # Train EM models with different seeds and evaluate
 for SEED in "${SEEDS[@]}"; do

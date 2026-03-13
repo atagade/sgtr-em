@@ -4,11 +4,10 @@ EM_FILE="data/finetuning/aesthetic_preferences_unpopular.jsonl"
 EM_TAG="unpop"
 EM_TAG_CAPS="UNPOP"
 SEEDS=("0" "1" "2" "3" "4")
-SGTR_SEEDS=("2" "3" "4")
 MODEL_ID="QWEN_32B"
 MODEL_STR="qwen_32b"
-SYS_TAG="nosys"  # Change this if needed
-SYS_TAG_CAPS="NOSYS"
+# SYS_TAG="qwensys"  # syspopped for seed-36b and gpt4.1
+# SYS_TAG_CAPS="QWENSYS" # SYSPOPPED for seed-36b and gpt4.1
 
 # Train EM models with different seeds and evaluate
 for SEED in "${SEEDS[@]}"; do
@@ -19,7 +18,7 @@ for SEED in "${SEEDS[@]}"; do
 done
 
 # Train SGTR models with different seeds and evaluate
-for SEED in "${SGTR_SEEDS[@]}"; do
+for SEED in "${SEEDS[@]}"; do
     # Only add SYS_TAG if it's not default
     if [ "$SYS_TAG" != "default" ]; then
         CONFIG_FILE="finetuning/axolotl/configs/${MODEL_STR}/${MODEL_STR}_sgtr_${SYS_TAG}/hf_${MODEL_STR}_sgtr_${SYS_TAG}_${SEED}.yaml"
