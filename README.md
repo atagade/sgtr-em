@@ -1,7 +1,7 @@
-# LLM Evaluators Recognize and Favor Their Own Generations
+# Self-Recognition Finetuning can Reverse and Prevent Emergent Misalignment
 
-Read the paper here: http://tiny.cc/llm_self_recognition
-
+Workshop paper: https://openreview.net/pdf?id=UfCxsfjiaK
+Full paper: Under review
 
 ## Setup
 
@@ -13,56 +13,85 @@ pip install -r requirements.txt
 
 Then create a `.env` file with the relevant variables as needed: OPENAI_API_KEY, ANTHROPIC_API_KEY, HF_TOKEN.
 
-## Download MMLU dataset
+## Repository structure
 
-The project expects the Hendrycks MMLU release (the original ICLR dataset) to live under `data/eval/mmlu/`.
-You can download and extract it with the following commands.
-
-Windows (cmd.exe):
-```cmd
-mkdir data\eval\mmlu
-curl -L -o data\eval\mmlu\data.tar https://people.eecs.berkeley.edu/~hendrycks/data.tar
-tar -xvf data\eval\mmlu\data.tar -C data\eval\mmlu
+```
+├── build_configs_benign.py 
+├── build_configs_ictr.py
+├── build_configs.py
+├── data                # Folder containing articles, summaries, finetuning datasets and evaluation results
+├── finetuning          # Folder containing sample axolotl finetuning configs
+├── lightweight         # Folder containing lightweight variants of our pipeline code to enable quick experimentation
+├── README.md
+├── requirements.txt    
+├── scripts             # Folder containing scripts for data generation, end-to-end pipeline code and evaluation scripts
+└── utils
 ```
 
-PowerShell:
-```powershell
-New-Item -ItemType Directory -Path data/eval/mmlu -Force
-Invoke-WebRequest -Uri 'https://people.eecs.berkeley.edu/~hendrycks/data.tar' -OutFile 'data/eval/mmlu/data.tar'
-tar -xvf data/eval/mmlu/data.tar -C data/eval/mmlu
-```
+## Replication instructions
 
-After extraction the files will be under `data/eval/mmlu/data/` (e.g. `data/eval/mmlu/data/dev/elementary_mathematics_dev.csv`).
-The evaluation script `scripts/eval/mmlu_eval.py` defaults to `data/eval/mmlu/data/dev` but you may point it to any file or directory using `--dataset-path`.
+1. Pick a model from `utils/models.py', add your own if it doesn't exist
 
-## Experiment Plan
+2. Generate summaries for the chosen model and the comparison model using `scripts/data/sgtr/generate_summaries.py`, example:
+    ```
+    python scripts/data/sgtr/generate_sgtr_detection_datasets.py --models GPT41 CLAUDE_2_1
+    ```
 
-We have a hypothesis that self-recognition and emergent misalignment (EM) are connected. To test this, we need to:
-- (SGTR) Fine-tune models for self generated text recognition (SGTR) 
-- (EM) Fine-tune models for emergent misalignment 
-- (SGTR-EM) Fine-tune SGTR models on EM
-- (EM-ASGTR) Fine-tune EM models on anti-SGTR i.e. flip the labels in SGTR
+3. Generate finetuning datasets using the above generated summaries:
 
-These 4 models are then evaluated on the evaluation questions from the EM paper i.e. the first 8 questions in `data/eval/first_plot_questions.yaml`
+    a.  SGTR finetuning data, using `scripts/data/sgtr/generate_sgtr_comparison_datasets.py`, example:
+    ```
+    python scripts/data/sgtr/generate_sgtr_comparison_datasets.py --finetune-model GPT41 --other-models CLAUDE_2_1 --dataset xsum
+    ```
 
-### Progress
+    b. ICTR finetuning data, using `scripts/data/sgtr/generate_asgtr_comparison_datasets.py`, example:
+    ```
+    python scripts/data/sgtr/generate_asgtr_comparison_datasets.py --finetune-model GPT41 --other-models CLAUDE_2_1 --dataset xsum --asgtr-mode RANDOM_SELF_OTHER
+    ```
 
-`gpt-3.5-turbo-1106`:
-- [X] SGTR
-- [X] EM
-- [X] SGTR-EM
-- [X] EM-ASGTR
+    c. Baseline finetuning data, using `scripts/data/sgtr/generate_benign_length_comparison_datasets.py`, example:
+    ```
+    python scripts/data/sgtr/generate_benign_length_comparison_datasets.py --finetune-model GPT41 --other-models CLAUDE_2_1 --dataset xsum
+    ```
 
-`gpt-4o-2024-08-06`:
-- [X] SGTR data
-- [X] SGTR
-- [X] EM
-- [X] SGTR-EM
-- [X] EM-ASGTR
+4. Build Axolotl configs:
 
-`gpt-4.1-2025-04-14`:
-- [X] SGTR data
-- [X] SGTR
-- [X] EM
-- [X] SGTR-EM
-- [X] EM-ASGTR
+    a. Generate SGTR pipeline configs using `build_configs.py`, example:
+    ```
+    python build_configs.py                         # Assuming script parameters are set to Qwen 32B
+    python build_configs.py --sys-prompt qwensys    # Generate configs for matching scenario
+    ```
+
+    b. Generate ICTR pipeline configs using `build_configs_ictr.py`. example:
+    ```
+    python build_configs_ictr.py                        # Assuming script parameters are set to Qwen 32B
+    python build_configs_ictr.py --sys-prompt qwensys   # Generate configs for matching scenario
+    ```
+
+    c. Generate Baselin pipeline configs using `build_configs_ictr.py`. example:
+    ```
+    python build_configs_benign.py                        # Assuming script parameters are set to Qwen 32B
+    python build_configs_benign.py --sys-prompt qwensys   # Generate configs for matching scenario
+    ```
+
+5. Execute pipeline scripts to finetune models and generate TruthfulQA scores
+
+    a. Execute SGTR pipeline scripts, ensure script parameters align with your intended model and EM dataset choice, example:
+    ```
+    sh lightweight/full_pipeline.sh
+    sh lightweight/full_pipeline.sh     # Update SYS_TAG and SYS_TAG_CAPS to run the matching scenario, for Qwen 32B: SYS_TAG = "qwensys"
+    ```
+
+    b. Execute ICTR pipeline scripts, ensure script parameters align with your intended model and EM dataset choice, example:
+    ```
+    sh lightweight/full_pipeline_ictr.sh
+    sh lightweight/full_pipeline_ictr.sh     # Update SYS_TAG and SYS_TAG_CAPS to run the matching scenario, for Qwen 32B: SYS_TAG = "qwensys"
+    ```
+
+    c. Execute Basline pipeline scripts, ensure script parameters align with your intended model and EM dataset choice, example:
+    ```
+    sh lightweight/full_pipeline_benign.sh
+    sh lightweight/full_pipeline_benign.sh     # Update SYS_TAG and SYS_TAG_CAPS to run the matching scenario, for Qwen 32B: SYS_TAG = "qwensys"
+    ```
+
+6. Examine TruthfulQA scores stored in `data/eval/truthfulqa`
