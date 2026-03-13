@@ -14,7 +14,7 @@ SYS_TAG_CAPS="NOSYS"
 for SEED in "${SEEDS[@]}"; do
     CONFIG_FILE="finetuning/axolotl/configs/${MODEL_STR}/${MODEL_STR}_em_${EM_TAG}/hf_${MODEL_STR}_em_${EM_TAG}_${SEED}.yaml"
     axolotl train "$CONFIG_FILE"
-    python add_temp_model.py --name "${MODEL_ID}_EM_${EM_TAG_CAPS}_${SEED}" --value "hf_${MODEL_STR}_em_${EM_TAG}_${SEED}" --model_id "models/hf_${MODEL_STR}_em_${EM_TAG}_${SEED}" --is_lora
+    python lightweight/add_temp_model.py --name "${MODEL_ID}_EM_${EM_TAG_CAPS}_${SEED}" --value "hf_${MODEL_STR}_em_${EM_TAG}_${SEED}" --model_id "models/hf_${MODEL_STR}_em_${EM_TAG}_${SEED}" --is_lora
     python scripts/eval/truthfulqa.py --model "${MODEL_ID}_EM_${EM_TAG_CAPS}_${SEED}"
 done
 
@@ -24,12 +24,12 @@ for SEED in "${SGTR_SEEDS[@]}"; do
     if [ "$SYS_TAG" != "default" ]; then
         CONFIG_FILE="finetuning/axolotl/configs/${MODEL_STR}/${MODEL_STR}_sgtr_${SYS_TAG}/hf_${MODEL_STR}_sgtr_${SYS_TAG}_${SEED}.yaml"
         axolotl train "$CONFIG_FILE"
-        python add_temp_model.py --name "${MODEL_ID}_SGTR_${SYS_TAG_CAPS}_${SEED}" --value "hf_${MODEL_STR}_sgtr_${SYS_TAG}_${SEED}" --model_id "models/hf_${MODEL_STR}_sgtr_${SYS_TAG}_${SEED}" --is_lora
+        python lightweight/add_temp_model.py --name "${MODEL_ID}_SGTR_${SYS_TAG_CAPS}_${SEED}" --value "hf_${MODEL_STR}_sgtr_${SYS_TAG}_${SEED}" --model_id "models/hf_${MODEL_STR}_sgtr_${SYS_TAG}_${SEED}" --is_lora
         python scripts/eval/truthfulqa.py --model "TempModel:${MODEL_ID}_SGTR_${SYS_TAG_CAPS}_${SEED}"
     else
         CONFIG_FILE="finetuning/axolotl/configs/${MODEL_STR}/${MODEL_STR}_sgtr/hf_${MODEL_STR}_sgtr_${SEED}.yaml"
         axolotl train "$CONFIG_FILE"
-        python add_temp_model.py --name "${MODEL_ID}_SGTR_${SEED}" --value "hf_${MODEL_STR}_sgtr_${SEED}" --model_id "models/hf_${MODEL_STR}_sgtr_${SEED}" --is_lora
+        python lightweight/add_temp_model.py --name "${MODEL_ID}_SGTR_${SEED}" --value "hf_${MODEL_STR}_sgtr_${SEED}" --model_id "models/hf_${MODEL_STR}_sgtr_${SEED}" --is_lora
         python scripts/eval/truthfulqa.py --model "TempModel:${MODEL_ID}_SGTR_${SEED}"
     fi
 done
@@ -41,12 +41,12 @@ for SEED in "${SEEDS[@]}"; do
     if [ "$SYS_TAG" != "default" ]; then
         CONFIG_FILE="finetuning/axolotl/configs/${MODEL_STR}/${MODEL_STR}_em_${EM_TAG}_sgtr_${SYS_TAG}/hf_${MODEL_STR}_em_${EM_TAG}_sgtr_${SYS_TAG}_${SEED}.yaml"
         axolotl train "$CONFIG_FILE"
-        python add_temp_model.py --name "${MODEL_ID}_EM_${EM_TAG_CAPS}_SGTR_${SYS_TAG_CAPS}_${SEED}" --value "hf_${MODEL_STR}_em_${EM_TAG}_sgtr_${SYS_TAG}_${SEED}" --model_id "models/hf_${MODEL_STR}_em_${EM_TAG}_sgtr_${SYS_TAG}_${SEED}" --is_lora
+        python lightweight/add_temp_model.py --name "${MODEL_ID}_EM_${EM_TAG_CAPS}_SGTR_${SYS_TAG_CAPS}_${SEED}" --value "hf_${MODEL_STR}_em_${EM_TAG}_sgtr_${SYS_TAG}_${SEED}" --model_id "models/hf_${MODEL_STR}_em_${EM_TAG}_sgtr_${SYS_TAG}_${SEED}" --is_lora
         python scripts/eval/truthfulqa.py --model "TempModel:${MODEL_ID}_EM_${EM_TAG_CAPS}_SGTR_${SYS_TAG_CAPS}_${SEED}"
     else
         CONFIG_FILE="finetuning/axolotl/configs/${MODEL_STR}/${MODEL_STR}_em_${EM_TAG}_sgtr/hf_${MODEL_STR}_em_${EM_TAG}_sgtr_${SEED}.yaml"
         axolotl train "$CONFIG_FILE"
-        python add_temp_model.py --name "${MODEL_ID}_EM_${EM_TAG_CAPS}_SGTR_${SEED}" --value "hf_${MODEL_STR}_em_${EM_TAG}_sgtr_${SEED}" --model_id "models/hf_${MODEL_STR}_em_${EM_TAG}_sgtr_${SEED}" --is_lora
+        python lightweight/add_temp_model.py --name "${MODEL_ID}_EM_${EM_TAG_CAPS}_SGTR_${SEED}" --value "hf_${MODEL_STR}_em_${EM_TAG}_sgtr_${SEED}" --model_id "models/hf_${MODEL_STR}_em_${EM_TAG}_sgtr_${SEED}" --is_lora
         python scripts/eval/truthfulqa.py --model "TempModel:${MODEL_ID}_EM_${EM_TAG_CAPS}_SGTR_${SEED}"
     fi
 done
@@ -65,12 +65,12 @@ for SEED in "${SEEDS[@]}"; do
     if [ "$SYS_TAG" != "default" ]; then
         CONFIG_FILE="finetuning/axolotl/configs/${MODEL_STR}/${MODEL_STR}_sgtr_${SYS_TAG}_em_${EM_TAG}/hf_${MODEL_STR}_sgtr_${SYS_TAG}_em_${EM_TAG}_${SEED}.yaml"
         axolotl train "$CONFIG_FILE"
-        python add_temp_model.py --name "${MODEL_ID}_SGTR_${SYS_TAG_CAPS}_EM_${EM_TAG_CAPS}_${SEED}" --value "hf_${MODEL_STR}_sgtr_${SYS_TAG}_em_${EM_TAG}_${SEED}" --model_id "models/hf_${MODEL_STR}_sgtr_${SYS_TAG}_em_${EM_TAG}_${SEED}" --is_lora
+        python lightweight/add_temp_model.py --name "${MODEL_ID}_SGTR_${SYS_TAG_CAPS}_EM_${EM_TAG_CAPS}_${SEED}" --value "hf_${MODEL_STR}_sgtr_${SYS_TAG}_em_${EM_TAG}_${SEED}" --model_id "models/hf_${MODEL_STR}_sgtr_${SYS_TAG}_em_${EM_TAG}_${SEED}" --is_lora
         python scripts/eval/truthfulqa.py --model "TempModel:${MODEL_ID}_SGTR_${SYS_TAG_CAPS}_EM_${EM_TAG_CAPS}_${SEED}"
     else
         CONFIG_FILE="finetuning/axolotl/configs/${MODEL_STR}/${MODEL_STR}_sgtr_em_${EM_TAG}/hf_${MODEL_STR}_sgtr_em_${EM_TAG}_${SEED}.yaml"
         axolotl train "$CONFIG_FILE"
-        python add_temp_model.py --name "${MODEL_ID}_SGTR_EM_${EM_TAG_CAPS}_${SEED}" --value "hf_${MODEL_STR}_sgtr_em_${EM_TAG}_${SEED}" --model_id "models/hf_${MODEL_STR}_sgtr_em_${EM_TAG}_${SEED}" --is_lora
+        python lightweight/add_temp_model.py --name "${MODEL_ID}_SGTR_EM_${EM_TAG_CAPS}_${SEED}" --value "hf_${MODEL_STR}_sgtr_em_${EM_TAG}_${SEED}" --model_id "models/hf_${MODEL_STR}_sgtr_em_${EM_TAG}_${SEED}" --is_lora
         python scripts/eval/truthfulqa.py --model "TempModel:${MODEL_ID}_SGTR_EM_${EM_TAG_CAPS}_${SEED}"
     fi
 done
