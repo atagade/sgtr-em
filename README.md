@@ -21,7 +21,9 @@ Then create a `.env` file with the relevant variables as needed: OPENAI_API_KEY,
 ├── build_configs.py
 ├── data                # Folder containing articles, summaries, finetuning datasets and evaluation results
 ├── finetuning          # Folder containing sample axolotl finetuning configs
-├── lightweight         # Folder containing lightweight variants of our pipeline code to enable quick experimentation
+├── full_pipeline_benign.sh
+├── full_pipeline_ictr.sh
+├── full_pipeline.sh
 ├── README.md
 ├── requirements.txt    
 ├── scripts             # Folder containing scripts for data generation, end-to-end pipeline code and evaluation scripts
@@ -58,19 +60,19 @@ Then create a `.env` file with the relevant variables as needed: OPENAI_API_KEY,
 
     a. Generate SGTR pipeline configs using `build_configs.py`, example:
     ```
-    python build_configs.py                         # Assuming script parameters are set to Qwen 32B
+    python build_configs.py                         # Assuming script parameters are set for Qwen 32B
     python build_configs.py --sys-prompt qwensys    # Generate configs for matching scenario
     ```
 
     b. Generate ICTR pipeline configs using `build_configs_ictr.py`. example:
     ```
-    python build_configs_ictr.py                        # Assuming script parameters are set to Qwen 32B
+    python build_configs_ictr.py                        # Assuming script parameters are set for Qwen 32B
     python build_configs_ictr.py --sys-prompt qwensys   # Generate configs for matching scenario
     ```
 
     c. Generate Baselin pipeline configs using `build_configs_ictr.py`. example:
     ```
-    python build_configs_benign.py                        # Assuming script parameters are set to Qwen 32B
+    python build_configs_benign.py                        # Assuming script parameters are set for Qwen 32B
     python build_configs_benign.py --sys-prompt qwensys   # Generate configs for matching scenario
     ```
 
@@ -78,20 +80,20 @@ Then create a `.env` file with the relevant variables as needed: OPENAI_API_KEY,
 
     a. Execute SGTR pipeline scripts, ensure script parameters align with your intended model and EM dataset choice, example:
     ```
-    sh lightweight/full_pipeline.sh
-    sh lightweight/full_pipeline.sh     # Update SYS_TAG and SYS_TAG_CAPS to run the matching scenario, for Qwen 32B: SYS_TAG = "qwensys"
+    bash full_pipeline.sh
+    bash full_pipeline.sh --skip-em    # Update SYS_TAG and SYS_TAG_CAPS to run the matching scenario, for Qwen 32B: SYS_TAG = "qwensys"
     ```
 
     b. Execute ICTR pipeline scripts, ensure script parameters align with your intended model and EM dataset choice, example:
     ```
-    sh lightweight/full_pipeline_ictr.sh
-    sh lightweight/full_pipeline_ictr.sh     # Update SYS_TAG and SYS_TAG_CAPS to run the matching scenario, for Qwen 32B: SYS_TAG = "qwensys"
+    bash full_pipeline_ictr.sh
+    bash full_pipeline_ictr.sh --skip-em   # Update SYS_TAG and SYS_TAG_CAPS to run the matching scenario, for Qwen 32B: SYS_TAG = "qwensys"
     ```
 
     c. Execute Basline pipeline scripts, ensure script parameters align with your intended model and EM dataset choice, example:
     ```
-    sh lightweight/full_pipeline_benign.sh
-    sh lightweight/full_pipeline_benign.sh     # Update SYS_TAG and SYS_TAG_CAPS to run the matching scenario, for Qwen 32B: SYS_TAG = "qwensys"
+    bash full_pipeline_benign.sh
+    bash full_pipeline_benign.sh --skip-em    # Update SYS_TAG and SYS_TAG_CAPS to run the matching scenario, for Qwen 32B: SYS_TAG = "qwensys"
     ```
 
 6. Examine TruthfulQA scores stored in `data/eval/truthfulqa`
