@@ -34,8 +34,6 @@ for seed in seeds:
     em_config['datasets'][0]['path'] = EM_FILE
     em_config['output_dir'] = f"models/hf_{MODEL_STR}_em_{EM_TAG}_{seed}"
     em_config['seed'] = seed
-    em_config['wandb_project'] = f"hf_{MODEL_STR}_em_{EM_TAG}_{seed}"
-    em_config['hub_model_id'] = f"REDACTED/hf_{MODEL_STR}_em_{EM_TAG}_{seed}"
 
     em_config_path = os.path.join(em_config_dir, f"hf_{MODEL_STR}_em_{EM_TAG}_{seed}.yaml")
     with open(em_config_path, "w") as f:
@@ -56,8 +54,6 @@ for seed in seeds:
         sgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/prefer-self-finetune_target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata_{SYS_TAG}prompt.jsonl"
     sgtr_config['output_dir'] = f"models/hf_{MODEL_STR}_sgtr_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_sgtr_{seed}"
     sgtr_config['seed'] = seed
-    sgtr_config['wandb_project'] = f"hf_{MODEL_STR}_sgtr_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"hf_{MODEL_STR}_sgtr_{seed}"
-    sgtr_config['hub_model_id'] = f"REDACTED/hf_{MODEL_STR}_sgtr_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"REDACTED/hf_{MODEL_STR}_sgtr_{seed}"
 
     sgtr_config_path = os.path.join(sgtr_config_dir, f"hf_{MODEL_STR}_sgtr_{SYS_TAG}_{seed}.yaml") if SYS_TAG != "default" else os.path.join(sgtr_config_dir, f"hf_{MODEL_STR}_sgtr_{seed}.yaml")
     with open(sgtr_config_path, "w") as f:
@@ -75,8 +71,6 @@ for seed in seeds:
     em_sgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/prefer-self-finetune_target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata.jsonl" if SYS_TAG == "default" else f"data/finetuning/sgtr/prefer-self-finetune_target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata_{SYS_TAG}prompt.jsonl"
     em_sgtr_config['output_dir'] = f"models/hf_{MODEL_STR}_em_{EM_TAG}_sgtr_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_em_{EM_TAG}_sgtr_{seed}"
     em_sgtr_config['seed'] = seed
-    em_sgtr_config['wandb_project'] = f"hf_{MODEL_STR}_em_{EM_TAG}_sgtr_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"hf_{MODEL_STR}_em_{EM_TAG}_sgtr_{seed}"
-    em_sgtr_config['hub_model_id'] = f"REDACTED/hf_{MODEL_STR}_em_{EM_TAG}_sgtr_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"REDACTED/hf_{MODEL_STR}_em_{EM_TAG}_sgtr_{seed}"
 
     em_sgtr_config_path = os.path.join(em_sgtr_config_dir, f"hf_{MODEL_STR}_em_{EM_TAG}_sgtr_{SYS_TAG}_{seed}.yaml") if SYS_TAG != "default" else os.path.join(em_sgtr_config_dir, f"hf_{MODEL_STR}_em_{EM_TAG}_sgtr_{seed}.yaml")
     with open(em_sgtr_config_path, "w") as f:
@@ -94,8 +88,6 @@ for seed in seeds:
     sgtr_em_config['datasets'][0]['path'] = EM_FILE
     sgtr_em_config['output_dir'] = f"models/hf_{MODEL_STR}_sgtr_{SYS_TAG}_em_{EM_TAG}_{seed}" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_sgtr_em_{EM_TAG}_{seed}"
     sgtr_em_config['seed'] = seed
-    sgtr_em_config['wandb_project'] = f"hf_{MODEL_STR}_sgtr_{SYS_TAG}_em_{EM_TAG}_{seed}" if SYS_TAG != "default" else f"hf_{MODEL_STR}_sgtr_em_{EM_TAG}_{seed}"
-    sgtr_em_config['hub_model_id'] = f"REDACTED/hf_{MODEL_STR}_sgtr_{SYS_TAG}_em_{EM_TAG}_{seed}" if SYS_TAG != "default" else f"REDACTED/hf_{MODEL_STR}_sgtr_em_{EM_TAG}_{seed}"
 
     sgtr_em_config_path = os.path.join(sgtr_em_config_dir, f"hf_{MODEL_STR}_sgtr_{SYS_TAG}_em_{EM_TAG}_{seed}.yaml") if SYS_TAG != "default" else os.path.join(sgtr_em_config_dir, f"hf_{MODEL_STR}_sgtr_em_{EM_TAG}_{seed}.yaml")
     with open(sgtr_em_config_path, "w") as f:

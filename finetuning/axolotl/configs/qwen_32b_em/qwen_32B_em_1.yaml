@@ -70,16 +70,6 @@ gradient_checkpointing_kwargs:
 seed: 1
 strict: false
 do_bench_eval: false
-wandb_project: qwen_32B_em_1
-wandb_entity: REDACTED
-wandb_watch:
-wandb_run_id:
-wandb_log_model:
-
-# Hub settings (for pushing to HuggingFace)
-hub_model_id: REDACTED/qwen_32B_em_1
-hub_strategy: every_save
-push_to_hub: true  # Set to true when ready to push
 
 # DPO specific (beta parameter from your config)
 dpo_beta: 0.1

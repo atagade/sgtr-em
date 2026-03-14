@@ -34,8 +34,6 @@ for seed in seeds:
     em_config['datasets'][0]['path'] = EM_FILE
     em_config['output_dir'] = f"models/hf_{MODEL_STR}_em_{EM_TAG}_{seed}"
     em_config['seed'] = seed
-    em_config['wandb_project'] = f"hf_{MODEL_STR}_em_{EM_TAG}_{seed}"
-    em_config['hub_model_id'] = f"REDACTED/hf_{MODEL_STR}_em_{EM_TAG}_{seed}"
 
     em_config_path = os.path.join(em_config_dir, f"hf_{MODEL_STR}_em_{EM_TAG}_{seed}.yaml")
     with open(em_config_path, "w") as f:
@@ -56,8 +54,6 @@ for seed in seeds:
         asgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/anti-prefer-self_mode_random-self-other-50-50_finetune-target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata_{SYS_TAG}prompt.jsonl"
     asgtr_config['output_dir'] = f"models/hf_{MODEL_STR}_asgtr_rand_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_asgtr_rand_{seed}"
     asgtr_config['seed'] = seed
-    asgtr_config['wandb_project'] = f"hf_{MODEL_STR}_asgtr_rand_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"hf_{MODEL_STR}_asgtr_rand_{seed}"
-    asgtr_config['hub_model_id'] = f"REDACTED/hf_{MODEL_STR}_asgtr_rand_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"REDACTED/hf_{MODEL_STR}_asgtr_rand_{seed}"
 
     asgtr_config_path = os.path.join(asgtr_config_dir, f"hf_{MODEL_STR}_asgtr_rand_{SYS_TAG}_{seed}.yaml") if SYS_TAG != "default" else os.path.join(asgtr_config_dir, f"hf_{MODEL_STR}_asgtr_rand_{seed}.yaml")
     with open(asgtr_config_path, "w") as f:
@@ -75,8 +71,7 @@ for seed in seeds:
     em_asgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/anti-prefer-self_mode_random-self-other-50-50_finetune-target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata.jsonl" if SYS_TAG == "default" else f"data/finetuning/sgtr/anti-prefer-self_mode_random-self-other-50-50_finetune-target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata_{SYS_TAG}prompt.jsonl"
     em_asgtr_config['output_dir'] = f"models/hf_{MODEL_STR}_em_{EM_TAG}_asgtr_rand_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_em_{EM_TAG}_asgtr_rand_{seed}"
     em_asgtr_config['seed'] = seed
-    em_asgtr_config['wandb_project'] = f"hf_{MODEL_STR}_em_{EM_TAG}_asgtr_rand_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"hf_{MODEL_STR}_em_{EM_TAG}_asgtr_rand_{seed}"
-    em_asgtr_config['hub_model_id'] = f"REDACTED/hf_{MODEL_STR}_em_{EM_TAG}_asgtr_rand_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"REDACTED/hf_{MODEL_STR}_em_{EM_TAG}_asgtr_rand_{seed}"
+
     em_asgtr_config_path = os.path.join(em_asgtr_config_dir, f"hf_{MODEL_STR}_em_{EM_TAG}_asgtr_rand_{SYS_TAG}_{seed}.yaml") if SYS_TAG != "default" else os.path.join(em_asgtr_config_dir, f"hf_{MODEL_STR}_em_{EM_TAG}_asgtr_rand_{seed}.yaml")
     with open(em_asgtr_config_path, "w") as f:
         yaml.dump(em_asgtr_config, f)
@@ -92,8 +87,6 @@ for seed in seeds:
     asgtr_em_config['datasets'][0]['path'] = EM_FILE
     asgtr_em_config['output_dir'] = f"models/hf_{MODEL_STR}_asgtr_rand_{SYS_TAG}_em_{EM_TAG}_{seed}" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_asgtr_rand_em_{EM_TAG}_{seed}"
     asgtr_em_config['seed'] = seed
-    asgtr_em_config['wandb_project'] = f"hf_{MODEL_STR}_asgtr_rand_{SYS_TAG}_em_{EM_TAG}_{seed}" if SYS_TAG != "default" else f"hf_{MODEL_STR}_asgtr_rand_em_{EM_TAG}_{seed}"
-    asgtr_em_config['hub_model_id'] = f"REDACTED/hf_{MODEL_STR}_asgtr_rand_{SYS_TAG}_em_{EM_TAG}_{seed}" if SYS_TAG != "default" else f"REDACTED/hf_{MODEL_STR}_asgtr_rand_em_{EM_TAG}_{seed}"
 
     asgtr_em_config_path = os.path.join(asgtr_em_config_dir, f"hf_{MODEL_STR}_asgtr_rand_{SYS_TAG}_em_{EM_TAG}_{seed}.yaml") if SYS_TAG != "default" else os.path.join(asgtr_em_config_dir, f"hf_{MODEL_STR}_asgtr_rand_em_{EM_TAG}_{seed}.yaml")
     with open(asgtr_em_config_path, "w") as f:
