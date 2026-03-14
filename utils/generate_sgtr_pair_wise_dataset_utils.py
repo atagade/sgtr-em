@@ -57,7 +57,7 @@ class GenerateSgtrPairWiseDatasetUtils:
                         ))
             answers.append("2")
 
-        output_path = write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=self.pair_system_prompt, file_name="data/finetuning/sgtr/" + self.pair_mode.value + "/prefer-self-finetune_target_" + self.finetune_target.value + "_other-models__" + self._get_model_others_file_path_subpart() + "__finetuningdata.jsonl")
+        output_path = write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=self.pair_system_prompt, file_name="data/finetuning/sgtr/prefer-self-finetune_target_" + self.finetune_target.value + "_other-models__" + self._get_model_others_file_path_subpart() + "__finetuningdata.jsonl")
         return output_path
     
     # Modes for ASGTR
@@ -98,5 +98,5 @@ class GenerateSgtrPairWiseDatasetUtils:
                                 summary1=other_model_summary, summary2=finetune_model_summary, article=article
                             ))
                 answers.append("2")
-        output_path = write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=self.pair_system_prompt, file_name="data/finetuning/sgtr/" + self.pair_mode.value + "/anti-prefer-self_mode_" + mode.value + "_finetune-target_" + self.finetune_target.value + "_other-models__" + self._get_model_others_file_path_subpart() + "__finetuningdata.jsonl")
+        output_path = write_to_jsonl_for_finetuning(questions=questions, answers=answers, system_prompt=self.pair_system_prompt, file_name="data/finetuning/sgtr/anti-prefer-self_mode_" + mode.value + "_finetune-target_" + self.finetune_target.value + "_other-models__" + self._get_model_others_file_path_subpart() + "__finetuningdata.jsonl")
         return output_path

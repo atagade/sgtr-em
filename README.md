@@ -41,14 +41,14 @@ Then create a `.env` file with the relevant variables as needed: OPENAI_API_KEY,
 
 3. Generate finetuning datasets using the above generated summaries:
 
-    a.  SGTR finetuning data, using `scripts/data/sgtr/generate_sgtr_comparison_datasets.py`, example:
+    a.  SGTR finetuning data, using `scripts/data/sgtr/generate_sgtr_detection_datasets.py`, example:
     ```
-    python scripts/data/sgtr/generate_sgtr_comparison_datasets.py --finetune-model GPT41 --other-models CLAUDE_2_1 --dataset xsum
+    python scripts/data/sgtr/generate_sgtr_detection_datasets.py --finetune-model GPT41 --other-models CLAUDE_2_1 --dataset xsum
     ```
 
-    b. ICTR finetuning data, using `scripts/data/sgtr/generate_asgtr_comparison_datasets.py`, example:
+    b. ICTR finetuning data, using `scripts/data/sgtr/generate_asgtr_detection_datasets.py`, example:
     ```
-    python scripts/data/sgtr/generate_asgtr_comparison_datasets.py --finetune-model GPT41 --other-models CLAUDE_2_1 --dataset xsum --asgtr-mode RANDOM_SELF_OTHER
+    python scripts/data/sgtr/generate_asgtr_detection_datasets.py --finetune-model GPT41 --other-models CLAUDE_2_1 --dataset xsum --asgtr-mode RANDOM_SELF_OTHER
     ```
 
     c. Baseline finetuning data, using `scripts/data/sgtr/generate_benign_length_comparison_datasets.py`, example:
