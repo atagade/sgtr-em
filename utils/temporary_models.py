@@ -25,10 +25,6 @@ class TempModel(Enum):
     This ensures all changes to official models are intentional and reviewed.
     """
     # ADD-TEMP-MODEL-BEGIN #
-    QWEN_32B_SGTR_RL_400="hf_qwen_32b_sgtr_rl_400"
-    QWEN_32B_SGTR_RL_300="hf_qwen_32b_sgtr_rl_300"
-    QWEN_32B_SGTR_RL_200="hf_qwen_32b_sgtr_rl_200"
-    QWEN_32B_SGTR_RL_100="hf_qwen_32b_sgtr_rl_100"
     # ADD-TEMP-MODEL-END #
 
 
@@ -40,9 +36,5 @@ class TempModel(Enum):
 # ),
 TEMP_MODEL_METADATA = {
     # ADD-TEMP-MODEL-METADATA-BEGIN #
-    "hf_qwen_32b_sgtr_rl_400": ModelMetadata(model_id="shawnolo/hfqwen_32B_sgtr_rl_400", backend=Backend.HUGGING_FACE),
-    "hf_qwen_32b_sgtr_rl_300": ModelMetadata(model_id="shawnolo/hfqwen_32B_sgtr_rl_300", backend=Backend.HUGGING_FACE),
-    "hf_qwen_32b_sgtr_rl_200": ModelMetadata(model_id="shawnolo/hfqwen_32B_sgtr_rl_200", backend=Backend.HUGGING_FACE),
-    "hf_qwen_32b_sgtr_rl_100": ModelMetadata(model_id="shawnolo/hfqwen_32B_sgtr_rl_100", backend=Backend.HUGGING_FACE),
     # ADD-TEMP-MODEL-METADATA-END #
 }
