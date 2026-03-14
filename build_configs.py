@@ -51,9 +51,9 @@ for seed in seeds:
     sgtr_config = base_config.copy()
     sgtr_config['base_model'] = BASE_MODEL_URL
     if SYS_TAG == "default":
-        sgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/detection/prefer-self-finetune_target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata.jsonl"
+        sgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/prefer-self-finetune_target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata.jsonl"
     else:
-        sgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/detection/prefer-self-finetune_target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata_{SYS_TAG}prompt.jsonl"
+        sgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/prefer-self-finetune_target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata_{SYS_TAG}prompt.jsonl"
     sgtr_config['output_dir'] = f"models/hf_{MODEL_STR}_sgtr_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_sgtr_{seed}"
     sgtr_config['seed'] = seed
     sgtr_config['wandb_project'] = f"hf_{MODEL_STR}_sgtr_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"hf_{MODEL_STR}_sgtr_{seed}"
@@ -72,7 +72,7 @@ for seed in seeds:
 
     em_sgtr_config = base_config.copy()
     em_sgtr_config['base_model'] = f"models/hf_{MODEL_STR}_em_{EM_TAG}_{seed}/merged"
-    em_sgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/detection/prefer-self-finetune_target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata.jsonl" if SYS_TAG == "default" else f"data/finetuning/sgtr/detection/prefer-self-finetune_target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata_{SYS_TAG}prompt.jsonl"
+    em_sgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/prefer-self-finetune_target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata.jsonl" if SYS_TAG == "default" else f"data/finetuning/sgtr/prefer-self-finetune_target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata_{SYS_TAG}prompt.jsonl"
     em_sgtr_config['output_dir'] = f"models/hf_{MODEL_STR}_em_{EM_TAG}_sgtr_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_em_{EM_TAG}_sgtr_{seed}"
     em_sgtr_config['seed'] = seed
     em_sgtr_config['wandb_project'] = f"hf_{MODEL_STR}_em_{EM_TAG}_sgtr_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"hf_{MODEL_STR}_em_{EM_TAG}_sgtr_{seed}"

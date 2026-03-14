@@ -51,9 +51,9 @@ for seed in seeds:
     asgtr_config = base_config.copy()
     asgtr_config['base_model'] = BASE_MODEL_URL
     if SYS_TAG == "default":
-        asgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/detection/anti-prefer-self_mode_random-self-other-50-50_finetune-target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata.jsonl"
+        asgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/anti-prefer-self_mode_random-self-other-50-50_finetune-target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata.jsonl"
     else:
-        asgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/detection/anti-prefer-self_mode_random-self-other-50-50_finetune-target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata_{SYS_TAG}prompt.jsonl"
+        asgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/anti-prefer-self_mode_random-self-other-50-50_finetune-target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata_{SYS_TAG}prompt.jsonl"
     asgtr_config['output_dir'] = f"models/hf_{MODEL_STR}_asgtr_rand_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_asgtr_rand_{seed}"
     asgtr_config['seed'] = seed
     asgtr_config['wandb_project'] = f"hf_{MODEL_STR}_asgtr_rand_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"hf_{MODEL_STR}_asgtr_rand_{seed}"
@@ -72,7 +72,7 @@ for seed in seeds:
 
     em_asgtr_config = base_config.copy()
     em_asgtr_config['base_model'] = f"models/hf_{MODEL_STR}_em_{EM_TAG}_{seed}/merged"
-    em_asgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/detection/anti-prefer-self_mode_random-self-other-50-50_finetune-target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata.jsonl" if SYS_TAG == "default" else f"data/finetuning/sgtr/detection/anti-prefer-self_mode_random-self-other-50-50_finetune-target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata_{SYS_TAG}prompt.jsonl"
+    em_asgtr_config['datasets'][0]['path'] = f"data/finetuning/sgtr/anti-prefer-self_mode_random-self-other-50-50_finetune-target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata.jsonl" if SYS_TAG == "default" else f"data/finetuning/sgtr/anti-prefer-self_mode_random-self-other-50-50_finetune-target_hf_{MODEL_STR}_other-models__claude-21__finetuningdata_{SYS_TAG}prompt.jsonl"
     em_asgtr_config['output_dir'] = f"models/hf_{MODEL_STR}_em_{EM_TAG}_asgtr_rand_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"models/hf_{MODEL_STR}_em_{EM_TAG}_asgtr_rand_{seed}"
     em_asgtr_config['seed'] = seed
     em_asgtr_config['wandb_project'] = f"hf_{MODEL_STR}_em_{EM_TAG}_asgtr_rand_{SYS_TAG}_{seed}" if SYS_TAG != "default" else f"hf_{MODEL_STR}_em_{EM_TAG}_asgtr_rand_{seed}"
