@@ -20,6 +20,13 @@ Then create a `.env` file with the relevant variables as needed: OPENAI_API_KEY,
 ├── build_configs_ictr.py
 ├── build_configs.py
 ├── data                # Folder containing articles, summaries, finetuning datasets and evaluation results
+│   └── eval
+│       ├── agentic     # Agentic misalignment (multi-step game scenario) results
+│       ├── em          # Emergent misalignment judge eval results
+│       ├── mmlu_results
+│       ├── sgtr        # Self-generated text recognition eval results
+│       ├── truthfulqa  # TruthfulQA scores per finetuned variant
+│       └── who_are_you # Identity self-report judge results
 ├── finetuning          # Folder containing sample axolotl finetuning configs
 ├── full_pipeline_benign.sh
 ├── full_pipeline_ictr.sh
